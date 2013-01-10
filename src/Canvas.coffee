@@ -117,8 +117,17 @@ class Api extends BaseApi
   
   drawColor2: ->
     
+    # Initialize offscreen canvas
+    canvas = document.createElement('canvas')
+    
+    # TODO: Do not hard code this!!!
+    canvas.width = 401
+    canvas.height = 401
+    
+    ctx = canvas.getContext('2d')
+    
     # Get canvas data
-    imgData = @ctx.getImageData(0, 0, @width, @height)
+    imgData = ctx.getImageData(0, 0, @width, @height)
     arr = imgData.data
     
     length = arr.length
@@ -138,7 +147,9 @@ class Api extends BaseApi
       arr[length + 3] = 255
     
     imgData.data = arr
-    @ctx.putImageData(imgData, 0, 0)
+    ctx.putImageData(imgData, 0, 0)
+    
+    @ctx.drawImage(canvas, 0, 0)
     
   arcsinh: (value) ->
     return Math.log(value + Math.sqrt(1 + value * value))
