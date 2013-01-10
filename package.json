@@ -1,0 +1,17 @@
+{
+  "name": "WebFITS",
+  "version": "0.0.1",
+  "author": "Amit Kapadia <amit@zooniverse.org>",
+  "dependencies": { 
+  },
+  "devDependencies": {
+    "coffee-script" : "1.4.x"
+  },
+  "_dependencyOrder": [
+    "WebFITS",
+    "Shaders",
+    "Api",
+    "WebGL",
+    "Canvas"
+  ]
+}
