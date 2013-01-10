@@ -1,8 +1,8 @@
 
-Api     = @astro.WebFITS.Api
+BaseApi = @astro.WebFITS.BaseApi
 Shaders = @astro.WebFITS.Shaders
 
-class WebGL extends Api
+class Api extends BaseApi
   
   algorithm: Shaders.lupton
   textureIndices:
@@ -13,13 +13,13 @@ class WebGL extends Api
     'z': 4
   
   # Code using this function must check if a context is returned
-  getContext: (canvas) ->
+  getContext: =>
     
     # Initialize context
     for name in ['webgl', 'experimental-webgl']
       try
-        context = canvas.getContext(name)
-        context.viewport(0, 0, canvas.width, canvas.height)
+        context = @canvas.getContext(name)
+        context.viewport(0, 0, @width, @height)
       catch e
       break if (context)
     
@@ -212,4 +212,4 @@ class WebGL extends Api
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
 
 
-@astro.WebFITS.WebGL = WebGL
+@astro.WebFITS.Api = Api

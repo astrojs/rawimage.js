@@ -24,7 +24,7 @@ buildWebGl = ->
   
   order = [
     'src/WebFITS.coffee',
-    'src/Api.coffee',
+    'src/BaseApi.coffee',
     'src/Shaders.coffee',
     'src/WebGL.coffee'
   ]
@@ -40,7 +40,7 @@ buildCanvas = ->
   
   order = [
     'src/WebFITS.coffee',
-    'src/Api.coffee',
+    'src/BaseApi.coffee',
     'src/Canvas'
   ]
   

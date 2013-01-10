@@ -1,7 +1,7 @@
 
-Api = @astro.Webfits.Api
+BaseApi = @astro.WebFITS.BaseApi
 
-class Canvas extends Api
+class Api extends BaseApi
   
   constructor: ->
     super
@@ -18,10 +18,10 @@ class Canvas extends Api
       @drawGrayscale(@currentBand)
     , 150)
     
-  getContext: (canvas) ->
+  getContext: ->
     # TODO: Flip Y axis without CSS
-    canvas.style.webkitTransform = 'scaleY(-1)'
-    @ctx = canvas.getContext('2d')
+    @canvas.style.webkitTransform = 'scaleY(-1)'
+    @ctx = @canvas.getContext('2d')
     return @ctx
   
   # Store a reference to the color bands on the object
@@ -146,4 +146,4 @@ class Canvas extends Api
   clamp: (value) ->
     return Math.max(Math.min(1, value), 0)
 
-@astro.WebFITS.Canvas = Canvas
+@astro.WebFITS.Api = Api

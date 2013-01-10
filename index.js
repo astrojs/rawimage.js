@@ -1,1 +1,1 @@
-module.exports = require('./lib/Webfits');
+module.exports = require('./lib/WebFITS');
