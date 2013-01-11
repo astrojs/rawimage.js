@@ -6,7 +6,6 @@ class BaseApi
     
     # Attach canvas to DOM element
     @canvas = document.createElement('canvas')
-    @canvas.setAttribute('class', 'webfits')
     @canvas.setAttribute('width', @width)
     @canvas.setAttribute('height', @height)
     
