@@ -211,5 +211,12 @@ class Api extends BaseApi
     
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
 
+  wheelHandler: (e) =>
+    super
+    
+    location = @ctx.getUniformLocation(@program2, 'u_scale')
+    @ctx.uniform1f(location, @scale)
+    @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
+
 
 @astro.WebFITS.Api = Api
