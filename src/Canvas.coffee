@@ -13,10 +13,12 @@ class Api extends BaseApi
     @sky = {'g': 0, 'r': 0, 'i': 0}
     @colorSat = 1.0
     
-    @drawColorDebounce      = _.debounce(@drawColor2, 150)
+    debounceRate = if /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) then 150 else 50
+    
+    @drawColorDebounce      = _.debounce(@drawColor2, debounceRate)
     @drawGrayscaleDebounce  = _.debounce( =>
       @drawGrayscale(@currentBand)
-    , 150)
+    , debounceRate)
     
   getContext: ->
     # TODO: Flip Y axis without CSS
