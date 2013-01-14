@@ -32,11 +32,44 @@ class Api extends BaseApi
     document.addEventListener("astro:webfits:texready", @textureLoaded, false)
     
   getContext: ->
-    # TODO: Flip Y axis without CSS
+    # Flip Y axis with CSS
     @canvas.style.webkitTransform = 'scaleY(-1)'
     @ctx = @canvas.getContext('2d')
     return @ctx
   
+  setupMouseInteraction: =>
+    super
+    
+    @xOffset  = 0
+    @yOffset  = 0
+    @zoom     = 1
+    @minZoom  = @zoom
+    @maxZoom  = 12 * @zoom
+    
+    @canvas.onmouseup = (e) =>
+      @drag = false
+      
+      # Prevents a NaN from being used
+      return null unless @xMouseDown?
+      
+      xDelta = e.clientX - @xMouseDown
+      yDelta = e.clientY - @yMouseDown
+      @xOffset = @xOldOffset + (xDelta / @zoom)
+      @yOffset = @yOldOffset - (yDelta / @zoom)
+      
+      @draw()
+    
+    @canvas.onmousemove = (e) =>
+      return unless @drag
+      
+      xDelta = e.clientX - @xMouseDown
+      yDelta = e.clientY - @yMouseDown
+      
+      @xOffset = @xOldOffset + (xDelta / @zoom)
+      @yOffset = @yOldOffset - (yDelta / @zoom)
+      
+      @draw()
+    
   # Store a reference to the color bands on the object
   loadTexture: (band, data) =>
     @[band] = new Float32Array(data)
@@ -91,6 +124,15 @@ class Api extends BaseApi
       
     imgData.data = arr
     @ctx.putImageData(imgData, 0, 0)
+  
+  draw: =>
+    transform = [
+      "scaleX(#{@zoom})",
+      "scaleY(#{-@zoom})",
+      "translateX(#{@xOffset}px)",
+      "translateY(#{@yOffset}px)"
+    ].join(' ')
+    @canvas.style.webkitTransform = transform
   
   drawColor: =>
     @drawColor2()
@@ -171,10 +213,7 @@ class Api extends BaseApi
 
   wheelHandler: (e) =>
     super
-    zoomX = @width * @zoom / 2
-    zoomY = -@height * @zoom / 2
-    
-    @canvas.style.webkitTransform = "scaleX(#{zoomX}) scaleY(#{zoomY})"
-    
+    @draw()
+
 
 @astro.WebFITS.Api = Api

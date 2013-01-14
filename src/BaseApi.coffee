@@ -25,6 +25,8 @@ class BaseApi
     @zoom       = 2 / @width
     @minZoom    = @zoom
     @maxZoom    = 12 * @zoom
+    @zoomX      = @zoom
+    @zoomY      = @zoom
     
     @canvas.onmousedown = (e) =>
       @drag = true
@@ -48,12 +50,6 @@ class BaseApi
       @draw()
     
     @canvas.onmousemove = (e) =>
-      xDelta = -1 * (@width / 2 - e.offsetX) / @width / @zoom * 2.0
-      yDelta = (@height / 2 - e.offsetY) / @height / @zoom * 2.0
-      
-      x = ((-1 * (@xOffset + 0.5)) + xDelta) + 1.5 << 0
-      y = ((-1 * (@yOffset + 0.5)) + yDelta) + 1.5 << 0
-      
       return unless @drag
       
       xDelta = e.clientX - @xMouseDown

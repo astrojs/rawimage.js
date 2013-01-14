@@ -181,13 +181,6 @@ class Api extends BaseApi
     location = @ctx.getUniformLocation(@program2, "u_#{band}sky")
     @ctx.uniform1f(location, value)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
-  
-  setColorSaturation: (value) =>
-    @ctx.useProgram(@program2)
-    
-    location = @ctx.getUniformLocation(@program2, 'u_colorsat')
-    @ctx.uniform1f(location, value)
-    @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
 
   #
   # Drawing functions
