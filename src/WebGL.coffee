@@ -206,7 +206,7 @@ class Api extends BaseApi
   wheelHandler: (e) =>
     super
     
-    location = @ctx.getUniformLocation(@program2, 'u_scale')
+    location = @ctx.getUniformLocation(@currentProgram, 'u_scale')
     @ctx.uniform1f(location, @zoom)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
 
