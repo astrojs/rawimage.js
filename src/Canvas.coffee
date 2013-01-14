@@ -2,23 +2,34 @@
 BaseApi = @astro.WebFITS.BaseApi
 
 class Api extends BaseApi
+  nTextures: 0
+  alpha: 0.03
+  Q: 1.0
+  scale: {}
+  max: {}
+  sky:
+    g: 0
+    r: 0
+    i: 0
   
   constructor: ->
     super
     
-    @scale = {}
-    @max = {}
-    @alpha = 0.03
-    @Q = 1.0
-    @sky = {'g': 0, 'r': 0, 'i': 0}
-    @colorSat = 1.0
-    
+    # Difference debounce rates depending on device
     debounceRate = if /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) then 150 else 50
     
+    # Debounced draw functions for better perceived performance
     @drawColorDebounce      = _.debounce(@drawColor, debounceRate)
     @drawGrayscaleDebounce  = _.debounce( =>
       @drawGrayscale(@currentBand)
     , debounceRate)
+    
+    # Custom event for broadcasting new dataset
+    @texReadyEvt = document.createEvent("HTMLEvents")
+    @texReadyEvt.initEvent("astro:webfits:texready", false, true)
+    
+    # Bind function to event
+    document.addEventListener("astro:webfits:texready", @textureLoaded, false)
     
   getContext: ->
     # TODO: Flip Y axis without CSS
@@ -29,9 +40,13 @@ class Api extends BaseApi
   # Store a reference to the color bands on the object
   loadTexture: (band, data) =>
     @[band] = new Float32Array(data)
+    document.dispatchEvent(@texReadyEvt)
   
-  draw: ->
-    console.log 'draw'
+  textureLoaded: =>
+    @nTextures += 1
+    if @nTextures is 5
+      @canvas.style.webkitTransform = "scaleX(1) scaleY(-1)"
+    @nTextures %= 5
   
   setScale: (band, value) ->
     @scale[band] = value
@@ -55,7 +70,6 @@ class Api extends BaseApi
   
   setBkgdSub: (band, value) ->
     @sky[band] = value
-    @draw()
   
   drawGrayscale: (band) =>
     @currentBand = band
@@ -157,10 +171,10 @@ class Api extends BaseApi
 
   wheelHandler: (e) =>
     super
+    zoomX = @width * @zoom / 2
+    zoomY = -@height * @zoom / 2
     
-    @ctx.clearRect(0, 0, @width, @height)
-    @ctx.save()
-    @ctx.scale(@zoom, @zoom)
-    @ctx.restore()
+    @canvas.style.webkitTransform = "scaleX(#{zoomX}) scaleY(#{zoomY})"
+    
 
 @astro.WebFITS.Api = Api
