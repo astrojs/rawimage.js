@@ -15,7 +15,7 @@ class Api extends BaseApi
     
     debounceRate = if /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) then 150 else 50
     
-    @drawColorDebounce      = _.debounce(@drawColor2, debounceRate)
+    @drawColorDebounce      = _.debounce(@drawColor, debounceRate)
     @drawGrayscaleDebounce  = _.debounce( =>
       @drawGrayscale(@currentBand)
     , debounceRate)
@@ -28,7 +28,7 @@ class Api extends BaseApi
   
   # Store a reference to the color bands on the object
   loadTexture: (band, data) =>
-    @[band] = data
+    @[band] = new Float32Array(data)
   
   draw: ->
     console.log 'draw'
@@ -55,10 +55,6 @@ class Api extends BaseApi
   
   setBkgdSub: (band, value) ->
     @sky[band] = value
-    @draw()
-  
-  setColorSaturation: (value) ->
-    @colorSat = value
     @draw()
   
   drawGrayscale: (band) =>
@@ -108,9 +104,9 @@ class Api extends BaseApi
       I = r + g + b + 1e-10
       factor = @arcsinh(@alpha * @Q * I) / (@Q * I)
       
-      r = 255 * @clamp(r * factor)
-      g = 255 * @clamp(g * factor)
-      b = 255 * @clamp(b * factor)
+      r = (255 * r * factor) & 0xff
+      g = (255 * g * factor) & 0xff
+      b = (255 * b * factor) & 0xff
       
       data[index] = (255 << 24) | (b << 16) | (g << 8) | r
       
@@ -158,5 +154,13 @@ class Api extends BaseApi
     
   clamp: (value) ->
     return Math.max(Math.min(1, value), 0)
+
+  wheelHandler: (e) =>
+    super
+    
+    @ctx.clearRect(0, 0, @width, @height)
+    @ctx.save()
+    @ctx.scale(@zoom, @zoom)
+    @ctx.restore()
 
 @astro.WebFITS.Api = Api

@@ -56,7 +56,6 @@ class Api extends BaseApi
       offsetLocation    = context.getUniformLocation(program, 'u_offset')
       scaleLocation     = context.getUniformLocation(program, 'u_scale')
       
-      # TODO: Using sample data CFHTLS 26.  Global min and max precomputed and hard coded here.
       context.uniform2f(extentLocation, @minimum, @maximum)
       context.uniform2f(offsetLocation, -@width / 2, -@height / 2)
       context.uniform1f(scaleLocation, 2 / @width)
@@ -76,7 +75,7 @@ class Api extends BaseApi
     context.bindBuffer(context.ARRAY_BUFFER, buffer)
     context.enableVertexAttribArray(positionLocation)
     context.vertexAttribPointer(positionLocation, 2, context.FLOAT, false, 0, 0)
-    @_setRectangle(context, 0, 0, 401, 401)
+    @_setRectangle()
     context.drawArrays(context.TRIANGLES, 0, 6)
     
     return context
@@ -117,10 +116,10 @@ class Api extends BaseApi
     return program
 
   # Set a buffer with viewport width and height
-  _setRectangle: (gl, x, y, width, height) ->
-      [x1, x2] = [x, x + width]
-      [y1, y2] = [y, y + height]
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW)  
+  _setRectangle: =>
+      [x1, x2] = [0, 0 + @width]
+      [y1, y2] = [0, 0 + @height]
+      @ctx.bufferData(@ctx.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), @ctx.STATIC_DRAW)  
   
   loadTexture: (band, data) =>
     index = @textureIndices[band]
@@ -189,9 +188,22 @@ class Api extends BaseApi
     location = @ctx.getUniformLocation(@program2, 'u_colorsat')
     @ctx.uniform1f(location, value)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
+
+  #
+  # Drawing functions
+  #
+  draw: =>
+    offsetLocation  = @ctx.getUniformLocation(@currentProgram, 'u_offset')
+    scaleLocation   = @ctx.getUniformLocation(@currentProgram, 'u_scale')
+    @ctx.uniform2f(offsetLocation, @xOffset, @yOffset)
+    @ctx.uniform1f(scaleLocation, @zoom)
+    
+    @_setRectangle()
+    @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
   
   drawGrayscale: (band) ->
     @ctx.useProgram(@program1)
+    @currentProgram = @program1
     
     index = @textureIndices[band]
     @ctx.activeTexture(@ctx["TEXTURE#{index}"])
@@ -202,6 +214,7 @@ class Api extends BaseApi
   # Pass three arrays to three GPU textures
   drawColor: ->
     @ctx.useProgram(@program2)
+    @currentProgram = @program2
     
     for band in ['g', 'r', 'i']
       index = @textureIndices[band]
@@ -210,12 +223,12 @@ class Api extends BaseApi
       @ctx.uniform1i(location, index)
     
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
-
+  
   wheelHandler: (e) =>
     super
     
     location = @ctx.getUniformLocation(@program2, 'u_scale')
-    @ctx.uniform1f(location, @scale)
+    @ctx.uniform1f(location, @zoom)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
 
 

@@ -11,24 +11,76 @@ class BaseApi
     
     elem.appendChild(@canvas)
     
-    # Setup variables for mouse navigation of canvas
-    @scale = 2 / @width
-    
-    @canvas.addEventListener('mousewheel', @wheelHandler, false)
-    @canvas.addEventListener('DOMMouseScroll', @wheelHandler, false)
-    
   # Set global minimum and maximum pixels values. Important for
   # scaling the dynamic range.
   setGlobalExtent: (@MINIMUM, @MAXIMUM) ->
+  
+  setupMouseInteraction: =>
+    @xOffset    = -@width / 2
+    @yOffset    = -@height / 2
+    @xOldOffset = @xOffset
+    @yOldOffset = @yOffset
+    @drag       = false
+    
+    @zoom       = 2 / @width
+    @minZoom    = @zoom
+    @maxZoom    = 12 * @zoom
+    
+    @canvas.onmousedown = (e) =>
+      @drag = true
+      
+      @xOldOffset = @xOffset
+      @yOldOffset = @yOffset
+      @xMouseDown = e.clientX 
+      @yMouseDown = e.clientY
+    
+    @canvas.onmouseup = (e) =>
+      @drag = false
+      
+      # Prevents a NaN from being used
+      return null unless @xMouseDown?
+      
+      xDelta = e.clientX - @xMouseDown
+      yDelta = e.clientY - @yMouseDown
+      @xOffset = @xOldOffset + (xDelta / @width / @zoom * 2.0)
+      @yOffset = @yOldOffset - (yDelta / @height / @zoom * 2.0)
+      
+      @draw()
+    
+    @canvas.onmousemove = (e) =>
+      xDelta = -1 * (@width / 2 - e.offsetX) / @width / @zoom * 2.0
+      yDelta = (@height / 2 - e.offsetY) / @height / @zoom * 2.0
+      
+      x = ((-1 * (@xOffset + 0.5)) + xDelta) + 1.5 << 0
+      y = ((-1 * (@yOffset + 0.5)) + yDelta) + 1.5 << 0
+      
+      return unless @drag
+      
+      xDelta = e.clientX - @xMouseDown
+      yDelta = e.clientY - @yMouseDown
+      
+      @xOffset = @xOldOffset + (xDelta / @width / @zoom * 2.0)
+      @yOffset = @yOldOffset - (yDelta / @height / @zoom * 2.0)
+      
+      @draw()
+    
+    @canvas.onmouseout = (e) =>
+      @drag = false
+    
+    @canvas.onmouseover = (e) =>
+      @drag = false
+    
+    @canvas.addEventListener('mousewheel', @wheelHandler, false)
+    @canvas.addEventListener('DOMMouseScroll', @wheelHandler, false)
     
   wheelHandler: (e) =>
     e.preventDefault()
     
     factor = if e.shiftKey then 1.01 else 1.1
-    @scale *= if (e.detail or e.wheelDelta) < 0 then factor else 1 / factor
+    @zoom *= if (e.detail or e.wheelDelta) < 0 then factor else 1 / factor
     
     # Probably not the most efficient way to do this ...
-    @scale = if @scale > @maxScale then @maxScale else @scale
-    @scale = if @scale < @minScale then @minScale else @scale
+    @zoom = if @zoom > @maxZoom then @maxZoom else @zoom
+    @zoom = if @zoom < @minZoom then @minZoom else @zoom
   
 @astro.WebFITS.BaseApi = BaseApi
