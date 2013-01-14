@@ -51,10 +51,6 @@ Shaders =
     "uniform sampler2D u_tex2;",
     "uniform sampler2D u_tex3;",
     
-    "uniform float u_gsky;",
-    "uniform float u_rsky;",
-    "uniform float u_isky;",
-    
     "uniform float u_gscale;",
     "uniform float u_rscale;",
     "uniform float u_iscale;",
@@ -75,9 +71,9 @@ Shaders =
       "vec4 pixel_v_i = texture2D(u_tex3, v_textureCoord);",
       
       # Store the current pixel value for each texture, background subtract, and apply scale
-      "float r = (pixel_v_i[0] - u_isky) * u_iscale;",
-      "float g = (pixel_v_r[0] - u_rsky) * u_rscale;",
-      "float b = (pixel_v_g[0] - u_gsky) * u_gscale;",
+      "float r = (pixel_v_i[0]) * u_iscale;",
+      "float g = (pixel_v_r[0]) * u_rscale;",
+      "float b = (pixel_v_g[0]) * u_gscale;",
       
       # Compute the total intensity and stretch factor
       "float I = r + g + b + 1e-10;",
@@ -91,82 +87,6 @@ Shaders =
       "gl_FragColor = vec4(R, G, B, 1.0);",
     "}"
   ].join("\n")
-  
-  stiff: [
-    "precision mediump float;",
 
-    "uniform sampler2D u_tex0;",
-    "uniform sampler2D u_tex1;",
-    "uniform sampler2D u_tex2;",
-    
-    "uniform vec2 u_extremes;",
-    
-    "uniform float u_gscale;",
-    "uniform float u_rscale;",
-    "uniform float u_iscale;",
-    
-    "uniform float u_gsky;",
-    "uniform float u_rsky;",
-    "uniform float u_isky;",
-    
-    "uniform float u_gmax;",
-    "uniform float u_rmax;",
-    "uniform float u_imax;",
-
-    "uniform float u_alpha;",
-    "uniform float u_Q;",
-    
-    "uniform float u_colorsat;",
-
-    "varying vec2 v_textureCoord;",
-
-    "float arcsinh(float value) {",
-      "return log(value + sqrt(1.0 + value * value));",
-    "}",
-    
-    "float lupton_asinh(float mean, float Q, float alpha) {",
-      "return arcsinh(alpha * Q * mean) / (Q * mean);"
-    "}",
-    
-    "void main() {",
-      # Get the pixel intensities from textures
-      "vec4 pixel_v_g = texture2D(u_tex0, v_textureCoord);",
-      "vec4 pixel_v_r = texture2D(u_tex1, v_textureCoord);",
-      "vec4 pixel_v_i = texture2D(u_tex2, v_textureCoord);",
-      
-      # Store the current pixel value for each texture and apply scale
-      "float r = pixel_v_i[0] * u_iscale;",
-      "float g = pixel_v_r[0] * u_rscale;",
-      "float b = pixel_v_g[0] * u_gscale;",
-      
-      # Set some parameters
-      "float grey = 0.001;",
-      "float gammafac = 1.0;",
-      "float greygf = pow(grey, gammafac);",
-      
-      # Compute min level from sky, grey and max level
-      # TODO: Move to JavaScript, this computation should only be done once by the CPU
-      "float rmin = (u_isky - greygf * u_imax) / (1. - greygf);",
-      "float gmin = (u_rsky - greygf * u_rmax) / (1. - greygf);",
-      "float bmin = (u_gsky - greygf * u_gmax) / (1. - greygf);",
-      
-      # Compute the sum and factor
-      "float I = r + g + b + 1e-10;",
-      "float Y = (r + g + b) / 3.0;",
-      "float factor = lupton_asinh(Y, u_Q, u_alpha);",
-      
-      # Apply factor
-      "float R = r * factor;",
-      "float G = g * factor;",
-      "float B = b * factor;",
-      
-      # Apply saturation parameter
-      "float R1 = I + u_colorsat * (2.0 * R - G - B);",
-      "float G1 = I + u_colorsat * (2.0 * G - R - B);",
-      "float B1 = I + u_colorsat * (2.0 * B - R - G);",
-      
-      "gl_FragColor = vec4(R1, G1, B1, 1.0);",
-    "}"
-  ].join("\n")
 
 @astro.WebFITS.Shaders = Shaders

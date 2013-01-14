@@ -140,12 +140,6 @@ class Api extends BaseApi
     location = @ctx.getUniformLocation(@program2, "u_#{band}scale")
     @ctx.uniform1f(location, scale)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
-    
-  setMax: (band, max) ->
-    @ctx.useProgram(@program2)
-    
-    location = @ctx.getUniformLocation(@program2, "u_#{band}max")
-    @ctx.uniform1f(location, max)
   
   # Set the minimum and maximum pixels for scaling grayscale images
   setExtent: (min, max) ->
@@ -171,14 +165,6 @@ class Api extends BaseApi
     @ctx.useProgram(@program2)
     
     location = @ctx.getUniformLocation(@program2, 'u_Q')
-    @ctx.uniform1f(location, value)
-    @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
-  
-  setBkgdSub: (band, value) =>
-    console.warn 'TODO: Implement setBkgdSub for grayscale images'
-    @ctx.useProgram(@program2)
-    
-    location = @ctx.getUniformLocation(@program2, "u_#{band}sky")
     @ctx.uniform1f(location, value)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
 
