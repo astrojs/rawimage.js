@@ -35,6 +35,7 @@ class Api extends BaseApi
     # Flip Y axis with CSS
     @canvas.style.webkitTransform = 'scaleY(-1)'
     @ctx = @canvas.getContext('2d')
+    
     return @ctx
   
   setupMouseInteraction: =>
@@ -79,6 +80,7 @@ class Api extends BaseApi
     @nTextures += 1
     if @nTextures is 5
       @canvas.style.webkitTransform = "scaleX(1) scaleY(-1)"
+      @canvas.style.MozTransform = "scaleX(1) scaleY(-1)"
     @nTextures %= 5
   
   setScale: (band, value) ->
@@ -133,6 +135,7 @@ class Api extends BaseApi
       "translateY(#{@yOffset}px)"
     ].join(' ')
     @canvas.style.webkitTransform = transform
+    @canvas.style.MozTransform = transform
   
   drawColor: =>
     @drawColor2()
@@ -195,9 +198,9 @@ class Api extends BaseApi
       I = r + g + b + 1e-10
       factor = @arcsinh(@alpha * @Q * I) / (@Q * I)
       
-      arr[length + 0] = 255 * r * factor
-      arr[length + 1] = 255 * g * factor
-      arr[length + 2] = 255 * b * factor
+      arr[length + 0] = parseInt(255 * r * factor + 0.5)
+      arr[length + 1] = parseInt(255 * g * factor + 0.5)
+      arr[length + 2] = parseInt(255 * b * factor + 0.5)
       arr[length + 3] = 255
     
     imgData.data = arr
