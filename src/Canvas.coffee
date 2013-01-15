@@ -12,7 +12,7 @@ class Api extends BaseApi
     super
     
     # Set default stretch function
-    @stretch = (value) -> value
+    @drawGrayscale = @drawGrayscaleLinear
     
     # Difference debounce rates depending on device
     debounceRate = if /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) then 150 else 50
@@ -104,38 +104,135 @@ class Api extends BaseApi
   setStretch: (value) =>
     switch value
       when 'logarithm'
-        @stretch = (value) ->
-          return Math.log(value / 0.05 + 1.0) / Math.log(1.0 / 0.05 + 1.0)
+        @drawGrayscale = @drawGrayscaleLog
       when 'sqrt'
-        @stretch = (value) ->
-          return Math.sqrt(value)
+        @drawGrayscale = @drawGrayscaleSqrt
       when 'arcsinh'
-        @stretch = (value) =>
-          return @arcsinh(value / -0.033) / @arcsinh(1.0 / -0.033)
+        @drawGrayscale = @drawGrayscaleArcsinh
       when 'power'
-        @stretch = (value) ->
-          return Math.pow(value, 2)
+        @drawGrayscale = @drawGrayscalePower
       else
-        @stretch = (value) -> value
+        @drawGrayscale = @drawGrayscaleLinear
+    
     @drawGrayscale()
   
   setBand: (band) =>
     @activeBand = band
   
-  drawGrayscale: =>
+  drawGrayscaleLinear: =>
     # Cache the data
     data = @textures[@activeBand]
     
     # Get canvas data
     imgData = @ctx.getImageData(0, 0, @width, @height)
     arr = imgData.data
-    min = @stretch(@minimum)
-    max = @stretch(@maximum)
+    min = @minimum
+    max = @maximum
     range = max - min
     
     length = arr.length
     while length -= 4
-      value = 255 * (@stretch(data[length / 4]) - min) / range
+      value = 255 * (data[length / 4] - min) / range
+      arr[length + 0] = value
+      arr[length + 1] = value
+      arr[length + 2] = value
+      arr[length + 3] = 255
+      
+    imgData.data = arr
+    @ctx.putImageData(imgData, 0, 0)
+  
+  drawGrayscaleLog: =>
+    # Cache the data
+    data = @textures[@activeBand]
+    
+    # Get canvas data
+    imgData = @ctx.getImageData(0, 0, @width, @height)
+    arr = imgData.data
+    
+    minimum = @minimum
+    min = 0
+    max = @logarithm(@maximum - @minimum)
+    range = max - min
+    
+    length = arr.length
+    while length -= 4
+      pixel = @logarithm(data[length / 4] - minimum)
+      
+      value = 255 * (pixel - min) / range
+      arr[length + 0] = value
+      arr[length + 1] = value
+      arr[length + 2] = value
+      arr[length + 3] = 255
+
+    imgData.data = arr
+    @ctx.putImageData(imgData, 0, 0)
+      
+  # FIXME: Does not match the WebGL implementation
+  drawGrayscaleSqrt: =>
+    # Cache the data
+    data = @textures[@activeBand]
+    
+    # Get the canvas
+    imgData = @ctx.getImageData(0, 0, @width, @height)
+    arr = imgData.data
+    
+    minimum = @minimum
+    max = @maximum - minimum
+    
+    length = arr.length
+    while length -= 4
+      pixel = data[length / 4] - minimum
+      
+      value = 255 * Math.sqrt(pixel / max)
+      arr[length + 0] = value
+      arr[length + 1] = value
+      arr[length + 2] = value
+      arr[length + 3] = 255
+      
+    imgData.data = arr
+    @ctx.putImageData(imgData, 0, 0)
+  
+  drawGrayscaleArcsinh: =>
+    # Cache the data
+    data = @textures[@activeBand]
+    
+    # Get the canvas
+    imgData = @ctx.getImageData(0, 0, @width, @height)
+    arr = imgData.data
+    
+    min = @scaledArcsinh(@minimum)
+    max = @scaledArcsinh(@maximum)
+    range = max - min
+    
+    length = arr.length
+    while length -= 4
+      pixel = @scaledArcsinh(data[length / 4])
+      
+      value = 255 * (pixel - min) / range
+      arr[length + 0] = value
+      arr[length + 1] = value
+      arr[length + 2] = value
+      arr[length + 3] = 255
+      
+    imgData.data = arr
+    @ctx.putImageData(imgData, 0, 0)
+  
+  drawGrayscalePower: =>
+    # Cache the data
+    data = @textures[@activeBand]
+    
+    # Get the canvas
+    imgData = @ctx.getImageData(0, 0, @width, @height)
+    arr = imgData.data
+    
+    min = @minimum
+    max = @maximum - min
+    
+    length = arr.length
+    while length -= 4
+      pixel = data[length / 4] - min
+      
+      value = 255 * Math.pow(pixel / max, 2)
       arr[length + 0] = value
       arr[length + 1] = value
       arr[length + 2] = value
@@ -194,13 +291,23 @@ class Api extends BaseApi
     imgData.data = arr
     ctx.putImageData(imgData, 0, 0)
     @ctx.drawImage(canvas, 0, 0)
-    
-  arcsinh: (value) ->
-    return Math.log(value + Math.sqrt(1 + value * value))    
   
   wheelHandler: (e) =>
     super
     @draw()
+  
+  #
+  # Stretch Functions
+  #
+  
+  logarithm: (value) ->
+    return Math.log(value / 0.05 + 1.0) / Math.log(1.0 / 0.05 + 1.0)
+  
+  arcsinh: (value) ->
+    return Math.log(value + Math.sqrt(1 + value * value))
+  
+  scaledArcsinh: (value) =>
+    @arcsinh(value / -0.033) / @arcsinh(1.0 / -0.033)
 
 
 @astro.WebFITS.Api = Api
