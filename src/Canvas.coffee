@@ -161,7 +161,10 @@ class Api extends BaseApi
     
   arcsinh: (value) ->
     return Math.log(value + Math.sqrt(1 + value * value))
-
+  
+  clamp: (value) ->
+    
+  
   wheelHandler: (e) =>
     super
     @draw()

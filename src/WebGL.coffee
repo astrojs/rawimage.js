@@ -4,7 +4,10 @@ Shaders = @astro.WebFITS.Shaders
 
 class Api extends BaseApi
   
-  algorithm: Shaders.lupton
+  fShaders: ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color']
+  algorithm: Shaders.color
+  programs: {}
+  previousProgram: null
   textureIndices:
     'u': 0
     'g': 1
@@ -27,26 +30,22 @@ class Api extends BaseApi
     @ctx = context
     
     # Check float extension support on GPU
-    ext = @_getExtension(context)
+    ext = @_getExtension()
     return null unless ext
     
     # Initialize shaders
-    vertexShader = @_loadShader(context, Shaders.vertex, context.VERTEX_SHADER)
+    vertexShader = @_loadShader(Shaders.vertex, context.VERTEX_SHADER)
     return null unless vertexShader
     
-    fragShader = @_loadShader(context, Shaders.fragment, context.FRAGMENT_SHADER)
-    return null unless fragShader
+    for key, index in @fShaders
+      fragShader = @_loadShader(Shaders[key], context.FRAGMENT_SHADER)
+      return null unless fragShader
+      
+      @programs[key] = @_createProgram(vertexShader, fragShader)
+      return null unless @programs[key]
     
-    colorShader = @_loadShader(context, @algorithm, context.FRAGMENT_SHADER)
-    return null unless colorShader
-    
-    # Create the program
-    @program1 = @_createProgram(context, [vertexShader, fragShader])
-    return null unless @program1
-    @program2 = @_createProgram(context, [vertexShader, colorShader])
-    return null unless @program2
-    
-    for program in [@program2, @program1]
+    # Set parameters for all programs
+    for key, program of @programs
       context.useProgram(program)
       
       # Grab attribute and uniform locations
@@ -56,6 +55,7 @@ class Api extends BaseApi
       offsetLocation    = context.getUniformLocation(program, 'u_offset')
       scaleLocation     = context.getUniformLocation(program, 'u_scale')
       
+      # Set uniforms
       context.uniform2f(extentLocation, @minimum, @maximum)
       context.uniform2f(offsetLocation, -@width / 2, -@height / 2)
       context.uniform1f(scaleLocation, 2 / @width)
@@ -76,41 +76,43 @@ class Api extends BaseApi
     context.enableVertexAttribArray(positionLocation)
     context.vertexAttribPointer(positionLocation, 2, context.FLOAT, false, 0, 0)
     @_setRectangle()
+    
+    context.useProgram(@programs.color)
     context.drawArrays(context.TRIANGLES, 0, 6)
     
     return context
     
   # Using underscore convention for 'private' methods
-  _getExtension: (gl) ->
-    return gl.getExtension('OES_texture_float')
+  _getExtension: =>
+    return @ctx.getExtension('OES_texture_float')
   
   # Creates, compiles and checks for error when loading shader
-  _loadShader: (gl, source, type) ->
-    shader = gl.createShader(type)
-    gl.shaderSource(shader, source)
-    gl.compileShader(shader)
+  _loadShader: (source, type) ->
+    shader = @ctx.createShader(type)
+    @ctx.shaderSource(shader, source)
+    @ctx.compileShader(shader)
     
-    compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS)
+    compiled = @ctx.getShaderParameter(shader, @ctx.COMPILE_STATUS)
     unless compiled
-      lastError = gl.getShaderInfoLog(shader)
+      lastError = @ctx.getShaderInfoLog(shader)
       throw "Error compiling shader #{shader}: #{lastError}"
-      gl.deleteShader(shader)
+      @ctx.deleteShader(shader)
       return null
     
     return shader
     
   # Create the WebGL program
-  _createProgram: (gl, shaders) ->
-    program = gl.createProgram()
-    for shader in shaders
-      gl.attachShader(program, shader)
+  _createProgram: (vshader, fshader) =>
+    program = @ctx.createProgram()
+    for shader in [vshader, fshader]
+      @ctx.attachShader(program, shader)
     
-    gl.linkProgram(program)
+    @ctx.linkProgram(program)
     
-    linked = gl.getProgramParameter(program, gl.LINK_STATUS)
+    linked = @ctx.getProgramParameter(program, @ctx.LINK_STATUS)
     unless linked
-      throw "Error in program linking: #{gl.getProgramInfoLog(program)}"
-      gl.deleteProgram(program)
+      throw "Error in program linking: #{@ctx.getProgramInfoLog(program)}"
+      @ctx.deleteProgram(program)
       return null
     
     return program
@@ -135,70 +137,80 @@ class Api extends BaseApi
   
   # Set scale for a channel in the color composite image
   setScale: (band, scale) ->
-    @ctx.useProgram(@program2)
+    @ctx.useProgram(@programs['color'])
     
-    location = @ctx.getUniformLocation(@program2, "u_#{band}scale")
+    location = @ctx.getUniformLocation(@programs.color, "u_#{band}scale")
     @ctx.uniform1f(location, scale)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
   
   # Set the minimum and maximum pixels for scaling grayscale images
   setExtent: (min, max) ->
-    @ctx.useProgram(@program1)
-    
     min = (@MAXIMUM - @MINIMUM) * min / 1000 + @MINIMUM
     max = (@MAXIMUM - @MINIMUM) * max / 1000 + @MINIMUM
     
-    location = @ctx.getUniformLocation(@program1, 'u_extent')
-    @ctx.uniform2f(location, min, max)
+    # Update u_extent to all programs
+    for stretch in ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
+      p = @programs[stretch]
+      @ctx.useProgram(p)
+      location = @ctx.getUniformLocation(p, 'u_extent')
+      @ctx.uniform2f(location, min, max)
+
+    @ctx.useProgram(@currentProgram)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
   
   # Set the alpha parameter for the Lupton algorithm
   setAlpha: (value) =>
-    @ctx.useProgram(@program2)
+    @ctx.useProgram(@programs.color)
     
-    location = @ctx.getUniformLocation(@program2, 'u_alpha')
+    location = @ctx.getUniformLocation(@programs.color, 'u_alpha')
     @ctx.uniform1f(location, value)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
   
   # Set the Q parameter for the Lupton algorithm
   setQ: (value) =>
-    @ctx.useProgram(@program2)
+    @ctx.useProgram(@programs.color)
     
-    location = @ctx.getUniformLocation(@program2, 'u_Q')
+    location = @ctx.getUniformLocation(@programs.color, 'u_Q')
     @ctx.uniform1f(location, value)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
 
+  # Set the stretch parameter for grayscale images
+  setStretch: (value) =>
+    @currentProgram = @previousProgram = @programs[value]
+    @ctx.useProgram(@currentProgram)
+    @syncVertexUniforms()
+    @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
+  
   #
   # Drawing functions
   #
   draw: =>
-    offsetLocation  = @ctx.getUniformLocation(@currentProgram, 'u_offset')
-    scaleLocation   = @ctx.getUniformLocation(@currentProgram, 'u_scale')
-    @ctx.uniform2f(offsetLocation, @xOffset, @yOffset)
-    @ctx.uniform1f(scaleLocation, @zoom)
-    
-    @_setRectangle()
+    @syncVertexUniforms()
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
   
-  drawGrayscale: (band) ->
-    @ctx.useProgram(@program1)
-    @currentProgram = @program1
+  drawGrayscale: (band) =>
+    # Determine the program to use
+    @currentProgram = if @previousProgram? then @previousProgram else @programs.linear
+    @ctx.useProgram(@currentProgram)
+    
+    @syncVertexUniforms()
     
     index = @textureIndices[band]
     @ctx.activeTexture(@ctx["TEXTURE#{index}"])
-    location = @ctx.getUniformLocation(@program1, "u_tex")
+    location = @ctx.getUniformLocation(@currentProgram, "u_tex")
     @ctx.uniform1i(location, index)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
   
-  # Pass three arrays to three GPU textures
   drawColor: ->
-    @ctx.useProgram(@program2)
-    @currentProgram = @program2
+    @ctx.useProgram(@programs.color)
+    @currentProgram = @programs.color
+    
+    @syncVertexUniforms()
     
     for band in ['g', 'r', 'i']
       index = @textureIndices[band]
       @ctx.activeTexture(@ctx["TEXTURE#{index}"])
-      location = @ctx.getUniformLocation(@program2, "u_tex#{index}")
+      location = @ctx.getUniformLocation(@currentProgram, "u_tex#{index}")
       @ctx.uniform1i(location, index)
     
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
@@ -210,5 +222,10 @@ class Api extends BaseApi
     @ctx.uniform1f(location, @zoom)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
 
-
+  syncVertexUniforms: =>
+    offsetLocation  = @ctx.getUniformLocation(@currentProgram, 'u_offset')
+    scaleLocation   = @ctx.getUniformLocation(@currentProgram, 'u_scale')
+    @ctx.uniform2f(offsetLocation, @xOffset, @yOffset)
+    @ctx.uniform1f(scaleLocation, @zoom)
+  
 @astro.WebFITS.Api = Api
