@@ -1,5 +1,6 @@
 
 class BaseApi
+  steps: 1000
   
   # Setup the DOM with a canvas
   constructor: (elem, @width, @height) ->

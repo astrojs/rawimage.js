@@ -1,3 +1,5 @@
+# TODO: Create functions that construct the appropriate shader
+
 Shaders =
 
   # Vertex shader (same for all programs)

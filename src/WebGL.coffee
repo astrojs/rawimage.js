@@ -60,6 +60,9 @@ class Api extends BaseApi
       context.uniform2f(offsetLocation, -@width / 2, -@height / 2)
       context.uniform1f(scaleLocation, 2 / @width)
     
+    # Set a default program for grayscale renderings
+    @previousProgram = @programs.linear
+    
     # Create texture coordinate buffer
     texCoordBuffer = context.createBuffer()
     context.bindBuffer(context.ARRAY_BUFFER, texCoordBuffer)
@@ -144,9 +147,10 @@ class Api extends BaseApi
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
   
   # Set the minimum and maximum pixels for scaling grayscale images
+  # min and max are in range of (0, @step)
   setExtent: (min, max) ->
-    min = (@MAXIMUM - @MINIMUM) * min / 1000 + @MINIMUM
-    max = (@MAXIMUM - @MINIMUM) * max / 1000 + @MINIMUM
+    min = (@MAXIMUM - @MINIMUM) * min / @steps + @MINIMUM
+    max = (@MAXIMUM - @MINIMUM) * max / @steps + @MINIMUM
     
     # Update u_extent to all programs
     for stretch in ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
@@ -173,13 +177,26 @@ class Api extends BaseApi
     location = @ctx.getUniformLocation(@programs.color, 'u_Q')
     @ctx.uniform1f(location, value)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
-
+    
   # Set the stretch parameter for grayscale images
   setStretch: (value) =>
     @currentProgram = @previousProgram = @programs[value]
     @ctx.useProgram(@currentProgram)
-    @syncVertexUniforms()
-    @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
+    @draw()
+  
+  # Set the band
+  setBand: (band) =>
+    @currentProgram = @previousProgram
+    @ctx.useProgram(@currentProgram)
+    
+    # Store the band
+    @activeBand = band
+    
+    # Activate the correct texture
+    index = @textureIndices[band]
+    @ctx.activeTexture(@ctx["TEXTURE#{index}"])
+    location = @ctx.getUniformLocation(@currentProgram, "u_tex")
+    @ctx.uniform1i(location, index)
   
   #
   # Drawing functions
@@ -188,18 +205,8 @@ class Api extends BaseApi
     @syncVertexUniforms()
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
   
-  drawGrayscale: (band) =>
-    # Determine the program to use
-    @currentProgram = if @previousProgram? then @previousProgram else @programs.linear
-    @ctx.useProgram(@currentProgram)
-    
-    @syncVertexUniforms()
-    
-    index = @textureIndices[band]
-    @ctx.activeTexture(@ctx["TEXTURE#{index}"])
-    location = @ctx.getUniformLocation(@currentProgram, "u_tex")
-    @ctx.uniform1i(location, index)
-    @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
+  # NOTE: Only called when user selects band
+  drawGrayscale: => @draw()
   
   drawColor: ->
     @ctx.useProgram(@programs.color)
@@ -227,5 +234,6 @@ class Api extends BaseApi
     scaleLocation   = @ctx.getUniformLocation(@currentProgram, 'u_scale')
     @ctx.uniform2f(offsetLocation, @xOffset, @yOffset)
     @ctx.uniform1f(scaleLocation, @zoom)
-  
+
+
 @astro.WebFITS.Api = Api
