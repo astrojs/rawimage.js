@@ -25,16 +25,11 @@ Updates the given `parameter` with `value`, and re-draws the image.
       <script src='webfits.js'></script>
 
       <script>
-        // Whoops, made a mistake, so need to make some variables global (this is not good code).
-        var width, height;
-      
         // Define callback that is executed after image is received from the server
         function getImageData(fits) {
           
           // Get first data unit
           var dataunit = fits.getDataUnit();
-          width = dataunit.width;
-          height = dataunit.height;
           
           // Asynchronously get pixels representing the image
           dataunit.getFrameAsync(undefined, createVisualization);
@@ -46,7 +41,7 @@ Updates the given `parameter` with `value`, and re-draws the image.
         }
         
         // Define callback for when the pixels have been read from file
-        function createVisualization(arr) {
+        function createVisualization(arr, width, height) {
           
           // Get the DOM element
           var el = document.querySelector('#wicked-science-visualization');
