@@ -5,7 +5,8 @@
   "dependencies": { 
   },
   "devDependencies": {
-    "coffee-script" : "1.4.x"
+    "coffee-script" : "1.4.x",
+    "http-server": "0.5.x"
   },
   "_dependencyOrder": [
     "WebFITS",

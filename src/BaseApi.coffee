@@ -3,12 +3,12 @@ class BaseApi
   steps: 1000
   
   # Setup the DOM with a canvas
-  constructor: (elem, @width, @height) ->
+  constructor: (elem, @dimension) ->
     
     # Attach canvas to DOM element
     @canvas = document.createElement('canvas')
-    @canvas.setAttribute('width', @width)
-    @canvas.setAttribute('height', @height)
+    @canvas.setAttribute('width', @dimension)
+    @canvas.setAttribute('height', @dimension)
     
     elem.appendChild(@canvas)
     
@@ -79,5 +79,6 @@ class BaseApi
     # Probably not the most efficient way to do this ...
     @zoom = if @zoom > @maxZoom then @maxZoom else @zoom
     @zoom = if @zoom < @minZoom then @minZoom else @zoom
-  
+
+
 @astro.WebFITS.BaseApi = BaseApi
