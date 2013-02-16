@@ -2,15 +2,22 @@
 class BaseApi
   steps: 1000
   
-  # Setup the DOM with a canvas
+  
+  # Setup the DOM with a canvas and get context
   constructor: (elem, @dimension) ->
     
-    # Attach canvas to DOM element
+    # Create and attach canvas to DOM
     @canvas = document.createElement('canvas')
     @canvas.setAttribute('width', @dimension)
     @canvas.setAttribute('height', @dimension)
     
     elem.appendChild(@canvas)
+    
+    # Lookup table for loaded images
+    @id = 0
+    @lookup = {}
+    
+    @getContext()
     
   # Set global minimum and maximum pixels values. Important for
   # scaling the dynamic range.

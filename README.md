@@ -6,14 +6,31 @@ A JavaScript library to visualize astronomical images.  This library creates a v
 
 ## API
 
-    webfits.init(DOM, width, height)
-Initializes a visualization context on the `DOM` element with the given `width` and `height`.  In the background this function checks the capability of the browser utilizing either a WebGL or canvas context.
+    webfits.init(DOM, dimension)
+Initializes a visualization context on the `DOM` element with the given `dimension`.  In the background this function checks the capability of the browser utilizing either a WebGL or canvas context.
 
     webfits.setImage(pixels, width, height, statistics)
 Passes an array of pixels representing an image of `width` and `height` dimensions.  Default parameters are set for visualization.  If the `statistics` argument is `true`, basic statistics are computed for a more optimal set of visualization parameters.
 
     webfits.updateParameter(parameter, value)
 Updates the given `parameter` with `value`, and re-draws the image.
+
+
+## Example
+
+An example may be found in the `example` directory.  To get started run:
+
+    ./setup.sh
+
+This will download `fits.js` and a sample image of m101 from MAST.  You will need a local server running from the root directory.  If developing with NodeJS, run
+
+    npm install .
+    http-server
+
+otherwise a local server may be started using Python.
+
+    python -m SimpleHTTPServer
+
 
 
 ## Example

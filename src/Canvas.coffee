@@ -310,4 +310,7 @@ class Api extends BaseApi
     @arcsinh(value / -0.033) / @arcsinh(1.0 / -0.033)
 
 
-@astro.WebFITS.Api = Api
+version = @astro.WebFITS.version
+@astro.WebFITS = Api
+@astro.WebFITS.version = version 
+

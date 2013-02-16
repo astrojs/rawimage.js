@@ -9,10 +9,10 @@
     "http-server": "0.5.x"
   },
   "_dependencyOrder": [
-    "WebFITS",
     "Shaders",
     "Api",
     "WebGL",
-    "Canvas"
+    "Canvas",
+    "WebFITS"
   ]
 }
