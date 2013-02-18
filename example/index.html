@@ -27,15 +27,9 @@
     // Get the DOM element
     var el = document.querySelector('#wicked-science-visualization');
     
-    // Initialize the WebFITS context with a 600px viewer
-    var webfits = new astro.WebFITS(el, 600);
+    // Initialize the WebFITS context with a 600px x 600px viewer
+    var webfits = new astro.WebFITS(el, 400);
     webfits.loadImage('test', arr, width, height);
-    
-    // Get and set extent
-    extent = dataunit.getExtent(arr);
-    webfits.setExtent(extent[0], extent[1] - 50000);
-    webfits.setBand('test');
-    webfits.draw();
     console.log('done');
   }
   
@@ -43,7 +37,9 @@
     
     // Get pixels from FITS image
     var path = 'example/data/m101.fits';
-    var fits = new astro.FITS.File(path, getImage);
+    var fits = new astro.FITS.File(path, getImage, opts);
+    
+    // Try for a second visualization content
     
   }
   </script>
@@ -54,5 +50,6 @@
 <body onload='main()'>
   <h3>Example of Astronomical Image Visualization</h3>
   <div id="wicked-science-visualization"></div>
+  <div id="wicked-science-visualization-redux"></div>
 </body>
 </html>

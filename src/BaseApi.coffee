@@ -13,15 +13,17 @@ class BaseApi
     
     elem.appendChild(@canvas)
     
+    @width = @height = @dimension
+    
     # Lookup table for loaded images
     @id = 0
     @lookup = {}
     
-    @getContext()
+    # Storage for image statistics
+    @statistics = {}
     
-  # Set global minimum and maximum pixels values. Important for
-  # scaling the dynamic range.
-  setGlobalExtent: (@MINIMUM, @MAXIMUM) ->
+    @getContext()
+    @setupMouseInteraction()
   
   setupMouseInteraction: =>
     @xOffset    = -@width / 2

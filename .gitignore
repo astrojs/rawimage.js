@@ -1,5 +1,5 @@
 .DS_Store
 node_modules/
 .npmignore
-examples/lib/*
-examples/data/*
+example/lib/*
+example/data/*
