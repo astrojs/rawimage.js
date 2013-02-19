@@ -4,8 +4,7 @@ Shaders = @astro.WebFITS.Shaders
 
 class Api extends BaseApi
   
-  fShaders: ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color']
-  algorithm: Shaders.color
+  fShaders: ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
   programs: {}
   previousProgram: null
   
@@ -76,7 +75,36 @@ class Api extends BaseApi
     @_setRectangle()
     
     return context
+  
+  setupColorShader: (r, g, b) =>
+    context = @ctx
     
+    # Initialize shaders
+    vertexShader = @_loadShader(Shaders.vertex, context.VERTEX_SHADER)
+    return null unless vertexShader
+    
+    fragShader = @_loadShader(Shaders['color'](r, g, b), context.FRAGMENT_SHADER)
+    return null unless fragShader
+    
+    program = @programs.color = @_createProgram(vertexShader, fragShader)
+    return null unless @programs.color
+    
+    context.useProgram(program)
+    
+    # Grab attribute and uniform locations
+    positionLocation  = context.getAttribLocation(program, 'a_position')
+    texCoordLocation  = context.getAttribLocation(program, 'a_textureCoord')
+    extentLocation    = context.getUniformLocation(program, 'u_extent')
+    offsetLocation    = context.getUniformLocation(program, 'u_offset')
+    scaleLocation     = context.getUniformLocation(program, 'u_scale')
+    
+    # Set uniforms
+    context.uniform2f(extentLocation, @minimum, @maximum)
+    context.uniform2f(offsetLocation, -@width / 2, -@height / 2)
+    context.uniform1f(scaleLocation, 2 / @width)
+    
+    @currentProgram = program
+  
   # Using underscore convention for 'private' methods
   _getExtension: =>
     return @ctx.getExtension('OES_texture_float')
@@ -142,10 +170,9 @@ class Api extends BaseApi
     
   # Get minimum, maximum, mean, and histogram of pixels
   getImageStatistics: (identifier, arr) ->
-    
     # Check if already computed
-    if identifier of @statistics
-      return
+    return if identifier of @statistics
+    
     #
     # Compute the minimum and maximum
     #
@@ -170,16 +197,20 @@ class Api extends BaseApi
         max = value
         continue
     
-    @statistics[identifier] =
-      minimum: min
+    # TODO: Compute percentiles
+    
+    # Store statistics
+    @statistics[identifier] = {
+      minimum: min,
       maximum: max
+    }
   
   # Set scale for a channel in the color composite image
-  setScale: (band, scale) ->
-    @ctx.useProgram(@programs['color'])
+  setScale: (identifier, value) ->
+    @ctx.useProgram(@programs.color)
     
-    location = @ctx.getUniformLocation(@programs.color, "u_#{band}scale")
-    @ctx.uniform1f(location, scale)
+    location = @ctx.getUniformLocation(@programs.color, "u_#{identifier}_scale")
+    @ctx.uniform1f(location, value)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
   
   # Set the minimum and maximum pixels for scaling grayscale images
@@ -222,16 +253,16 @@ class Api extends BaseApi
     @ctx.useProgram(@currentProgram)
     @draw()
   
-  # Set the band
-  setBand: (band) =>
+  # Set the layer
+  setLayer: (identifier) =>
     @currentProgram = @previousProgram
     @ctx.useProgram(@currentProgram)
     
-    # Store the band
-    @activeBand = band
+    # Store the layer
+    @activeLayer = identifier
     
     # Activate the correct texture
-    index = @lookup[band]
+    index = @lookup[identifier]
     
     @ctx.activeTexture(@ctx["TEXTURE#{index}"])
     location = @ctx.getUniformLocation(@currentProgram, "u_tex")
@@ -253,8 +284,7 @@ class Api extends BaseApi
     
     @syncVertexUniforms()
     
-    for band in ['g', 'r', 'i']
-      index = @textureIndices[band]
+    for identifier, index of @lookup
       @ctx.activeTexture(@ctx["TEXTURE#{index}"])
       location = @ctx.getUniformLocation(@currentProgram, "u_tex#{index}")
       @ctx.uniform1i(location, index)
@@ -279,3 +309,4 @@ class Api extends BaseApi
 version = @astro.WebFITS.version
 @astro.WebFITS = Api
 @astro.WebFITS.version = version
+

@@ -1,19 +1,16 @@
 
 class BaseApi
-  steps: 1000
-  
   
   # Setup the DOM with a canvas and get context
   constructor: (elem, @dimension) ->
+    @width = @height = @dimension
     
     # Create and attach canvas to DOM
     @canvas = document.createElement('canvas')
-    @canvas.setAttribute('width', @dimension)
-    @canvas.setAttribute('height', @dimension)
+    @canvas.setAttribute('width', @width)
+    @canvas.setAttribute('height', @height)
     
     elem.appendChild(@canvas)
-    
-    @width = @height = @dimension
     
     # Lookup table for loaded images
     @id = 0
