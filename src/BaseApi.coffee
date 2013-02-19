@@ -13,7 +13,7 @@ class BaseApi
     elem.appendChild(@canvas)
     
     # Lookup table for loaded images
-    @id = 0
+    @id = 1
     @lookup = {}
     
     # Storage for image statistics

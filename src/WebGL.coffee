@@ -76,6 +76,7 @@ class Api extends BaseApi
     
     return context
   
+  # Arguments r, g, b are to be identifiers referencing images already initialized using loadImage.
   setupColorShader: (r, g, b) =>
     context = @ctx
     
@@ -83,7 +84,7 @@ class Api extends BaseApi
     vertexShader = @_loadShader(Shaders.vertex, context.VERTEX_SHADER)
     return null unless vertexShader
     
-    fragShader = @_loadShader(Shaders['color'](r, g, b), context.FRAGMENT_SHADER)
+    fragShader = @_loadShader(Shaders.color(r, g, b), context.FRAGMENT_SHADER)
     return null unless fragShader
     
     program = @programs.color = @_createProgram(vertexShader, fragShader)

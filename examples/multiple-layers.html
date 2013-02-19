@@ -29,11 +29,11 @@
     // Initialize the color shader when all three layers are imported
     if (Object.keys(webfits.lookup).length === 3) {
       webfits.setupColorShader('ir', 'red', 'blue');
-      webfits.setAlpha(0.03);
-      webfits.setQ(1.0);
       webfits.setScale('ir', 1.0);
       webfits.setScale('red', 1.0);
       webfits.setScale('blue', 1.0);
+      webfits.setAlpha(0.03);
+      webfits.setQ(1.0);
       webfits.drawColor();
       console.log('ready');
     }
