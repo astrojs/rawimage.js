@@ -179,9 +179,9 @@ Shaders =
     [
       "precision mediump float;"
       
+      "uniform sampler2D u_tex0;"
       "uniform sampler2D u_tex1;"
       "uniform sampler2D u_tex2;"
-      "uniform sampler2D u_tex3;"
       
       "uniform float u_#{identifier1}_scale;"
       "uniform float u_#{identifier2}_scale;"
@@ -198,9 +198,9 @@ Shaders =
       
       "void main() {"
         # Get the pixel intensities from textures
-        "vec4 pixel_v_b = texture2D(u_tex1, v_textureCoord);"
-        "vec4 pixel_v_g = texture2D(u_tex2, v_textureCoord);"
-        "vec4 pixel_v_r = texture2D(u_tex3, v_textureCoord);"
+        "vec4 pixel_v_b = texture2D(u_tex0, v_textureCoord);"
+        "vec4 pixel_v_g = texture2D(u_tex1, v_textureCoord);"
+        "vec4 pixel_v_r = texture2D(u_tex2, v_textureCoord);"
         
         # Store the current pixel value for each texture, background subtract, and apply scale
         "float r = (pixel_v_r[0]) * u_#{identifier1}_scale;"

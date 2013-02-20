@@ -22,12 +22,14 @@
     var width = dataunit.width;
     var height = dataunit.height;
     
-    // Load the image
+    // Reference WebFITS object and load the image
     var webfits = opts.webfits;
-    webfits.loadImage(opts.identifier, arr, width, height);
+    webfits.loadImage(opts.identifier, arr, width, height, false);
     
     // Initialize the color shader when all three layers are imported
     if (Object.keys(webfits.lookup).length === 3) {
+      
+      // Specify each rgb channel using the identifiers
       webfits.setupColorShader('ir', 'red', 'blue');
       webfits.setScale('ir', 1.0);
       webfits.setScale('red', 1.0);
