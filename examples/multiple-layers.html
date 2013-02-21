@@ -30,31 +30,28 @@
     if (Object.keys(webfits.lookup).length === 3) {
       
       // Specify each rgb channel using the identifiers
-      webfits.setupColorShader('ir', 'red', 'blue');
-      webfits.setScale('ir', 1.0);
-      webfits.setScale('red', 1.0);
-      webfits.setScale('blue', 1.0);
       webfits.setAlpha(0.03);
+      webfits.setScales(1.0, 1.0, 1.0)
+      
       webfits.setQ(1.0);
-      webfits.drawColor();
-      console.log('ready');
+      webfits.drawColor('ir', 'red', 'green');
     }
   }
   
   function main() {
     
     // Define paths to files
-    var path1 = '/examples/data/m101_red.fits';
-    var path2 = '/examples/data/m101_blue.fits';
-    var path3 = '/examples/data/m101_ir.fits';
+    var path1 = '/examples/data/CFHTLS_074_2382_i.fits';
+    var path2 = '/examples/data/CFHTLS_074_2382_r.fits';
+    var path3 = '/examples/data/CFHTLS_074_2382_g.fits';
     
     // Initialize WebFITS object
     var el = document.querySelector('#wicked-science-visualization');
-    var webfits = new astro.WebFITS(el, 600);
+    var webfits = new astro.WebFITS(el, 440);
     
-    var f1 = new astro.FITS.File(path1, getImage, {identifier: 'red', webfits: webfits});
-    var f2 = new astro.FITS.File(path2, getImage, {identifier: 'blue', webfits: webfits});
-    var f3 = new astro.FITS.File(path3, getImage, {identifier: 'ir', webfits: webfits});
+    var f1 = new astro.FITS.File(path1, getImage, {identifier: 'ir', webfits: webfits});
+    var f2 = new astro.FITS.File(path2, getImage, {identifier: 'red', webfits: webfits});
+    var f3 = new astro.FITS.File(path3, getImage, {identifier: 'green', webfits: webfits});
   }
   </script>
   
