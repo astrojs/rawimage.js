@@ -139,7 +139,7 @@ class Api extends BaseApi
   
   # Create a texture from an array representing an image.  Optional parameter computes
   # relevant statistics used for rendering grayscale images.
-  loadImage: (identifier, arr, width, height, statistics = true) ->
+  loadImage: (identifier, arr, width, height) ->
     ctx = @ctx
     @_setRectangle(ctx, width, height)
     
@@ -159,10 +159,6 @@ class Api extends BaseApi
     
     # TODO: Remove need to cast to Float32 array
     ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.LUMINANCE, width, height, 0, ctx.LUMINANCE, ctx.FLOAT, new Float32Array(arr))
-    
-    if statistics
-      @getImageStatistics(identifier, arr)
-      @setExtent(identifier)
   
   # Select the image to render.  This function is to be used only for grayscale renderings.
   setImage: (identifier) ->
@@ -176,62 +172,20 @@ class Api extends BaseApi
   
   # Set the stretch parameter for grayscale images
   setStretch: (stretch) ->
-    @currentProgram = @previousProgram = @programs[stretch]
+    @currentProgram = @programs[stretch]
     @ctx.useProgram(@currentProgram)
-    @_updateUniforms(@currentProgram)
-    
-  # Get minimum, maximum, mean, and histogram of pixels
-  getImageStatistics: (identifier, arr) ->
-    # Check if already computed
-    return if identifier of @statistics
-    
-    #
-    # Compute the minimum and maximum
-    #
-    
-    # Set initial values for min/max
-    index = arr.length
-    while index--
-      value = arr[index]
-      continue if isNaN(value)
-      
-      [min, max] = [value, value]
-      break
-      
-    # Continue loop to find extent
-    while index--
-      value = arr[index]
-      continue if isNaN(value)
-      if value < min
-        min = value
-        continue
-      if value > max
-        max = value
-        continue
-    
-    # TODO: Compute percentiles and other stats
-    
-    # Store statistics
-    @statistics[identifier] = {
-      minimum: min,
-      maximum: max
-    }
   
   # Set the minimum and maximum pixels for scaling grayscale images.
-  setExtent: (identifier) ->
+  setExtent: (min, max) ->
     ctx = @ctx
     
-    stats = @statistics[identifier]
-    min = stats.minimum
-    max = stats.maximum
-
-    # Update u_extent to all programs
+    # Update u_extent to all programs'
     for stretch in ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
       program = @programs[stretch]
       ctx.useProgram(program)
       location = ctx.getUniformLocation(program, 'u_extent')
       ctx.uniform2f(location, min, max)
-
+      
     # Switch back to current program and draw
     ctx.useProgram(@currentProgram)
     ctx.drawArrays(ctx.TRIANGLES, 0, 6)

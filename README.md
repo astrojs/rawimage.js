@@ -22,8 +22,8 @@ Initialize a visualization context by initializing
     setupControls
 Allow panning and zooming on the visualization context.
 
-    loadImage(identifier, arr, width, height, statistics = true)
-Imports an image to the visualization.  `identifier` is a user chosen name for the image. `arr` is a typed array representing the image with `width` and `height`.  The `statistics` flag is mostly used when rendering grayscale images.  If `statistics` is set to true, the minimum and maximum pixel values will be computed.  More stats to be implemented later.  If rendering color, the Lupton algorithm does not need these values, so it's encouraged to set this to `false`.
+    loadImage(identifier, arr, width, height)
+Imports an image to the visualization.  `identifier` is a user chosen name for the image. `arr` is a typed array representing the image of `width` and `height`.
 
     setImage(identifier)
 After loading images with `loadImage`, a specific image may be selected using this function.

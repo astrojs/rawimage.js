@@ -24,7 +24,7 @@
     
     // Reference WebFITS object and load the image
     var webfits = opts.webfits;
-    webfits.loadImage(opts.identifier, arr, width, height, false);
+    webfits.loadImage(opts.identifier, arr, width, height);
     
     // Initialize the color shader when all three layers are imported
     if (Object.keys(webfits.lookup).length === 3) {

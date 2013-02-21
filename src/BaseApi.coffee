@@ -16,9 +16,6 @@ class BaseApi
     @id = 0
     @lookup = {}
     
-    # Storage for image statistics
-    @statistics = {}
-    
     @getContext()
     
     @xOffset    = -@width / 2

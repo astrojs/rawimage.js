@@ -24,6 +24,9 @@
     
     var width = dataunit.width;
     var height = dataunit.height;
+    var extent = dataunit.getExtent(arr);
+    var range = extent[1] - extent[0];
+    var delta = range * 0.1;
     
     // Get the DOM element
     var el = document.querySelector('#' + opts.el);
@@ -36,6 +39,7 @@
     
     // Load image from fitsjs
     webfits.loadImage('test', arr, width, height);
+    webfits.setExtent(extent[0], extent[1]);
     webfits.setStretch('logarithm');
     webfits.draw();
   }
