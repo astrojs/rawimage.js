@@ -1,28 +1,56 @@
 # WebFITS
 
-A JavaScript library to visualize astronomical images.  This library creates a visualization context from an array of pixels.
+A JavaScript library to visualize astronomical images in a web browser.  This library contains a set of functions that are frequently used to visualize the high dynamic range of astronomical images.  The following functions are currently supported:
 
-#### Note: None of this works yet.
+  * Linear
+  * Logarithm
+  * Square Root
+  * Hyperbolic Inverse Sine
+  * Power (order 2)
+  * Lupton Color Algorithm
+
+Extending these should be straight-forward.
+
+###### Note: Currently only the WebGL API works.
 
 ## API
 
-    webfits.init(DOM, dimension)
-Initializes a visualization context on the `DOM` element with the given `dimension`.  In the background this function checks the capability of the browser utilizing either a WebGL or canvas context.
 
-    webfits.setImage(pixels, width, height, statistics)
-Passes an array of pixels representing an image of `width` and `height` dimensions.  Default parameters are set for visualization.  If the `statistics` argument is `true`, basic statistics are computed for a more optimal set of visualization parameters.
+    getContext
+Initialize a visualization context by initializing 
 
-    webfits.updateParameter(parameter, value)
-Updates the given `parameter` with `value`, and re-draws the image.
+    setupControls
+Allow panning and zooming on the visualization context.
+
+    loadImage(identifier, arr, width, height, statistics = true)
+Imports an image to the visualization.  `identifier` is a user chosen name for the image. `arr` is a typed array representing the image with `width` and `height`.  The `statistics` flag is mostly used when rendering grayscale images.  If `statistics` is set to true, the minimum and maximum pixel values will be computed.  More stats to be implemented later.  If rendering color, the Lupton algorithm does not need these values, so it's encouraged to set this to `false`.
+
+    setImage(identifier)
+After loading images with `loadImage`, a specific image may be selected using this function.
+
+    setStretch(stretch)
+Sets the stretch for the image.  Currently valid values for `stretch` are `linear`, `logarithm`, `sqrt`, `arcsinh`, `power`.
+
+    setScales(r, g, b)
+This function is relevant to color composites, setting a normalized scale for each rgb channel.
+
+    setAlpha(value)
+This function is relevant to color composites, setting the `alpha` parameter in the Lupton algorithm.
+
+    setQ(value)
+This function is relevant to color composites, setting the `Q` parameter in the Lupton algorithm.
+
+    drawColor(r_identifier, g_identifier, b_identifier)
+Render a color composite by specifying the identifiers for each channel.  Note: `setScales`, `setAlpha`, and `setQ` must be called prior to this function.
 
 
-## Example
+## Examples
 
-An example may be found in the `example` directory.  To get started run:
+Examples may be found in the `examples` directory.  To get started run:
 
     ./setup.sh
 
-This will download `fits.js` and a sample image of m101 from MAST.  You will need a local server running from the root directory.  If developing with NodeJS, run
+This script downloads the latest version of `fits.js` and sample images from MAST needed to run the examples.  Run a local server from the root directory to see the examples.  If familiar with NodeJS, you may run:
 
     npm install .
     http-server
@@ -30,56 +58,3 @@ This will download `fits.js` and a sample image of m101 from MAST.  You will nee
 otherwise a local server may be started using Python.
 
     python -m SimpleHTTPServer
-
-
-
-## Example
-
-
-    <html>
-    <head>
-      <script src='fits.js'></script>
-      <script src='webfits.js'></script>
-
-      <script>
-        // Define callback that is executed after image is received from the server
-        function getImageData(fits) {
-          
-          // Get first data unit
-          var dataunit = fits.getDataUnit();
-          
-          // Asynchronously get pixels representing the image
-          dataunit.getFrameAsync(undefined, createVisualization);
-          
-          // If you like, pixels can be retreived synchronously,
-          // however it causes the browser UI to lock.  It's fine for small
-          // images, but not recommended for large images.
-          // var arr = dataunit.getFrame();
-        }
-        
-        // Define callback for when the pixels have been read from file
-        function createVisualization(arr, width, height) {
-          
-          // Get the DOM element
-          var el = document.querySelector('#wicked-science-visualization');
-          
-          // Initialize the WebFITS context with a viewer 600px by 600px
-          webfits.init(el, 600, 600);
-          webfits.setImage(arr, width, height);
-        }
-      
-        function main() {
-          
-          // Path to FITS image
-          var url = '/path/to/image.fits';
-          
-          // Get a FITS file sitting on your server
-          var fits = new astro.FITS.File('/path/to/image.fits', getImageData);
-        }
-        
-      </script>
-    </head>
-    <body onload='main()'>
-      <div id='wicked-science-visualization'></div>
-    </body>
-    </html>
