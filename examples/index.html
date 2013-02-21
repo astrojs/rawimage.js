@@ -29,30 +29,28 @@
     var el = document.querySelector('#' + opts.el);
     
     // Initialize the WebFITS context with a 400px by 400px viewer
-    var webfits = new astro.WebFITS(el, 400);
+    var webfits = new astro.WebFITS(el, 256);
     
     // Add mouse controls
     webfits.setupControls();
     
     // Load image from fitsjs
     webfits.loadImage('test', arr, width, height);
+    webfits.setStretch('logarithm');
+    webfits.draw();
   }
   
   function main() {
+    var path1 = '/examples/data/m101_i.fits';
+    var path2 = '/examples/data/m101_r.fits';
+    var path3 = '/examples/data/m101_g.fits';
     
-    // Initialize first FITS object
-    var path1 = 'data/m101_red.fits';
-    var opts1 = {el: 'red-wicked-science-visualization'};
-    var f1 = new astro.FITS.File(path1, getImage, opts1);
-    
-    // Initialize second FITS object
-    var path1 = 'data/m101_blue.fits';
-    var opts2 = {el: 'blue-wicked-science-visualization'};
-    var f2 = new astro.FITS.File(path1, getImage, opts2);
-    
-    // Initialize third FITS object
-    var path3 = 'data/m101_ir.fits';
+    var opts1 = {el: 'green-wicked-science-visualization'};
+    var opts2 = {el: 'red-wicked-science-visualization'};
     var opts3 = {el: 'ir-wicked-science-visualization'};
+    
+    var f1 = new astro.FITS.File(path1, getImage, opts1);
+    var f2 = new astro.FITS.File(path1, getImage, opts2);
     var f3 = new astro.FITS.File(path3, getImage, opts3);
   }
   </script>
@@ -62,8 +60,8 @@
 
 <body onload='main()'>
   <h3>examples of Astronomical Image Visualization</h3>
+  <div id="green-wicked-science-visualization" style="display: inline-block;"></div>
   <div id="red-wicked-science-visualization" style="display: inline-block;"></div>
-  <div id="blue-wicked-science-visualization" style="display: inline-block;"></div>
   <div id="ir-wicked-science-visualization" style="display: inline-block;"></div>
 </body>
 </html>

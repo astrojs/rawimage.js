@@ -40,13 +40,14 @@
   function main() {
     
     // Define paths to files
-    var path1 = '/examples/data/CFHTLS_074_2382_i.fits';
-    var path2 = '/examples/data/CFHTLS_074_2382_r.fits';
-    var path3 = '/examples/data/CFHTLS_074_2382_g.fits';
+    var path1 = '/examples/data/m101_i.fits';
+    var path2 = '/examples/data/m101_r.fits';
+    var path3 = '/examples/data/m101_g.fits';
     
     // Initialize WebFITS object
     var el = document.querySelector('#wicked-science-visualization');
-    var webfits = new astro.WebFITS(el, 440);
+    var webfits = new astro.WebFITS(el, 512);
+    webfits.setupControls();
     
     var f1 = new astro.FITS.File(path1, getImage, {identifier: 'ir', webfits: webfits});
     var f2 = new astro.FITS.File(path2, getImage, {identifier: 'red', webfits: webfits});

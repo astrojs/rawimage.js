@@ -53,10 +53,10 @@ class Api extends BaseApi
     return program
     
   # Set a buffer with viewport width and height
-  _setRectangle: (width, height) ->
+  _setRectangle: (ctx, width, height) ->
     [x1, x2] = [0, 0 + width]
     [y1, y2] = [0, 0 + height]
-    @ctx.bufferData(@ctx.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), @ctx.STATIC_DRAW)
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), ctx.STATIC_DRAW)
     
   # Update the vertex uniforms (used for mouse interactions)
   _updateUniforms: (program) ->
@@ -134,7 +134,6 @@ class Api extends BaseApi
     ctx.bindBuffer(ctx.ARRAY_BUFFER, buffer)
     ctx.enableVertexAttribArray(positionLocation)
     ctx.vertexAttribPointer(positionLocation, 2, ctx.FLOAT, false, 0, 0)
-    @_setRectangle(width, height)
     
     return ctx
   
@@ -142,6 +141,7 @@ class Api extends BaseApi
   # relevant statistics used for rendering grayscale images.
   loadImage: (identifier, arr, width, height, statistics = true) ->
     ctx = @ctx
+    @_setRectangle(ctx, width, height)
     
     # Cache id, assign image to identifier and increment
     index = @id

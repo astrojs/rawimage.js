@@ -6,6 +6,6 @@ rm examples/data/*
 curl "https://raw.github.com/astrojs/fitsjs/master/lib/fits.js" -o 'examples/lib/fits.js'
 
 # Download data for examples
-curl "http://archive.stsci.edu/cgi-bin/dss_search?v=poss2ukstu_red&r=14+03+12.51&d=%2B54+20+53.1&e=J2000&h=30&w=30&f=fits&c=none&fov=NONE&v3=" -o 'examples/data/m101_red.fits'
-curl 'http://archive.stsci.edu/cgi-bin/dss_search?v=poss2ukstu_blue&r=14+03+12.51&d=%2B54+20+53.1&e=J2000&h=30&w=30&f=fits&c=none&fov=NONE&v3=' -o 'examples/data/m101_blue.fits'
-curl 'http://archive.stsci.edu/cgi-bin/dss_search?v=poss2ukstu_ir&r=14+03+12.51&d=%2B54+20+53.1&e=J2000&h=30&w=30&f=fits&c=none&fov=NONE&v3=' -o 'examples/data/m101_ir.fits'
+curl "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHTSG/W3-2%2B0.G.fits%5B16094%3A16605%2C7328%3A7839%5D" -o "examples/data/m101_g.fits"
+curl "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHTSG/W3-2%2B0.R.fits%5B16094%3A16605%2C7328%3A7839%5D" -o "examples/data/m101_r.fits"
+curl "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/pub/CFHTSG/W3-2%2B0.I.fits%5B16094%3A16605%2C7328%3A7839%5D" -o "examples/data/m101_i.fits"
