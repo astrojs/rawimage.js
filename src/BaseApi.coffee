@@ -20,9 +20,7 @@ class BaseApi
     @statistics = {}
     
     @getContext()
-    @setupMouseInteraction()
-  
-  setupMouseInteraction: =>
+    
     @xOffset    = -@width / 2
     @yOffset    = -@height / 2
     @xOldOffset = @xOffset
@@ -34,6 +32,9 @@ class BaseApi
     @maxZoom    = 12 * @zoom
     @zoomX      = @zoom
     @zoomY      = @zoom
+  
+  # Setup panning and zooming
+  setupControls: ->
     
     @canvas.onmousedown = (e) =>
       @drag = true

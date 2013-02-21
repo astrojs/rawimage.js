@@ -9,31 +9,94 @@ class Api extends BaseApi
   previousProgram: null
   
   
-  # Code using this function must check if a context is returned
+  #
+  # Private Methods
+  #
+  
+  # Check support for floating point textures
+  _getExtension: ->
+    return @ctx.getExtension('OES_texture_float')
+  
+  # Creates, compiles and checks for error when loading shader
+  _loadShader: (source, type) ->
+    ctx = @ctx
+    
+    shader = ctx.createShader(type)
+    ctx.shaderSource(shader, source)
+    ctx.compileShader(shader)
+    
+    compiled = ctx.getShaderParameter(shader, ctx.COMPILE_STATUS)
+    unless compiled
+      lastError = ctx.getShaderInfoLog(shader)
+      throw "Error compiling shader #{shader}: #{lastError}"
+      ctx.deleteShader(shader)
+      return null
+      
+    return shader
+
+  # Initialize program with vertex and fragment shader
+  _createProgram: (vshader, fshader) ->
+    ctx = @ctx
+    
+    program = ctx.createProgram()
+    ctx.attachShader(program, vshader)
+    ctx.attachShader(program, fshader)
+    
+    ctx.linkProgram(program)
+    
+    linked = ctx.getProgramParameter(program, ctx.LINK_STATUS)
+    unless linked
+      throw "Error in program linking: #{ctx.getProgramInfoLog(program)}"
+      ctx.deleteProgram(program)
+      return null
+    
+    return program
+    
+  # Set a buffer with viewport width and height
+  _setRectangle: (width, height) ->
+    [x1, x2] = [0, 0 + width]
+    [y1, y2] = [0, 0 + height]
+    @ctx.bufferData(@ctx.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), @ctx.STATIC_DRAW)
+    
+  # Update the vertex uniforms (used for mouse interactions)
+  _updateUniforms: (program) ->
+    offsetLocation  = @ctx.getUniformLocation(program, 'u_offset')
+    scaleLocation   = @ctx.getUniformLocation(program, 'u_scale')
+    
+    @ctx.uniform2f(offsetLocation, @xOffset, @yOffset)
+    @ctx.uniform1f(scaleLocation, @zoom)
+    
+  #
+  # Public Methods
+  #
+  
+  # Initializes WebGL context, programs and buffers.  Error handling is done by checking the
+  # return value of this function.
   getContext: ->
     
     # Initialize context
     for name in ['webgl', 'experimental-webgl']
       try
-        context = @canvas.getContext(name)
-        context.viewport(0, 0, @width, @height)
+        ctx = @canvas.getContext(name)
+        width = @canvas.width
+        height = @canvas.height
+        ctx.viewport(0, 0, width, height)
       catch e
-      break if (context)
+      break if (ctx)
     
-    return null unless context
-    @ctx = context
+    return null unless ctx
+    @ctx = ctx
     
-    # Check float extension support on GPU
     ext = @_getExtension()
     return null unless ext
     
     # Initialize shaders
-    vertexShader = @_loadShader(Shaders.vertex, context.VERTEX_SHADER)
+    vertexShader = @_loadShader(Shaders.vertex, ctx.VERTEX_SHADER)
     return null unless vertexShader
     
     # Initialize programs
     for key, index in @fShaders
-      fragShader = @_loadShader(Shaders[key], context.FRAGMENT_SHADER)
+      fragShader = @_loadShader(Shaders[key], ctx.FRAGMENT_SHADER)
       return null unless fragShader
       
       @programs[key] = @_createProgram(vertexShader, fragShader)
@@ -41,83 +104,42 @@ class Api extends BaseApi
     
     # Set program specific parameters for each program
     for key, program of @programs
-      context.useProgram(program)
+      ctx.useProgram(program)
       
       # Get attribute and uniform locations
-      positionLocation  = context.getAttribLocation(program, 'a_position')
-      texCoordLocation  = context.getAttribLocation(program, 'a_textureCoord')
-      extentLocation    = context.getUniformLocation(program, 'u_extent')
-      offsetLocation    = context.getUniformLocation(program, 'u_offset')
-      scaleLocation     = context.getUniformLocation(program, 'u_scale')
+      positionLocation  = ctx.getAttribLocation(program, 'a_position')
+      texCoordLocation  = ctx.getAttribLocation(program, 'a_textureCoord')
+      offsetLocation    = ctx.getUniformLocation(program, 'u_offset')
+      scaleLocation     = ctx.getUniformLocation(program, 'u_scale')
       
       # Set uniforms
-      context.uniform2f(extentLocation, @minimum, @maximum)
-      context.uniform2f(offsetLocation, -@width / 2, -@height / 2)
-      context.uniform1f(scaleLocation, 2 / @width)
+      ctx.uniform2f(offsetLocation, -width / 2, -height / 2)
+      ctx.uniform1f(scaleLocation, 2 / width)
     
-    # Set a default program
+    # Set default program
     @currentProgram = @previousProgram = @programs.linear
     
     # Create texture coordinate buffer
-    texCoordBuffer = context.createBuffer()
-    context.bindBuffer(context.ARRAY_BUFFER, texCoordBuffer)
-    context.bufferData(
-      context.ARRAY_BUFFER,
+    texCoordBuffer = ctx.createBuffer()
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, texCoordBuffer)
+    ctx.bufferData(
+      ctx.ARRAY_BUFFER,
       new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]),
-      context.STATIC_DRAW
+      ctx.STATIC_DRAW
     )
-    context.enableVertexAttribArray(texCoordLocation)
-    context.vertexAttribPointer(texCoordLocation, 2, context.FLOAT, false, 0, 0)
+    ctx.enableVertexAttribArray(texCoordLocation)
+    ctx.vertexAttribPointer(texCoordLocation, 2, ctx.FLOAT, false, 0, 0)
     
-    buffer = context.createBuffer()
-    context.bindBuffer(context.ARRAY_BUFFER, buffer)
-    context.enableVertexAttribArray(positionLocation)
-    context.vertexAttribPointer(positionLocation, 2, context.FLOAT, false, 0, 0)
-    @_setRectangle()
+    buffer = ctx.createBuffer()
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, buffer)
+    ctx.enableVertexAttribArray(positionLocation)
+    ctx.vertexAttribPointer(positionLocation, 2, ctx.FLOAT, false, 0, 0)
+    @_setRectangle(width, height)
     
-    return context
+    return ctx
   
-  # Using underscore convention for 'private' methods
-  _getExtension: ->
-    return @ctx.getExtension('OES_texture_float')
-  
-  # Creates, compiles and checks for error when loading shader
-  _loadShader: (source, type) ->
-    shader = @ctx.createShader(type)
-    @ctx.shaderSource(shader, source)
-    @ctx.compileShader(shader)
-    
-    compiled = @ctx.getShaderParameter(shader, @ctx.COMPILE_STATUS)
-    unless compiled
-      lastError = @ctx.getShaderInfoLog(shader)
-      throw "Error compiling shader #{shader}: #{lastError}"
-      @ctx.deleteShader(shader)
-      return null
-    
-    return shader
-    
-  # Create the WebGL program
-  _createProgram: (vshader, fshader) ->
-    program = @ctx.createProgram()
-    for shader in [vshader, fshader]
-      @ctx.attachShader(program, shader)
-    
-    @ctx.linkProgram(program)
-    
-    linked = @ctx.getProgramParameter(program, @ctx.LINK_STATUS)
-    unless linked
-      throw "Error in program linking: #{@ctx.getProgramInfoLog(program)}"
-      @ctx.deleteProgram(program)
-      return null
-    
-    return program
-
-  # Set a buffer with viewport width and height
-  _setRectangle: ->
-      [x1, x2] = [0, 0 + @width]
-      [y1, y2] = [0, 0 + @height]
-      @ctx.bufferData(@ctx.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), @ctx.STATIC_DRAW)
-  
+  # Create a texture from an array representing an image.  Optional parameter computes
+  # relevant statistics used for rendering grayscale images.
   loadImage: (identifier, arr, width, height, statistics = true) ->
     ctx = @ctx
     
@@ -141,6 +163,22 @@ class Api extends BaseApi
     if statistics
       @getImageStatistics(identifier, arr)
       @setExtent(identifier)
+  
+  # Select the image to render.  This function is to be used only for grayscale renderings.
+  setImage: (identifier) ->
+    index = @lookup[identifier]
+    
+    @ctx.activeTexture(@ctx["TEXTURE#{index}"])
+    location = @ctx.getUniformLocation(@currentProgram, "u_tex")
+    @ctx.uniform1i(location, index)
+    
+    @currentImage = identifier
+  
+  # Set the stretch parameter for grayscale images
+  setStretch: (stretch) ->
+    @currentProgram = @previousProgram = @programs[stretch]
+    @ctx.useProgram(@currentProgram)
+    @_updateUniforms(@currentProgram)
     
   # Get minimum, maximum, mean, and histogram of pixels
   getImageStatistics: (identifier, arr) ->
@@ -171,7 +209,7 @@ class Api extends BaseApi
         max = value
         continue
     
-    # TODO: Compute percentiles
+    # TODO: Compute percentiles and other stats
     
     # Store statistics
     @statistics[identifier] = {
@@ -179,39 +217,41 @@ class Api extends BaseApi
       maximum: max
     }
   
-  # Set scales for each channel in the color composite
-  setScales: (r, g, b) ->
-    ctx = @ctx
-    ctx.useProgram(@programs.color)
-    
-    location = ctx.getUniformLocation(@programs.color, "u_r_scale")
-    ctx.uniform1f(location, r)
-    
-    location = ctx.getUniformLocation(@programs.color, "u_g_scale")
-    ctx.uniform1f(location, g)
-    
-    location = ctx.getUniformLocation(@programs.color, "u_b_scale")
-    ctx.uniform1f(location, b)
-    
-    ctx.drawArrays(ctx.TRIANGLES, 0, 6)
-  
-  # Set the minimum and maximum pixels for scaling grayscale images
-  # min and max are in range of (0, @step)
+  # Set the minimum and maximum pixels for scaling grayscale images.
   setExtent: (identifier) ->
+    ctx = @ctx
+    
     stats = @statistics[identifier]
     min = stats.minimum
     max = stats.maximum
-    
+
     # Update u_extent to all programs
     for stretch in ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
-      p = @programs[stretch]
-      @ctx.useProgram(p)
-      location = @ctx.getUniformLocation(p, 'u_extent')
-      @ctx.uniform2f(location, min, max)
-    
+      program = @programs[stretch]
+      ctx.useProgram(program)
+      location = ctx.getUniformLocation(program, 'u_extent')
+      ctx.uniform2f(location, min, max)
+
     # Switch back to current program and draw
-    @ctx.useProgram(@currentProgram)
-    @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
+    ctx.useProgram(@currentProgram)
+    ctx.drawArrays(ctx.TRIANGLES, 0, 6)
+  
+  # Set scales for each channel in the color composite
+  setScales: (r, g, b) ->
+    ctx = @ctx
+    program = @programs.color
+    ctx.useProgram(program)
+    
+    location = ctx.getUniformLocation(program, "u_r_scale")
+    ctx.uniform1f(location, r)
+    
+    location = ctx.getUniformLocation(program, "u_g_scale")
+    ctx.uniform1f(location, g)
+    
+    location = ctx.getUniformLocation(program, "u_b_scale")
+    ctx.uniform1f(location, b)
+    
+    ctx.drawArrays(ctx.TRIANGLES, 0, 6)
   
   # Set the alpha parameter for the Lupton algorithm
   setAlpha: (value) ->
@@ -230,37 +270,13 @@ class Api extends BaseApi
     location = ctx.getUniformLocation(@programs.color, 'u_Q')
     ctx.uniform1f(location, value)
     ctx.drawArrays(ctx.TRIANGLES, 0, 6)
-    
-  # Set the stretch parameter for grayscale images
-  setStretch: (value) ->
-    @currentProgram = @previousProgram = @programs[value]
-    @ctx.useProgram(@currentProgram)
-    @draw()
-  
-  # Set the layer
-  setTexture: (identifier) ->
-    @currentProgram = @previousProgram
-    @ctx.useProgram(@currentProgram)
-    
-    # Store the layer
-    @activeTexture = identifier
-    
-    # Activate the correct texture
-    index = @lookup[identifier]
-    
-    @ctx.activeTexture(@ctx["TEXTURE#{index}"])
-    location = @ctx.getUniformLocation(@currentProgram, "u_tex")
-    @ctx.uniform1i(location, index)
   
   #
   # Drawing functions
   #
   draw: ->
-    @syncVertexUniforms(@currentProgram)
+    @_updateUniforms(@currentProgram)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
-  
-  # NOTE: Only called when user selects band
-  drawGrayscale: -> @draw()
   
   drawColor: (r, g, b) ->
     ctx = @ctx
@@ -268,21 +284,16 @@ class Api extends BaseApi
     program = @currentProgram = @programs.color
     ctx.useProgram(program)
     
-    @syncVertexUniforms(program)
-    
-    index = @lookup[r]
     location = ctx.getUniformLocation(program, "u_tex0")
-    ctx.uniform1i(location, index)
+    ctx.uniform1i(location, @lookup[r])
     
-    index = @lookup[g]
     location = ctx.getUniformLocation(program, "u_tex1")
-    ctx.uniform1i(location, index)
+    ctx.uniform1i(location, @lookup[g])
     
-    index = @lookup[b]
     location = ctx.getUniformLocation(program, "u_tex2")
-    ctx.uniform1i(location, index)
+    ctx.uniform1i(location, @lookup[b])
     
-    ctx.drawArrays(ctx.TRIANGLES, 0, 6)
+    @draw()
     
   wheelHandler: (e) ->
     super
@@ -290,13 +301,6 @@ class Api extends BaseApi
     location = @ctx.getUniformLocation(@currentProgram, 'u_scale')
     @ctx.uniform1f(location, @zoom)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
-    
-  syncVertexUniforms: (program) ->
-    offsetLocation  = @ctx.getUniformLocation(program, 'u_offset')
-    scaleLocation   = @ctx.getUniformLocation(program, 'u_scale')
-    
-    @ctx.uniform2f(offsetLocation, @xOffset, @yOffset)
-    @ctx.uniform1f(scaleLocation, @zoom)
 
 
 version = @astro.WebFITS.version

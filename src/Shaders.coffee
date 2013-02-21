@@ -1,148 +1,148 @@
 # TODO: Create functions that construct the appropriate shader
 
 Shaders =
-
+  
   # Vertex shader (same for all programs)
   vertex: [
-    "attribute vec2 a_position;",
-    "attribute vec2 a_textureCoord;",
-
-    "uniform vec2 u_offset;",
-    "uniform float u_scale;",
-
-    "varying vec2 v_textureCoord;",
-
-    "void main() {",
-      "vec2 position = a_position + u_offset;",
-      "position = position * u_scale;",
-      "gl_Position = vec4(position, 0.0, 1.0);",
+    "attribute vec2 a_position;"
+    "attribute vec2 a_textureCoord;"
+    
+    "uniform vec2 u_offset;"
+    "uniform float u_scale;"
+    
+    "varying vec2 v_textureCoord;"
+    
+    "void main() {"
+      "vec2 position = a_position + u_offset;"
+      "position = position * u_scale;"
+      "gl_Position = vec4(position, 0.0, 1.0);"
       
       # Pass coordinate to fragment shader
-      "v_textureCoord = a_textureCoord;",
+      "v_textureCoord = a_textureCoord;"
     "}"
   ].join("\n")
   
   linear: [
-    "precision mediump float;",
+    "precision mediump float;"
     
-    "uniform sampler2D u_tex;",
-    "uniform vec2 u_extent;",
+    "uniform sampler2D u_tex;"
+    "uniform vec2 u_extent;"
     
-    "varying vec2 v_textureCoord;",
+    "varying vec2 v_textureCoord;"
     
-    "void main() {",
-        "vec4 pixel_v = texture2D(u_tex, v_textureCoord);",
+    "void main() {"
+        "vec4 pixel_v = texture2D(u_tex, v_textureCoord);"
         
-        "float min = u_extent[0];",
-        "float max = u_extent[1];",
+        "float min = u_extent[0];"
+        "float max = u_extent[1];"
         
-        "float pixel = (pixel_v[0] - min) / (max - min);",
+        "float pixel = (pixel_v[0] - min) / (max - min);"
         
-        "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);",
+        "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
     "}"
   ].join("\n")
   
   logarithm: [
     "precision mediump float;"
     
-    "uniform sampler2D u_tex;",
-    "uniform vec2 u_extent;",
+    "uniform sampler2D u_tex;"
+    "uniform vec2 u_extent;"
     
-    "varying vec2 v_textureCoord;",
-
-    "float logarithm(float value) {",
-        "return log(value / 0.05 + 1.0) / log(1.0 / 0.05 + 1.0);",
-    "}",
-
-    "void main() {",
-        "vec4 pixel_v = texture2D(u_tex, v_textureCoord);",
+    "varying vec2 v_textureCoord;"
+    
+    "float logarithm(float value) {"
+        "return log(value / 0.05 + 1.0) / log(1.0 / 0.05 + 1.0);"
+    "}"
+    
+    "void main() {"
+        "vec4 pixel_v = texture2D(u_tex, v_textureCoord);"
         
-        "float min = u_extent[0];",
-        "float max = u_extent[1];",
+        "float min = u_extent[0];"
+        "float max = u_extent[1];"
         
-        "max = max - min;",
+        "max = max - min;"
         
-        "float minScaled = logarithm(0.0);",
-        "max = logarithm(max);",
-        "float pixel = pixel_v[0] - min;",
-        "pixel = logarithm(pixel);",
+        "float minScaled = logarithm(0.0);"
+        "max = logarithm(max);"
+        "float pixel = pixel_v[0] - min;"
+        "pixel = logarithm(pixel);"
         
-        "pixel = (pixel - minScaled) / (max - minScaled);",
+        "pixel = (pixel - minScaled) / (max - minScaled);"
         
-        "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);",
+        "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
     "}"
   ].join("\n")
   
   sqrt: [
     "precision mediump float;"
     
-    "uniform sampler2D u_tex;",
-    "uniform vec2 u_extent;",
+    "uniform sampler2D u_tex;"
+    "uniform vec2 u_extent;"
     
-    "varying vec2 v_textureCoord;",
-
-    "void main() {",
-      "vec4 pixel_v = texture2D(u_tex, v_textureCoord);",
+    "varying vec2 v_textureCoord;"
+    
+    "void main() {"
+      "vec4 pixel_v = texture2D(u_tex, v_textureCoord);"
       
       # Shift value by min to avoid negative numbers
-      "float min = u_extent[0];",
-      "float max = u_extent[1] - min;",
-      "float pixel = pixel_v[0] - min;",
+      "float min = u_extent[0];"
+      "float max = u_extent[1] - min;"
+      "float pixel = pixel_v[0] - min;"
       
-      "pixel = sqrt(pixel_v[0] / max);",
+      "pixel = sqrt(pixel_v[0] / max);"
       
-      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);",
+      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
     "}"
   ].join("\n")
   
   arcsinh: [
     "precision mediump float;"
     
-    "uniform sampler2D u_tex;",
-    "uniform vec2 u_extent;",
+    "uniform sampler2D u_tex;"
+    "uniform vec2 u_extent;"
     
-    "varying vec2 v_textureCoord;",
-
-    "float arcsinh(float value) {",
-        "return log(value + sqrt(1.0 + value * value));",
+    "varying vec2 v_textureCoord;"
+    
+    "float arcsinh(float value) {"
+        "return log(value + sqrt(1.0 + value * value));"
     "}",
     
-    "float scaledArcsinh(float value) {",
-        "return arcsinh(value / -0.033) / arcsinh(1.0 / -0.033);",
-    "}",
-
-    "void main() {",
-      "vec4 pixel_v = texture2D(u_tex, v_textureCoord);",
+    "float scaledArcsinh(float value) {"
+        "return arcsinh(value / -0.033) / arcsinh(1.0 / -0.033);"
+    "}"
+    
+    "void main() {"
+      "vec4 pixel_v = texture2D(u_tex, v_textureCoord);"
       
-      "float min = scaledArcsinh(u_extent[0]);",
-      "float max = scaledArcsinh(u_extent[1]);",
-      "float value = scaledArcsinh(pixel_v[0]);",
+      "float min = scaledArcsinh(u_extent[0]);"
+      "float max = scaledArcsinh(u_extent[1]);"
+      "float value = scaledArcsinh(pixel_v[0]);"
       
-      "float pixel = (value - min) / (max - min);",
-
-      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);",
+      "float pixel = (value - min) / (max - min);"
+      
+      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
     "}"
   ].join("\n")
   
   power: [
     "precision mediump float;"
     
-    "uniform sampler2D u_tex;",
-    "uniform vec2 u_extent;",
+    "uniform sampler2D u_tex;"
+    "uniform vec2 u_extent;"
     
-    "varying vec2 v_textureCoord;",
-
+    "varying vec2 v_textureCoord;"
+    
     "void main() {",
-      "vec4 pixel_v = texture2D(u_tex, v_textureCoord);",
-
-      # Shift value by min to avoid negative numbers
-      "float min = u_extent[0];",
-      "float max = u_extent[1] - min;",
-      "float pixel = pixel_v[0] - min;",
+      "vec4 pixel_v = texture2D(u_tex, v_textureCoord);"
       
-      "pixel = pow(pixel / max, 2.0);",
-
-      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);",
+      # Shift value by min to avoid negative numbers
+      "float min = u_extent[0];"
+      "float max = u_extent[1] - min;"
+      "float pixel = pixel_v[0] - min;"
+      
+      "pixel = pow(pixel / max, 2.0);"
+      
+      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
     "}"
   ].join("\n")
   
@@ -178,7 +178,7 @@ Shaders =
       "float b = (pixel_v_b[0]) * u_b_scale;"
       
       # Compute the total intensity and stretch factor
-      "float I = r + g + b + 1e-10;",
+      "float I = r + g + b + 1e-10;"
       "float factor = arcsinh(u_alpha * u_Q * I) / (u_Q * I);"
       
       # Apply stretch factor to scaled pixels

@@ -30,8 +30,12 @@
     
     // Initialize the WebFITS context with a 400px by 400px viewer
     var webfits = new astro.WebFITS(el, 400);
+    
+    // Add mouse controls
+    webfits.setupControls();
+    
+    // Load image from fitsjs
     webfits.loadImage('test', arr, width, height);
-    console.log('done');
   }
   
   function main() {
