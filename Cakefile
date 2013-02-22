@@ -20,7 +20,7 @@ buildWebGl = ->
   pkg = require('./package.json')
   
   # Specify the name of the library
-  output = "lib/#{pkg['name'].toLowerCase()}-gl-#{pkg['version']}.js"
+  output = "lib/#{pkg['name'].toLowerCase()}-gl.js"
   
   order = [
     'src/WebFITS.coffee',
@@ -37,7 +37,7 @@ buildCanvas = ->
   pkg = require('./package.json')
   
   # Specify the name of the library
-  output = "lib/#{pkg['name'].toLowerCase()}-canvas-#{pkg['version']}.js"
+  output = "lib/#{pkg['name'].toLowerCase()}-canvas.js"
   
   order = [
     'src/WebFITS.coffee',
@@ -62,7 +62,7 @@ task 'watch', 'Watch src for changes', ->
   pkg = require('./package.json')
   
   # Specify the name of the WebGL library
-  output = "lib/#{pkg['name'].toLowerCase()}-gl-#{pkg['version']}.js"
+  output = "lib/#{pkg['name'].toLowerCase()}-gl.js"
   
   order = [
     'src/WebFITS.coffee',
@@ -84,7 +84,7 @@ task 'watch', 'Watch src for changes', ->
     callback?() if code is 0
     
   # Specify the name of the Canvas library
-  output = "lib/#{pkg['name'].toLowerCase()}-canvas-#{pkg['version']}.js"
+  output = "lib/#{pkg['name'].toLowerCase()}-canvas.js"
   
   order = [
     'src/WebFITS.coffee',

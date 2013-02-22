@@ -16,7 +16,7 @@ class BaseApi
     @id = 0
     @lookup = {}
     
-    @getContext()
+    return null unless @_getContext()
     
     @xOffset    = -@width / 2
     @yOffset    = -@height / 2

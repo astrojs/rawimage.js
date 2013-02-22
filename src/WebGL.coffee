@@ -65,14 +65,10 @@ class Api extends BaseApi
     
     @ctx.uniform2f(offsetLocation, @xOffset, @yOffset)
     @ctx.uniform1f(scaleLocation, @zoom)
-    
-  #
-  # Public Methods
-  #
   
   # Initializes WebGL context, programs and buffers.  Error handling is done by checking the
   # return value of this function.
-  getContext: ->
+  _getContext: ->
     
     # Initialize context
     for name in ['webgl', 'experimental-webgl']
@@ -137,6 +133,10 @@ class Api extends BaseApi
     
     return ctx
   
+  #
+  # Public Methods
+  #
+  
   # Create a texture from an array representing an image.  Optional parameter computes
   # relevant statistics used for rendering grayscale images.
   loadImage: (identifier, arr, width, height) ->
@@ -174,6 +174,7 @@ class Api extends BaseApi
   setStretch: (stretch) ->
     @currentProgram = @programs[stretch]
     @ctx.useProgram(@currentProgram)
+    @draw()
   
   # Set the minimum and maximum pixels for scaling grayscale images.
   setExtent: (min, max) ->

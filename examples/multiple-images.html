@@ -1,7 +1,8 @@
 <html>
 <head>
+  <link rel="stylesheet" href="/examples/astrojs.css" type="text/css" charset="utf-8">
   <script type="text/javascript" src="lib/fits.js"></script>
-  <script type="text/javascript" src="/lib/webfits-gl-0.0.1.js"></script>
+  <script type="text/javascript" src="/lib/webfits-gl.js"></script>
   <script type="text/javascript">
   
   // Define callback to be executed after image is received from the server
@@ -25,26 +26,25 @@
     var width = dataunit.width;
     var height = dataunit.height;
     var extent = dataunit.getExtent(arr);
-    var range = extent[1] - extent[0];
-    var delta = range * 0.1;
     
     // Get the DOM element
     var el = document.querySelector('#' + opts.el);
     
-    // Initialize the WebFITS context with a 400px by 400px viewer
-    var webfits = new astro.WebFITS(el, 256);
+    // Initialize the WebFITS context
+    var webfits = new astro.WebFITS(el, width);
     
     // Add mouse controls
     webfits.setupControls();
     
     // Load image from fitsjs
-    webfits.loadImage('test', arr, width, height);
+    webfits.loadImage('some-identifier', arr, width, height);
     webfits.setExtent(extent[0], extent[1]);
     webfits.setStretch('logarithm');
-    webfits.draw();
   }
   
   function main() {
+    // Define paths, options, and FITS objects
+    
     var path1 = '/examples/data/m101_i.fits';
     var path2 = '/examples/data/m101_r.fits';
     var path3 = '/examples/data/m101_g.fits';
@@ -54,7 +54,7 @@
     var opts3 = {el: 'ir-wicked-science-visualization'};
     
     var f1 = new astro.FITS.File(path1, getImage, opts1);
-    var f2 = new astro.FITS.File(path1, getImage, opts2);
+    var f2 = new astro.FITS.File(path2, getImage, opts2);
     var f3 = new astro.FITS.File(path3, getImage, opts3);
   }
   </script>
@@ -63,9 +63,11 @@
 </head>
 
 <body onload='main()'>
-  <h3>examples of Astronomical Image Visualization</h3>
-  <div id="green-wicked-science-visualization" style="display: inline-block;"></div>
-  <div id="red-wicked-science-visualization" style="display: inline-block;"></div>
-  <div id="ir-wicked-science-visualization" style="display: inline-block;"></div>
+  <div class='content'>
+    <h3>Multiple WebFITS Instances</h3>
+    <div id="green-wicked-science-visualization" class='visualization'></div>
+    <div id="red-wicked-science-visualization" class='visualization'></div>
+    <div id="ir-wicked-science-visualization" class='visualization'></div>
+  </div>
 </body>
 </html>

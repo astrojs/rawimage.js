@@ -1,7 +1,8 @@
 <html>
 <head>
+  <link rel="stylesheet" href="/examples/astrojs.css" type="text/css" charset="utf-8">
   <script type="text/javascript" src="lib/fits.js"></script>
-  <script type="text/javascript" src="/lib/webfits-gl-0.0.1.js"></script>
+  <script type="text/javascript" src="/lib/webfits-gl.js"></script>
   <script type="text/javascript">
   
   // Define callback to be executed after image is received from the server
@@ -59,7 +60,9 @@
 </head>
 
 <body onload='main()'>
-  <h3>examples of Astronomical Image Visualization</h3>
-  <div id="wicked-science-visualization"></div>
+  <div class='content'>
+    <h3>Single WebFITS Instance with Multiple Layers</h3>
+    <div id="wicked-science-visualization"></div>
+  </div>
 </body>
 </html>
