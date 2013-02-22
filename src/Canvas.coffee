@@ -37,6 +37,7 @@ class Api extends BaseApi
       "translateX(#{@xOffset}px)",
       "translateY(#{@yOffset}px)"
     ].join(' ')
+    @canvas.style.transform       = transforms
     @canvas.style.webkitTransform = transforms
     @canvas.style.MozTransform    = transforms
   
@@ -80,6 +81,11 @@ class Api extends BaseApi
   
   # Store the image
   loadImage: (identifier, arr, width, height) ->
+    # Cache id, assign image to identifier and increment
+    index = @id
+    @lookup[identifier] = @id
+    @id += 1
+    
     @images[identifier] =
       arr: new Float32Array(arr)
       width: width
@@ -252,20 +258,19 @@ class Api extends BaseApi
     @_applyTransforms()
   
   # TODO: Improve performance using Int32Array, some bitwise operators and ternary clamp function
-  drawColor: =>
-    # Cache some objects
-    iBand = @textures['i']
-    rBand = @textures['r']
-    gBand = @textures['g']
-    iScale = @scale['i']
-    rScale = @scale['r']
-    gScale = @scale['g']
+  drawLupton: ->
+    rImage = @images[@r].arr
+    gImage = @images[@g].arr
+    bImage = @images[@b].arr
     
-    # Initialize offscreen canvas
+    rScale = @scales.r
+    gScale = @scales.g
+    bScale = @scales.b
+    
+    # Initialize offscreen canvas and get context
     canvas = document.createElement('canvas')
     canvas.width  = @width
     canvas.height = @height
-    
     ctx = canvas.getContext('2d')
     
     # Get canvas data
@@ -275,9 +280,9 @@ class Api extends BaseApi
     length = arr.length
     while length -= 4
       index = length / 4
-      r = iBand[index] * iScale
-      g = rBand[index] * rScale
-      b = gBand[index] * gScale
+      r = rImage[index] * rScale
+      g = gImage[index] * gScale
+      b = bImage[index] * bScale
       
       # Compute total intensity and stretch factor
       I = r + g + b + 1e-10
@@ -291,6 +296,11 @@ class Api extends BaseApi
     imgData.data = arr
     ctx.putImageData(imgData, 0, 0)
     @ctx.drawImage(canvas, 0, 0)
+    @_applyTransforms()
+  
+  drawColor: (@r, @g, @b) ->
+    @draw = @drawLupton
+    @drawLupton()
   
   wheelHandler: (e) =>
     super

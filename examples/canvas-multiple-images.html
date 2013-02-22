@@ -1,7 +1,7 @@
 <html>
 <head>
   <link rel="stylesheet" href="/examples/astrojs.css" type="text/css" charset="utf-8">
-  <script type="text/javascript" src="/examples/lib/fits.js"></script>
+  <script type="text/javascript" src="lib/fits.js"></script>
   <script type="text/javascript" src="/lib/webfits-canvas.js"></script>
   <script type="text/javascript">
   
@@ -10,14 +10,12 @@
     
     // Get first data unit
     var dataunit = f.getDataUnit();
-    
-    // Set options to pass to the next callback
     opts = {
       dataunit: dataunit,
       el: opts.el
     };
     
-    // Asynchronously get pixels representing the image passing a callback and options
+    // Asynchronously get pixels representing the image
     dataunit.getFrameAsync(0, createVisualization, opts);
   }
   
@@ -32,28 +30,32 @@
     // Get the DOM element
     var el = document.querySelector('#' + opts.el);
     
-    // Initialize the WebFITS context with a viewer of size width
+    // Initialize the WebFITS context
     var webfits = new astro.WebFITS(el, width);
     
-    // Add pan and zoom controls
+    // Add mouse controls
     webfits.setupControls();
     
-    // Load array representation of image
+    // Load image from fitsjs
     webfits.loadImage('some-identifier', arr, width, height);
-    
-    // Set the intensity range and stretch
     webfits.setExtent(extent[0], extent[1]);
-    webfits.setStretch('linear');
+    webfits.setStretch('logarithm');
   }
   
   function main() {
+    // Define paths, options, and FITS objects
     
-    // Define the path and options
-    var path = '/examples/data/m101_i.fits';
-    var opts = {el: 'wicked-science-visualization'};
+    var path1 = '/examples/data/m101_i.fits';
+    var path2 = '/examples/data/m101_r.fits';
+    var path3 = '/examples/data/m101_g.fits';
     
-    // Initialize the FITS file, passing the function getImage as a callback
-    var f = new astro.FITS.File(path, getImage, opts);
+    var opts1 = {el: 'green-wicked-science-visualization'};
+    var opts2 = {el: 'red-wicked-science-visualization'};
+    var opts3 = {el: 'ir-wicked-science-visualization'};
+    
+    var f1 = new astro.FITS.File(path1, getImage, opts1);
+    var f2 = new astro.FITS.File(path2, getImage, opts2);
+    var f3 = new astro.FITS.File(path3, getImage, opts3);
   }
   </script>
   
@@ -62,8 +64,10 @@
 
 <body onload='main()'>
   <div class='content'>
-    <h3>Single WebFITS Instance (Canvas)</h3>
-    <div id="wicked-science-visualization"></div>
+    <h3>Multiple WebFITS Instances (WebGL)</h3>
+    <div id="green-wicked-science-visualization" class='visualization'></div>
+    <div id="red-wicked-science-visualization" class='visualization'></div>
+    <div id="ir-wicked-science-visualization" class='visualization'></div>
   </div>
 </body>
 </html>
