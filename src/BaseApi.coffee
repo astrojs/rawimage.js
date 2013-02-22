@@ -2,15 +2,15 @@
 class BaseApi
   
   # Setup the DOM with a canvas and get context
-  constructor: (elem, @dimension) ->
-    @width = @height = @dimension
+  constructor: (el, dimension) ->
+    @width = @height = dimension
     
     # Create and attach canvas to DOM
     @canvas = document.createElement('canvas')
     @canvas.setAttribute('width', @width)
     @canvas.setAttribute('height', @height)
     
-    elem.appendChild(@canvas)
+    el.appendChild(@canvas)
     
     # Lookup table for loaded images
     @id = 0

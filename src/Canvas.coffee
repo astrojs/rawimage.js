@@ -2,43 +2,50 @@
 BaseApi = @astro.WebFITS.BaseApi
 
 class Api extends BaseApi
-  nTextures: 0
-  textures: {}
-  alpha: 0.03
-  Q: 1.0
-  scale: {}
+  nImages: 0
+  images: {}
+  scales: {}
   
-  constructor: ->
-    super
+  
+  #
+  # Private Methods
+  #
+  
+  _getContext: ->
     
-    # Set default stretch function
-    @drawGrayscale = @drawGrayscaleLinear
+    # Style the parent element
+    parentStyle = @canvas.parentElement.style
+    parentStyle.width = @canvas.width
+    parentStyle.height = @canvas.height
+    parentStyle.overflow = 'hidden'
     
-    # Difference debounce rates depending on device
-    debounceRate = if /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) then 150 else 50
-    
-    # Debounced draw functions for better perceived performance
-    @drawColorDebounce      = _.debounce(@drawColor, debounceRate)
-    @drawGrayscaleDebounce  = _.debounce( =>
-      @drawGrayscale(@currentBand)
-    , debounceRate)
-    
-    # Custom event for broadcasting new dataset
-    @texReadyEvt = document.createEvent("HTMLEvents")
-    @texReadyEvt.initEvent("astro:webfits:texready", false, true)
-    
-    # Bind function to event
-    document.addEventListener("astro:webfits:texready", @textureLoaded, false)
-    
-  getContext: ->
     # Flip Y axis with CSS
+    @canvas.style.transform = 'scaleY(-1)'
     @canvas.style.webkitTransform = 'scaleY(-1)'
     @canvas.style.MozTransform    = 'scaleY(-1)'
     @ctx = @canvas.getContext('2d')
     
+    # Set default draw function
+    @draw = @drawLinear
+    
     return @ctx
+    
+  _applyTransforms: ->
+    transforms = [
+      "scaleX(#{@zoom})",
+      "scaleY(#{-@zoom})",
+      "translateX(#{@xOffset}px)",
+      "translateY(#{@yOffset}px)"
+    ].join(' ')
+    @canvas.style.webkitTransform = transforms
+    @canvas.style.MozTransform    = transforms
   
-  setupMouseInteraction: =>
+  #
+  # Public Methods
+  #
+  
+  # TODO: Check if this is necessary
+  setupControls: ->
     super
     
     @xOffset  = 0
@@ -70,58 +77,60 @@ class Api extends BaseApi
       @yOffset = @yOldOffset - (yDelta / @zoom)
       
       @draw()
+  
+  # Store the image
+  loadImage: (identifier, arr, width, height) ->
+    @images[identifier] =
+      arr: new Float32Array(arr)
+      width: width
+      height: height
     
-  # Store a reference to the color bands on the object
-  loadTexture: (band, data) =>
-    @textures[band] = new Float32Array(data)
-    document.dispatchEvent(@texReadyEvt)
+    @setImage(identifier) unless @currentImage
+    @nImages += 1
   
-  textureLoaded: =>
-    @nTextures += 1
-    if @nTextures is 5
-      @canvas.style.webkitTransform = "scaleX(1) scaleY(-1)"
-      @canvas.style.MozTransform    = "scaleX(1) scaleY(-1)"
-    @nTextures %= 5
+  # Set the image
+  setImage: (identifier) ->
+    @currentImage = identifier
   
-  setScale: (band, value) ->
-    @scale[band] = value
-    @drawColorDebounce()
+  # Set the stretch parameter for grayscale images
+  setStretch: (stretch) ->
+    switch stretch
+      when 'logarithm'
+        @draw = @drawLog
+      when 'sqrt'
+        @draw = @drawSqrt
+      when 'arcsinh'
+        @draw = @drawAsinh
+      when 'power'
+        @draw = @drawPower
+      else
+        @draw = @drawLinear
+    
+    @draw()
   
+  # Set the minimum and maximum pixels for scaling grayscale images.
   setExtent: (min, max) ->
-    @minimum = (@MAXIMUM - @MINIMUM) * min / @steps + @MINIMUM
-    @maximum = (@MAXIMUM - @MINIMUM) * max / @steps + @MINIMUM
-    @drawGrayscaleDebounce()
+    @minimum = min
+    @maximum = max
+    @draw()
+  
+  # Set scales for each channel in the color composite
+  setScales: (r, g, b) ->
+    @scales.r = r
+    @scales.g = g
+    @scales.b = b
+    @draw()
   
   setAlpha: (value) ->
     @alpha = value
-    @drawColorDebounce()
+    @draw()
   
   setQ: (value) ->
     @Q = value
-    @drawColorDebounce()
+    @draw()
   
-  # Set the stretch parameter for grayscale images
-  setStretch: (value) =>
-    switch value
-      when 'logarithm'
-        @drawGrayscale = @drawGrayscaleLog
-      when 'sqrt'
-        @drawGrayscale = @drawGrayscaleSqrt
-      when 'arcsinh'
-        @drawGrayscale = @drawGrayscaleArcsinh
-      when 'power'
-        @drawGrayscale = @drawGrayscalePower
-      else
-        @drawGrayscale = @drawGrayscaleLinear
-    
-    @drawGrayscale()
-  
-  setBand: (band) =>
-    @activeBand = band
-  
-  drawGrayscaleLinear: =>
-    # Cache the data
-    data = @textures[@activeBand]
+  drawLinear: ->
+    data = @images[@currentImage].arr
     
     # Get canvas data
     imgData = @ctx.getImageData(0, 0, @width, @height)
@@ -140,10 +149,10 @@ class Api extends BaseApi
       
     imgData.data = arr
     @ctx.putImageData(imgData, 0, 0)
+    @_applyTransforms()
   
-  drawGrayscaleLog: =>
-    # Cache the data
-    data = @textures[@activeBand]
+  drawLog: ->
+    data = @images[@currentImage].arr
     
     # Get canvas data
     imgData = @ctx.getImageData(0, 0, @width, @height)
@@ -166,11 +175,11 @@ class Api extends BaseApi
 
     imgData.data = arr
     @ctx.putImageData(imgData, 0, 0)
+    @_applyTransforms()
       
   # FIXME: Does not match the WebGL implementation
-  drawGrayscaleSqrt: =>
-    # Cache the data
-    data = @textures[@activeBand]
+  drawSqrt: ->
+    data = @images[@currentImage].arr
     
     # Get the canvas
     imgData = @ctx.getImageData(0, 0, @width, @height)
@@ -191,10 +200,10 @@ class Api extends BaseApi
       
     imgData.data = arr
     @ctx.putImageData(imgData, 0, 0)
+    @_applyTransforms()
   
-  drawGrayscaleArcsinh: =>
-    # Cache the data
-    data = @textures[@activeBand]
+  drawAsinh: ->
+    data = @images[@currentImage].arr
     
     # Get the canvas
     imgData = @ctx.getImageData(0, 0, @width, @height)
@@ -216,10 +225,10 @@ class Api extends BaseApi
       
     imgData.data = arr
     @ctx.putImageData(imgData, 0, 0)
+    @_applyTransforms()
   
-  drawGrayscalePower: =>
-    # Cache the data
-    data = @textures[@activeBand]
+  drawPower: ->
+    data = @images[@currentImage].arr
     
     # Get the canvas
     imgData = @ctx.getImageData(0, 0, @width, @height)
@@ -240,16 +249,7 @@ class Api extends BaseApi
       
     imgData.data = arr
     @ctx.putImageData(imgData, 0, 0)
-  
-  draw: =>
-    transform = [
-      "scaleX(#{@zoom})",
-      "scaleY(#{-@zoom})",
-      "translateX(#{@xOffset}px)",
-      "translateY(#{@yOffset}px)"
-    ].join(' ')
-    @canvas.style.webkitTransform = transform
-    @canvas.style.MozTransform    = transform
+    @_applyTransforms()
   
   # TODO: Improve performance using Int32Array, some bitwise operators and ternary clamp function
   drawColor: =>
