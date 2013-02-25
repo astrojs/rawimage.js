@@ -11,7 +11,6 @@ A JavaScript library to visualize astronomical images in a web browser.  This li
 
 Extending these should be straight-forward.
 
-###### Note: Currently only the WebGL API works.
 
 ## API
 
