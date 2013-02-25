@@ -14,8 +14,8 @@ class Api extends BaseApi
     
     # Style the parent element
     parentStyle = @canvas.parentElement.style
-    parentStyle.width = @canvas.width
-    parentStyle.height = @canvas.height
+    parentStyle.width = "#{@canvas.width}px"
+    parentStyle.height = "#{@canvas.height}px"
     parentStyle.overflow = 'hidden'
     
     # Flip Y axis with CSS
