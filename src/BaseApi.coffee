@@ -1,5 +1,6 @@
 
 class BaseApi
+  nImages: 0
   
   # Setup the DOM with a canvas and get context
   constructor: (el, dimension) ->

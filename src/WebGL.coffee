@@ -159,6 +159,8 @@ class Api extends BaseApi
     
     # TODO: Remove need to cast to Float32 array
     ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.LUMINANCE, width, height, 0, ctx.LUMINANCE, ctx.FLOAT, new Float32Array(arr))
+    
+    @nImages += 1
   
   # Select the image to render.  This function is to be used only for grayscale renderings.
   setImage: (identifier) ->
