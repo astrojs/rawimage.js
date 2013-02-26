@@ -3,11 +3,12 @@ BaseApi = @astro.WebFITS.BaseApi
 Shaders = @astro.WebFITS.Shaders
 
 class Api extends BaseApi
-  
   fShaders: ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color']
-  programs: {}
-  previousProgram: null
   
+  constructor: ->
+    @programs = {}
+    
+    super
   
   #
   # Private Methods
@@ -113,7 +114,7 @@ class Api extends BaseApi
       ctx.uniform1f(scaleLocation, 2 / width)
     
     # Set default program
-    @currentProgram = @previousProgram = @programs.linear
+    @currentProgram = @programs.linear
     
     # Create texture coordinate buffer
     texCoordBuffer = ctx.createBuffer()

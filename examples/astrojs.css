@@ -15,3 +15,14 @@ body {
 .visualization {
   display: inline-block;
 }
+
+canvas {
+  cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+canvas:active {
+  cursor: move;
+}

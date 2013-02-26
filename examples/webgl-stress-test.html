@@ -1,0 +1,133 @@
+<html>
+<head>
+  <link rel="stylesheet" href="/examples/astrojs.css" type="text/css" charset="utf-8">
+  <script type="text/javascript" src="lib/fits.js"></script>
+  <script type="text/javascript" src="/lib/webfits-gl.js"></script>
+  <script type="text/javascript">
+  
+  // Define callback to be executed after image is received from the server
+  function getImage(f, opts) {
+    
+    // Get first data unit
+    var dataunit = f.getDataUnit();
+    opts.dataunit = f.getDataUnit();
+    
+    // Asynchronously get pixels representing the image
+    dataunit.getFrameAsync(0, createVisualization, opts);
+  }
+  
+  // Define callback for when pixels have been read from file
+  function createVisualization(arr, opts) {
+    var dataunit = opts.dataunit;
+    
+    var width = dataunit.width;
+    var height = dataunit.height;
+    var extent = dataunit.getExtent(arr);
+    
+    // Reference WebFITS object and load the image
+    var webfits = opts.webfits;
+    webfits.loadImage(opts.identifier, arr, width, height);
+    webfits.setExtent(extent[0], extent[1]);
+    
+    // Initialize the color shader when all three layers are imported
+    if (Object.keys(webfits.lookup).length === 5) {
+      // Specify each rgb channel using the identifiers
+      webfits.setScales(1.0, 1.0, 1.0)
+      webfits.setAlpha(0.03);
+      webfits.setQ(1.0);
+      webfits.drawColor('i', 'r', 'g');
+      console.log(webfits);
+    }
+  }
+  
+  function main() {
+    // Define paths
+    var root = "http://www.spacewarps.org.s3.amazonaws.com/beta/subjects/raw/";
+    var paths = [
+      "CFHTLS_082_0291_g.fits.fz",
+      "CFHTLS_082_0291_i.fits.fz",
+      "CFHTLS_082_0291_r.fits.fz",
+      "CFHTLS_082_0291_u.fits.fz",
+      "CFHTLS_082_0291_z.fits.fz",
+      "CFHTLS_082_0292_g.fits.fz",
+      "CFHTLS_082_0292_i.fits.fz",
+      "CFHTLS_082_0292_r.fits.fz",
+      "CFHTLS_082_0292_u.fits.fz",
+      "CFHTLS_082_0292_z.fits.fz",
+      "CFHTLS_082_0293_g.fits.fz",
+      "CFHTLS_082_0293_i.fits.fz",
+      "CFHTLS_082_0293_r.fits.fz",
+      "CFHTLS_082_0293_u.fits.fz",
+      "CFHTLS_082_0293_z.fits.fz",
+      "CFHTLS_082_0294_g.fits.fz",
+      "CFHTLS_082_0294_i.fits.fz",
+      "CFHTLS_082_0294_r.fits.fz",
+      "CFHTLS_082_0294_u.fits.fz",
+      "CFHTLS_082_0294_z.fits.fz",
+      "CFHTLS_082_0295_g.fits.fz",
+      "CFHTLS_082_0295_i.fits.fz",
+      "CFHTLS_082_0295_r.fits.fz",
+      "CFHTLS_082_0295_u.fits.fz",
+      "CFHTLS_082_0295_z.fits.fz",
+      "CFHTLS_082_0296_g.fits.fz",
+      "CFHTLS_082_0296_i.fits.fz",
+      "CFHTLS_082_0296_r.fits.fz",
+      "CFHTLS_082_0296_u.fits.fz",
+      "CFHTLS_082_0296_z.fits.fz",
+      "CFHTLS_082_0297_g.fits.fz",
+      "CFHTLS_082_0297_i.fits.fz",
+      "CFHTLS_082_0297_r.fits.fz",
+      "CFHTLS_082_0297_u.fits.fz",
+      "CFHTLS_082_0297_z.fits.fz",
+      "CFHTLS_082_0298_g.fits.fz",
+      "CFHTLS_082_0298_i.fits.fz",
+      "CFHTLS_082_0298_r.fits.fz",
+      "CFHTLS_082_0298_u.fits.fz",
+      "CFHTLS_082_0298_z.fits.fz",
+      "CFHTLS_082_0299_g.fits.fz",
+      "CFHTLS_082_0299_i.fits.fz",
+      "CFHTLS_082_0299_r.fits.fz",
+      "CFHTLS_082_0299_u.fits.fz",
+      "CFHTLS_082_0299_z.fits.fz",
+      "CFHTLS_082_0300_g.fits.fz",
+      "CFHTLS_082_0300_i.fits.fz",
+      "CFHTLS_082_0300_r.fits.fz",
+      "CFHTLS_082_0300_u.fits.fz",
+      "CFHTLS_082_0300_z.fits.fz"
+    ];
+    
+    var els = document.querySelectorAll('.visualization');
+    for (var i = 0; i < els.length; i += 1) {
+      var webfits = new astro.WebFITS(els[i], 440);
+      
+      for (var j = 0; j < 5; j += 1) {
+        var index = i * 5 + j;
+        var filename = paths[index];
+        var identifier = filename.split('.')[0].slice(-1);
+        var path = root + filename;
+        var f = new astro.FITS.File(path, getImage, {identifier: identifier, webfits: webfits});
+      }
+    }
+  }
+  </script>
+  
+  
+</head>
+
+<body onload='main()'>
+  <div class='content'>
+    <h3>WebFITS Stress Test (WebGL)</h3>
+    <div class='visualization'></div>
+    <div class='visualization'></div>
+    <div class='visualization'></div>
+    <div class='visualization'></div>
+    <div class='visualization'></div>
+    <div class='visualization'></div>
+    <div class='visualization'></div>
+    <div class='visualization'></div>
+    <div class='visualization'></div>
+    <div class='visualization'></div>
+    <div class='visualization'></div>
+  </div>
+</body>
+</html>
