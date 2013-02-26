@@ -14,8 +14,8 @@ Extending these should be straight-forward.
 
 ## API
 
-    setupControls()
-Allow panning and zooming on the visualization context.
+    setupControls(callback)
+Allow panning and zooming on the visualization context.  `callback` is an optional user-defined function that accepts three arguments: `x`, `y`, and `opts`.  The callback is executed when the mouse moves over the visualization context, passing the `x` and `y` coordinates of the image reference frame.  This is useful for getting the pixel value at a given coordinate.  See examples.
 
     loadImage(identifier, arr, width, height)
 Imports an image to the visualization.  `identifier` is a user chosen name for the image. `arr` is a typed array representing the image of `width` and `height`.
