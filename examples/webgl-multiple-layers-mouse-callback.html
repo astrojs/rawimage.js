@@ -1,0 +1,88 @@
+<html>
+<head>
+  <link rel="stylesheet" href="/examples/astrojs.css" type="text/css" charset="utf-8">
+  <script type="text/javascript" src="lib/fits.js"></script>
+  <script type="text/javascript" src="/lib/webfits-gl.js"></script>
+  <script type="text/javascript">
+  
+  // Define callback to be executed after image is received from the server
+  function getImage(f, opts) {
+    
+    // Get first data unit
+    var dataunit = f.getDataUnit();
+    opts.dataunit = dataunit
+    
+    // Asynchronously get pixels representing the image
+    dataunit.getFrameAsync(0, createVisualization, opts);
+  }
+  
+  // Callback to capture coordinates in image reference frame
+  function onmousemove(x, y, opts) {
+    var width = opts.width;
+    var arrays = opts.arrays;
+    for (identifier in arrays) {
+      arr = arrays[identifier];
+      console.log(identifier, arr[x + y * width]);
+    }
+  }
+  
+  // Define callback for when pixels have been read from file
+  function createVisualization(arr, opts) {
+    var dataunit = opts.dataunit;
+    
+    var width = dataunit.width;
+    var height = dataunit.height;
+    var extent = dataunit.getExtent(arr);
+    
+    // Reference WebFITS object and load the image
+    var webfits = opts.webfits;
+    webfits.loadImage(opts.identifier, arr, width, height);
+    webfits.setExtent(extent[0], extent[1]);
+    
+    // Setup mouse controls
+    opts.arrays[opts.identifier] = arr;
+    
+    // Initialize the color shader when all three layers are imported
+    if (Object.keys(webfits.lookup).length === 3) {
+      opts.width = width;
+      webfits.setupControls(onmousemove, opts);
+      
+      // Specify each rgb channel using the identifiers
+      webfits.setScales(1.0, 1.0, 1.0)
+      webfits.setAlpha(0.03);
+      webfits.setQ(1.0);
+      webfits.drawColor('ir', 'red', 'green');
+      
+      window.webfits = webfits;
+    }
+  }
+  
+  function main() {
+    var arrays = {}
+    
+    // Define paths to files
+    var path1 = '/examples/data/m101_i.fits';
+    var path2 = '/examples/data/m101_r.fits';
+    var path3 = '/examples/data/m101_g.fits';
+    
+    // Initialize WebFITS object
+    var el = document.querySelector('#wicked-science-visualization');
+    var webfits = new astro.WebFITS(el, 512);
+    
+    var f1 = new astro.FITS.File(path1, getImage, {identifier: 'ir', webfits: webfits, arrays: arrays});
+    var f2 = new astro.FITS.File(path2, getImage, {identifier: 'red', webfits: webfits, arrays: arrays});
+    var f3 = new astro.FITS.File(path3, getImage, {identifier: 'green', webfits: webfits, arrays: arrays});
+  }
+  </script>
+  
+  
+</head>
+
+<body onload='main()'>
+  <div class='content'>
+    <h3>Single WebFITS Instance with Multiple Layers and Mouse Callback (WebGL)</h3>
+    <h6>(open the javascript console and type <code>webfits.setAlpha(0.001)</code>)</h6>
+    <div id="wicked-science-visualization"></div>
+  </div>
+</body>
+</html>
