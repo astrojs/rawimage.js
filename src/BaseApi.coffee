@@ -31,8 +31,9 @@ class BaseApi
     @zoomX      = @zoom
     @zoomY      = @zoom
   
-  # Setup panning and zooming
-  setupControls: ->
+  # Setup panning and zooming with optional callback.
+  # The callback is used to capture the coordinates in image space on mouse move.
+  setupControls: (callback = null, opts = null) ->
     
     @canvas.onmousedown = (e) =>
       @drag = true
@@ -55,7 +56,7 @@ class BaseApi
       
       @draw()
     
-    @canvas.onmousemove = (e) =>
+    _onmousemove = (e) =>
       return unless @drag
       
       xDelta = e.clientX - @xMouseDown
@@ -65,6 +66,20 @@ class BaseApi
       @yOffset = @yOldOffset - (yDelta / @height / @zoom * 2.0)
       
       @draw()
+    
+    if callback?
+      @canvas.onmousemove = (e) =>
+        xDelta = -1 * (@width / 2 - e.offsetX) / @width / @zoom * 2.0
+        yDelta = (@height / 2 - e.offsetY) / @height / @zoom * 2.0
+        
+        x = ((-1 * (@xOffset + 0.5)) + xDelta) + 1.5 << 0
+        y = ((-1 * (@yOffset + 0.5)) + yDelta) + 1.5 << 0
+        callback.call(@, x, y, opts)
+        
+        _onmousemove(e)
+    else
+      @canvas.onmousemove = (e) =>
+        _onmousemove(e)
     
     @canvas.onmouseout = (e) =>
       @drag = false

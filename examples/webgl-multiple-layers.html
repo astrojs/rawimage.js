@@ -22,10 +22,12 @@
     
     var width = dataunit.width;
     var height = dataunit.height;
+    var extent = dataunit.getExtent(arr);
     
     // Reference WebFITS object and load the image
     var webfits = opts.webfits;
     webfits.loadImage(opts.identifier, arr, width, height);
+    webfits.setExtent(extent[0], extent[1]);
     
     // Initialize the color shader when all three layers are imported
     if (Object.keys(webfits.lookup).length === 3) {
@@ -35,6 +37,7 @@
       webfits.setAlpha(0.03);
       webfits.setQ(1.0);
       webfits.drawColor('ir', 'red', 'green');
+      window.webfits = webfits;
     }
   }
   
