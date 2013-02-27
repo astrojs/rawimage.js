@@ -177,6 +177,7 @@ class Api extends BaseApi
   setStretch: (stretch) ->
     @currentProgram = @programs[stretch]
     @ctx.useProgram(@currentProgram)
+    @setImage(@currentImage)  # update program with current texture
     @draw()
   
   # Set the minimum and maximum pixels for scaling grayscale images.
