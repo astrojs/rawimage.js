@@ -2,9 +2,12 @@
 BaseApi = @astro.WebFITS.BaseApi
 
 class Api extends BaseApi
-  images: {}
-  scales: {}
   
+  constructor: ->
+    @images = {}
+    @scales = {}
+    
+    super
   
   #
   # Private Methods

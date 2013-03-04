@@ -9,6 +9,8 @@ Shaders.STIFF: [
   "uniform sampler2D u_tex1;"
   "uniform sampler2D u_tex2;"
   
+  "uniform vec2 u_extent;"
+  
   "void main() {"
     # Get the pixel intensities from textures
     "vec4 pixel_v_r = texture2D(u_tex0, v_textureCoord);"
@@ -19,6 +21,8 @@ Shaders.STIFF: [
     "float r = (pixel_v_r[0]);"
     "float g = (pixel_v_g[0]);"
     "float b = (pixel_v_b[0]);"
+    
+    
     
     # Compute the total intensity and stretch factor
     "float I = (r + g + b) / 3.0;"
