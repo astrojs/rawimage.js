@@ -129,6 +129,10 @@ class Api extends BaseApi
     @scales.b = b
     @draw()
   
+  setCalibration: (value) ->
+    @calibration = value
+    @draw()
+  
   setAlpha: (value) ->
     @alpha = value
     @draw()
@@ -265,9 +269,13 @@ class Api extends BaseApi
     gImage = @images[@g].arr
     bImage = @images[@b].arr
     
-    rScale = @scales.r
-    gScale = @scales.g
-    bScale = @scales.b
+    rFactor = @scales.r * @calibration
+    gFactor = @scales.g * @calibration
+    bFactor = @scales.b * @calibration
+    
+    # Cache parameters in scope
+    alpha = @alpha
+    Q = @Q
     
     # Initialize offscreen canvas and get context
     canvas = document.createElement('canvas')
@@ -282,13 +290,13 @@ class Api extends BaseApi
     length = arr.length
     while length -= 4
       index = length / 4
-      r = rImage[index] * rScale
-      g = gImage[index] * gScale
-      b = bImage[index] * bScale
+      r = rImage[index] * rFactor
+      g = gImage[index] * gFactor
+      b = bImage[index] * bFactor
       
       # Compute total intensity and stretch factor
       I = r + g + b + 1e-10
-      factor = @arcsinh(@alpha * @Q * I) / (@Q * I)
+      factor = @arcsinh(alpha * Q * I) / (Q * I)
       
       arr[length + 0] = 255 * r * factor
       arr[length + 1] = 255 * g * factor

@@ -37,7 +37,8 @@
     // Initialize the color shader when all three layers are imported
     if (Object.keys(webfits.lookup).length === 5) {
       // Specify each rgb channel using the identifiers
-      webfits.setScales(1.0, 1.0, 1.0)
+      webfits.setScales(1.0, 1.0, 1.0);
+      webfits.setCalibration(1.0);
       webfits.setAlpha(0.03);
       webfits.setQ(1.0);
       webfits.drawColor('i', 'r', 'g');
@@ -252,7 +253,7 @@
 
 <body onload='main()'>
   <div class='content'>
-    <h3>WebFITS Stress Test (WebGL)</h3>
+    <h3>WebFITS Stress Test (Canvas)</h3>
     <p>What's going on here?</p>
     <p>One-hundred and seventy five images will be sent to your browser.  As each image is received, a new thread is instantiated, the bytes are interpreted as compressed values, these values are decompressed to pixel intensities, and each one is sent to the graphics card as a texture.  All of this happens in JavaScript.  The image format is not JPG, PNG or TIFF.  Not even GIF.  Rather, the image format is FITS, the standard format for astronomical data.  </p>
     <p>Each image is a color composite made using three images, smashed together using a canvas.</p>

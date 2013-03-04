@@ -212,6 +212,15 @@ class Api extends BaseApi
     
     ctx.drawArrays(ctx.TRIANGLES, 0, 6)
   
+  # Calibration factor typically used to convert pixel values to flux units
+  setCalibration: (value) ->
+    ctx = @ctx
+    ctx.useProgram(@programs.color)
+    
+    location = ctx.getUniformLocation(@programs.color, 'u_calibration')
+    ctx.uniform1f(location, value)
+    ctx.drawArrays(ctx.TRIANGLES, 0, 6)
+  
   # Set the alpha parameter for the Lupton algorithm
   setAlpha: (value) ->
     ctx = @ctx
