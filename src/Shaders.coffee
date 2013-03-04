@@ -157,7 +157,10 @@ Shaders =
     "uniform float u_g_scale;"
     "uniform float u_b_scale;"
     
-    "uniform float u_calibration;"
+    "uniform float u_r_calibration;"
+    "uniform float u_g_calibration;"
+    "uniform float u_b_calibration;"
+    
     "uniform float u_alpha;"
     "uniform float u_Q;"
     
@@ -174,9 +177,9 @@ Shaders =
       "vec4 pixel_v_b = texture2D(u_tex2, v_textureCoord);"
       
       # Calibrate pixels to flux units and apply scale
-      "float r = (pixel_v_r[0]) * u_calibration * u_r_scale;"
-      "float g = (pixel_v_g[0]) * u_calibration * u_g_scale;"
-      "float b = (pixel_v_b[0]) * u_calibration * u_b_scale;"
+      "float r = (pixel_v_r[0]) * u_r_calibration * u_r_scale;"
+      "float g = (pixel_v_g[0]) * u_g_calibration * u_g_scale;"
+      "float b = (pixel_v_b[0]) * u_b_calibration * u_b_scale;"
       
       # Compute the total intensity and stretch factor
       "float I = r + g + b + 1e-10;"
