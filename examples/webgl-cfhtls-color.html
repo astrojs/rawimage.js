@@ -91,6 +91,11 @@
     var f1 = new astro.FITS.File(path1, getImage, {identifier: 'ir', webfits: webfits});
     var f2 = new astro.FITS.File(path2, getImage, {identifier: 'red', webfits: webfits});
     var f3 = new astro.FITS.File(path3, getImage, {identifier: 'green', webfits: webfits});
+    
+    // Setup teardown button
+    document.querySelector('.teardown').onclick = function(e) {
+      webfits.teardown();
+    }
   }
   </script>
   
@@ -100,6 +105,7 @@
 <body onload='main()'>
   <div class='content'>
     <h3>Single WebFITS Instance with Multiple Layers (WebGL)</h3>
+    <button class='teardown'>Teardown</button>
     <div id="wicked-science-visualization"></div>
   </div>
 </body>

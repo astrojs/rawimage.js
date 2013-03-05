@@ -13,6 +13,8 @@ Extending these should be straight-forward.
 
 
 ## API
+    getContext()
+Setup a visualization context.  For the WebGL implementation this function sets up all programs, shaders and buffers.  For the Canvas implementation this function just extracts the 2d context and sets a few internal variables.  This function is automatically called when a new WebFITS object is instantiated, but if `teardown` is called, this function needs to be explicitly called again.
 
     setupControls(callback)
 Allow panning and zooming on the visualization context.  `callback` is an optional user-defined function that accepts three arguments: `x`, `y`, and `opts`.  The callback is executed when the mouse moves over the visualization context, passing the `x` and `y` coordinates of the image reference frame.  This is useful for getting the pixel value at a given coordinate.  See examples.

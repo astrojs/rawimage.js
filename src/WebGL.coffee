@@ -6,13 +6,18 @@ class Api extends BaseApi
   fShaders: ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color']
   
   constructor: ->
-    @programs = {}
-    
+    @_reset()
     super
   
   #
   # Private Methods
   #
+  
+  _reset: ->
+    @programs = {}
+    @textures = {}
+    @buffers = []
+    @shaders = []
   
   # Check support for floating point textures
   _getExtension: ->
@@ -32,7 +37,8 @@ class Api extends BaseApi
       throw "Error compiling shader #{shader}: #{lastError}"
       ctx.deleteShader(shader)
       return null
-      
+    
+    @shaders.push(shader)
     return shader
 
   # Initialize program with vertex and fragment shader
@@ -67,9 +73,13 @@ class Api extends BaseApi
     @ctx.uniform2f(offsetLocation, @xOffset, @yOffset)
     @ctx.uniform1f(scaleLocation, @zoom)
   
+  #
+  # Public Methods
+  #
+  
   # Initializes WebGL context, programs and buffers.  Error handling is done by checking the
   # return value of this function.
-  _getContext: ->
+  getContext: ->
     
     # Initialize context
     for name in ['webgl', 'experimental-webgl']
@@ -132,11 +142,10 @@ class Api extends BaseApi
     ctx.enableVertexAttribArray(positionLocation)
     ctx.vertexAttribPointer(positionLocation, 2, ctx.FLOAT, false, 0, 0)
     
+    @buffers.push(texCoordBuffer)
+    @buffers.push(buffer)
+    
     return ctx
-  
-  #
-  # Public Methods
-  #
   
   # Create a texture from an array representing an image.  Optional parameter computes
   # relevant statistics used for rendering grayscale images.
@@ -145,12 +154,11 @@ class Api extends BaseApi
     @_setRectangle(ctx, width, height)
     
     # Cache id, assign image to identifier and increment
-    index = @id
-    @lookup[identifier] = @id
-    @id += 1
+    index = @nImages
+    @lookup[identifier] = @nImages
     
     # Set up new texture
-    ctx.activeTexture(ctx["TEXTURE#{index}"])
+    ctx.activeTexture(ctx.TEXTURE0 + @nImages)
     texture = ctx.createTexture()
     ctx.bindTexture(ctx.TEXTURE_2D, texture)
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE)
@@ -161,13 +169,17 @@ class Api extends BaseApi
     # TODO: Remove need to cast to Float32 array
     ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.LUMINANCE, width, height, 0, ctx.LUMINANCE, ctx.FLOAT, new Float32Array(arr))
     
+    # Set default for current image
+    @currentImage = identifier unless @currentImage?
+    
+    # Add texture to object for referencing later
+    @textures[identifier] = texture
     @nImages += 1
   
   # Select the image to render.  This function is to be used only for grayscale renderings.
   setImage: (identifier) ->
     index = @lookup[identifier]
-    
-    @ctx.activeTexture(@ctx["TEXTURE#{index}"])
+    @ctx.activeTexture(@ctx.TEXTURE0 + index)
     location = @ctx.getUniformLocation(@currentProgram, "u_tex")
     @ctx.uniform1i(location, index)
     
@@ -276,6 +288,31 @@ class Api extends BaseApi
     location = @ctx.getUniformLocation(@currentProgram, 'u_scale')
     @ctx.uniform1f(location, @zoom)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
+
+  teardown: ->
+    ctx = @ctx
+    
+    # Remove all textures ...
+    for key, texture of @textures
+      ctx.deleteTexture(texture)
+    
+    # buffers ...
+    for buffer in @buffers
+      ctx.deleteBuffer(buffer)
+    
+    # shaders ...
+    for shader in @shaders
+      ctx.deleteShader(shader)
+    
+    # programs ...
+    for key, program of @programs
+      ctx.deleteProgram(program)
+    
+    # and the canvas
+    @el.removeChild(@canvas)
+    
+    @ctx = undefined
+    @_reset()
 
 
 version = @astro.WebFITS.version

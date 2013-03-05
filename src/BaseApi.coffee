@@ -1,9 +1,8 @@
 
 class BaseApi
-  nImages: 0
   
   # Setup the DOM with a canvas and get context
-  constructor: (el, dimension) ->
+  constructor: (@el, dimension) ->
     @width = @height = dimension
     
     # Create and attach canvas to DOM
@@ -11,13 +10,13 @@ class BaseApi
     @canvas.setAttribute('width', @width)
     @canvas.setAttribute('height', @height)
     
-    el.appendChild(@canvas)
+    @el.appendChild(@canvas)
     
     # Lookup table for loaded images
-    @id = 0
-    @lookup = {}
+    @nImages  = 0
+    @lookup   = {}
     
-    return null unless @_getContext()
+    return null unless @getContext()
     
     @xOffset    = -@width / 2
     @yOffset    = -@height / 2

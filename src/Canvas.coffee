@@ -4,16 +4,31 @@ BaseApi = @astro.WebFITS.BaseApi
 class Api extends BaseApi
   
   constructor: ->
-    @images = {}
-    @scales = {}
-    
+    @_reset()
     super
   
   #
   # Private Methods
   #
+  _reset: ->
+    @images = {}
+    @scales = {}
   
-  _getContext: ->
+  _applyTransforms: ->
+    transforms = [
+      "scaleX(#{@zoom})",
+      "scaleY(#{-@zoom})",
+      "translateX(#{@xOffset}px)",
+      "translateY(#{@yOffset}px)"
+    ].join(' ')
+    @canvas.style.transform       = transforms
+    @canvas.style.webkitTransform = transforms
+    @canvas.style.MozTransform    = transforms
+  
+  #
+  # Public Methods
+  #
+  getContext: ->
     
     # Style the parent element
     parentStyle = @canvas.parentElement.style
@@ -31,21 +46,6 @@ class Api extends BaseApi
     @draw = @drawLinear
     
     return @ctx
-    
-  _applyTransforms: ->
-    transforms = [
-      "scaleX(#{@zoom})",
-      "scaleY(#{-@zoom})",
-      "translateX(#{@xOffset}px)",
-      "translateY(#{@yOffset}px)"
-    ].join(' ')
-    @canvas.style.transform       = transforms
-    @canvas.style.webkitTransform = transforms
-    @canvas.style.MozTransform    = transforms
-  
-  #
-  # Public Methods
-  #
   
   # TODO: Check if this is necessary
   setupControls: ->
@@ -84,9 +84,8 @@ class Api extends BaseApi
   # Store the image
   loadImage: (identifier, arr, width, height) ->
     # Cache id, assign image to identifier and increment
-    index = @id
-    @lookup[identifier] = @id
-    @id += 1
+    index = @nImages
+    @lookup[identifier] = @nImages
     
     @images[identifier] =
       arr: new Float32Array(arr)
@@ -315,6 +314,11 @@ class Api extends BaseApi
   wheelHandler: (e) =>
     super
     @draw()
+  
+  teardown: ->
+    @el.removeChild(@canvas)
+    @ctx = undefined
+    @_reset()
   
   #
   # Stretch Functions
