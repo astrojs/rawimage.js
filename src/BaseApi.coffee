@@ -23,7 +23,7 @@ class BaseApi
     parentStyle.width = "#{@canvas.width}px"
     parentStyle.height = "#{@canvas.height}px"
     parentStyle.overflow = 'hidden'
-    parentStyle.background = '#151515'
+    parentStyle.backgroundColor = '#151515'
     
     # Set control parameters
     @xOffset    = -@width / 2
