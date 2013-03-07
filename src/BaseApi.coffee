@@ -18,6 +18,14 @@ class BaseApi
     
     return null unless @getContext()
     
+    # Style the parent element
+    parentStyle = @canvas.parentElement.style
+    parentStyle.width = "#{@canvas.width}px"
+    parentStyle.height = "#{@canvas.height}px"
+    parentStyle.overflow = 'hidden'
+    parentStyle.background = '#151515'
+    
+    # Set control parameters
     @xOffset    = -@width / 2
     @yOffset    = -@height / 2
     @xOldOffset = @xOffset

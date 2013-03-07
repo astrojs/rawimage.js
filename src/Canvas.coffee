@@ -13,6 +13,7 @@ class Api extends BaseApi
   _reset: ->
     @images = {}
     @scales = {}
+    @calibrations = {}
   
   _applyTransforms: ->
     transforms = [
@@ -29,12 +30,6 @@ class Api extends BaseApi
   # Public Methods
   #
   getContext: ->
-    
-    # Style the parent element
-    parentStyle = @canvas.parentElement.style
-    parentStyle.width = "#{@canvas.width}px"
-    parentStyle.height = "#{@canvas.height}px"
-    parentStyle.overflow = 'hidden'
     
     # Flip Y axis with CSS
     @canvas.style.transform = 'scaleY(-1)'
@@ -128,8 +123,10 @@ class Api extends BaseApi
     @scales.b = b
     @draw()
   
-  setCalibration: (value) ->
-    @calibration = value
+  setCalibrations: (r, g, b) ->
+    @calibrations.r = r
+    @calibrations.g = g
+    @calibrations.b = b
     @draw()
   
   setAlpha: (value) ->
@@ -268,9 +265,9 @@ class Api extends BaseApi
     gImage = @images[@g].arr
     bImage = @images[@b].arr
     
-    rFactor = @scales.r * @calibration
-    gFactor = @scales.g * @calibration
-    bFactor = @scales.b * @calibration
+    rFactor = @scales.r * @calibrations.r
+    gFactor = @scales.g * @calibrations.g
+    bFactor = @scales.b * @calibrations.b
     
     # Cache parameters in scope
     alpha = @alpha
