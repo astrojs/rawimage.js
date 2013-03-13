@@ -2,6 +2,9 @@
 rm examples/lib/*
 rm examples/data/*
 
+mkdir -vp examples/lib
+mkdir -vp examples/data
+
 # Download JavaScript dependencies
 curl "https://raw.github.com/astrojs/fitsjs/master/lib/fits.js" -o 'examples/lib/fits.js'
 
