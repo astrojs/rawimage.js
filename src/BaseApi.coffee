@@ -101,7 +101,7 @@ class BaseApi
     e.preventDefault()
     
     factor = if e.shiftKey then 1.01 else 1.1
-    @zoom *= if (e.detail or e.wheelDelta) < 0 then factor else 1 / factor
+    @zoom *= if (e.detail or e.wheelDelta) < 0 then 1 / factor else factor
     
     # Probably not the most efficient way to do this ...
     @zoom = if @zoom > @maxZoom then @maxZoom else @zoom
