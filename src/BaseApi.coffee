@@ -82,6 +82,9 @@ class BaseApi
       @drag = false
     
     # Setup callbacks if exist
+    if callbacks?.onzoom?
+      @zoomCallback = callbacks.onzoom
+    
     if callbacks?.onmousedown?
       @canvas.onmousedown = (e) =>
         _onmousedown(e)
@@ -140,6 +143,7 @@ class BaseApi
     # Probably not the most efficient way to do this ...
     @zoom = if @zoom > @maxZoom then @maxZoom else @zoom
     @zoom = if @zoom < @minZoom then @minZoom else @zoom
-
+    
+    @zoomCallback?()
 
 @astro.WebFITS.BaseApi = BaseApi
