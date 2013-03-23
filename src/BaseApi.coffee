@@ -96,7 +96,7 @@ class BaseApi
         _onmouseup(e)
     else
       @canvas.onmouseup = (e) =>
-        onmouseup(e)
+        _onmouseup(e)
     
     if callbacks?.onmousemove?
       @canvas.onmousemove = (e) =>
