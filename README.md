@@ -58,3 +58,8 @@ This script downloads the latest version of [`fits.js`](http://astrojs.github.co
 otherwise a local server can be started using Python.
 
     python -m SimpleHTTPServer
+
+
+#### TODO:
+
+  * http://jsfiddle.net/JqBs8/4/

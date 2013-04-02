@@ -78,6 +78,7 @@ class Api extends BaseApi
   
   # Store the image
   loadImage: (identifier, arr, width, height) ->
+    
     # Cache id, assign image to identifier and increment
     index = @nImages
     @lookup[identifier] = @nImages
@@ -140,8 +141,12 @@ class Api extends BaseApi
   drawLinear: ->
     data = @images[@currentImage].arr
     
+    # Get dimensions
+    width   = @images[@currentImage].width
+    height  = @images[@currentImage].height
+    
     # Get canvas data
-    imgData = @ctx.getImageData(0, 0, @width, @height)
+    imgData = @ctx.getImageData(0, 0, width, height)
     arr = imgData.data
     min = @minimum
     max = @maximum
@@ -162,8 +167,12 @@ class Api extends BaseApi
   drawLog: ->
     data = @images[@currentImage].arr
     
+    # Get dimensions
+    width   = @images[@currentImage].width
+    height  = @images[@currentImage].height
+    
     # Get canvas data
-    imgData = @ctx.getImageData(0, 0, @width, @height)
+    imgData = @ctx.getImageData(0, 0, width, height)
     arr = imgData.data
     
     minimum = @minimum
@@ -189,8 +198,12 @@ class Api extends BaseApi
   drawSqrt: ->
     data = @images[@currentImage].arr
     
+    # Get dimensions
+    width   = @images[@currentImage].width
+    height  = @images[@currentImage].height
+    
     # Get the canvas
-    imgData = @ctx.getImageData(0, 0, @width, @height)
+    imgData = @ctx.getImageData(0, 0, width, height)
     arr = imgData.data
     
     minimum = @minimum
@@ -213,8 +226,12 @@ class Api extends BaseApi
   drawAsinh: ->
     data = @images[@currentImage].arr
     
+    # Get dimensions
+    width   = @images[@currentImage].width
+    height  = @images[@currentImage].height
+    
     # Get the canvas
-    imgData = @ctx.getImageData(0, 0, @width, @height)
+    imgData = @ctx.getImageData(0, 0, width, height)
     arr = imgData.data
     
     min = @scaledArcsinh(@minimum)
@@ -238,8 +255,12 @@ class Api extends BaseApi
   drawPower: ->
     data = @images[@currentImage].arr
     
+    # Get dimensions
+    width   = @images[@currentImage].width
+    height  = @images[@currentImage].height
+    
     # Get the canvas
-    imgData = @ctx.getImageData(0, 0, @width, @height)
+    imgData = @ctx.getImageData(0, 0, width, height)
     arr = imgData.data
     
     min = @minimum
@@ -273,14 +294,18 @@ class Api extends BaseApi
     alpha = @alpha
     Q = @Q
     
+    # Get dimensions of one layer
+    width   = @images[@r].width
+    height  = @images[@r].height
+    
     # Initialize offscreen canvas and get context
     canvas = document.createElement('canvas')
-    canvas.width  = @width
-    canvas.height = @height
+    canvas.width  = width
+    canvas.height = height
     ctx = canvas.getContext('2d')
     
     # Get canvas data
-    imgData = ctx.getImageData(0, 0, @width, @height)
+    imgData = ctx.getImageData(0, 0, width, height)
     arr = imgData.data
     
     length = arr.length

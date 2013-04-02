@@ -88,7 +88,7 @@ class BaseApi
     if callbacks?.onmousedown?
       @canvas.onmousedown = (e) =>
         _onmousedown(e)
-        callbacks.onmousedown.call(@, opts)
+        callbacks.onmousedown.call(@, opts, e)
     else
       @canvas.onmousedown = (e) =>
         _onmousedown(e)
@@ -96,7 +96,7 @@ class BaseApi
     if callbacks?.onmouseup?
       @canvas.onmouseup = (e) =>
         _onmouseup(e)
-        callbacks.onmouseup.call(@, opts)
+        callbacks.onmouseup.call(@, opts, e)
     else
       @canvas.onmouseup = (e) =>
         _onmouseup(e)
@@ -110,7 +110,7 @@ class BaseApi
         
         x = ((-1 * (@xOffset + 0.5)) + xDelta) + 1.5 << 0
         y = ((-1 * (@yOffset + 0.5)) + yDelta) + 1.5 << 0
-        callbacks.onmousemove.call(@, x, y, opts)
+        callbacks.onmousemove.call(@, x, y, opts, e)
     else
       @canvas.onmousemove = (e) =>
         _onmousemove(e)
@@ -118,7 +118,7 @@ class BaseApi
     if callbacks?.onmouseout?
       @canvas.onmouseout = (e) =>
         _onmouseout(e)
-        callbacks.onmouseout.call(@, opts)
+        callbacks.onmouseout.call(@, opts, e)
     else
       @canvas.onmouseout = (e) =>
         _onmouseout(e)
@@ -126,7 +126,7 @@ class BaseApi
     if callbacks?.onmouseover?
       @canvas.onmouseover = (e) =>
         _onmouseover(e)
-        callbacks.onmouseover.call(@, opts)
+        callbacks.onmouseover.call(@, opts, e)
     else
       @canvas.onmouseover = (e) =>
         _onmouseover(e)
