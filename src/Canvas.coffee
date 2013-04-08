@@ -337,6 +337,11 @@ class Api extends BaseApi
     super
     @draw()
   
+  # Return the same zoom mapping as the WebGL implementation
+  getZoom: -> return @zoom * 2 / @width
+  getXOffset: -> return @xOffset - @width / 2
+  getYOffset: -> return @yOffset - @height / 2
+  
   teardown: ->
     @el.removeChild(@canvas)
     @ctx = undefined

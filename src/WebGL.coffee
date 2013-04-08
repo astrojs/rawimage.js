@@ -288,7 +288,11 @@ class Api extends BaseApi
     location = @ctx.getUniformLocation(@currentProgram, 'u_scale')
     @ctx.uniform1f(location, @zoom)
     @ctx.drawArrays(@ctx.TRIANGLES, 0, 6)
-
+  
+  getXOffset: -> return @xOffset
+  getYOffset: -> return @yOffset
+  getZoom: -> return @zoom
+  
   teardown: ->
     ctx = @ctx
     
