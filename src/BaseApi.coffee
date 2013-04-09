@@ -139,13 +139,13 @@ class BaseApi
         _onmouseover(e)
     
     @canvas.addEventListener('mousewheel', @wheelHandler, false)
-    @canvas.addEventListener('DOMMouseScroll', @wheelHandler, false)
+    @canvas.addEventListener('wheel', @wheelHandler, false)
     
   wheelHandler: (e) =>
     e.preventDefault()
     
     factor = if e.shiftKey then 1.01 else 1.1
-    @zoom *= if (e.detail or e.wheelDelta) < 0 then 1 / factor else factor
+    @zoom *= if (e.wheelDelta or e.deltaY) < 0 then 1 / factor else factor
     
     # Probably not the most efficient way to do this ...
     @zoom = if @zoom > @maxZoom then @maxZoom else @zoom
