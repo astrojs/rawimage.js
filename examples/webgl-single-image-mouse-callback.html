@@ -44,7 +44,9 @@
     
     // Add pan and zoom controls
     opts = {arr: arr, width: width};
-    webfits.setupControls(onmousemove, opts);
+    callbacks = {onmousemove: onmousemove}
+      
+    webfits.setupControls(callbacks, opts);
     
     // Load array representation of image
     webfits.loadImage('some-identifier', arr, width, height);

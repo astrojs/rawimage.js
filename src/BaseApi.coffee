@@ -18,6 +18,10 @@ class BaseApi
     
     return null unless @getContext()
     
+    # Store the offsets of the canvas element
+    @offsetLeft = @canvas.offsetLeft
+    @offsetTop  = @canvas.offsetTop
+    
     # Style the parent element
     parentStyle = @canvas.parentElement.style
     parentStyle.width = "#{@canvas.width}px"
@@ -105,8 +109,11 @@ class BaseApi
       @canvas.onmousemove = (e) =>
         _onmousemove(e)
         
-        xDelta = -1 * (@width / 2 - e.offsetX) / @width / @zoom * 2.0
-        yDelta = (@height / 2 - e.offsetY) / @height / @zoom * 2.0
+        offsetX = e.clientX - @offsetLeft
+        offsetY = e.clientY - @offsetTop
+        
+        xDelta = -1 * (@width / 2 - offsetX) / @width / @zoom * 2.0
+        yDelta = (@height / 2 - offsetY) / @height / @zoom * 2.0
         
         x = ((-1 * (@xOffset + 0.5)) + xDelta) + 1.5 << 0
         y = ((-1 * (@yOffset + 0.5)) + yDelta) + 1.5 << 0
