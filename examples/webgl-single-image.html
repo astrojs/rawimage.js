@@ -18,7 +18,9 @@
     };
     
     // Asynchronously get pixels representing the image passing a callback and options
-    dataunit.getFrameAsync(0, createVisualization, opts);
+    arr = dataunit.getFrame(0);
+    createVisualization(arr, opts);
+    // dataunit.getFrameAsync(0, createVisualization, opts);
   }
   
   // Define callback for when pixels have been read from file
@@ -43,17 +45,19 @@
     
     // Set the intensity range and stretch
     webfits.setExtent(extent[0], extent[1]);
-    webfits.setStretch('linear');
+    webfits.setStretch('logarithm');
   }
   
   function main() {
     
     // Define the path and options
-    var path = '/examples/data/m101_i.fits';
+    // var path = '/examples/data/m101_i.fits';
+    var path = '/examples/data/CFHTLS_082_0001_i.fits.fz'
+    // var path = '/examples/data/test.fits.fz'
     var opts = {el: 'wicked-science-visualization'};
     
     // Initialize the FITS file, passing the function getImage as a callback
-    var f = new astro.FITS.File(path, getImage, opts);
+    var f = new astro.FITS(path, getImage, opts);
   }
   </script>
   

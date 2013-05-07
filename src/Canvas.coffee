@@ -3,9 +3,6 @@ BaseApi = @astro.WebFITS.BaseApi
 
 class Api extends BaseApi
   
-  constructor: ->
-    @_reset()
-    super
   
   #
   # Private Methods

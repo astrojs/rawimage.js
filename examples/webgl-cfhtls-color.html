@@ -14,7 +14,9 @@
     opts.header = f.getHeader();
     
     // Asynchronously get pixels representing the image
-    dataunit.getFrameAsync(0, createVisualization, opts);
+    // dataunit.getFrame(0, createVisualization, opts);
+    arr = dataunit.getFrame(0);
+    createVisualization(arr, opts);
   }
   
   function getCalibration(header) {
@@ -76,9 +78,9 @@
   function main() {
     
     // Define paths to files
-    var path1 = '/examples/data/CFHTLS_27_i_sci.fits';
-    var path2 = '/examples/data/CFHTLS_27_r_sci.fits';
-    var path3 = '/examples/data/CFHTLS_27_g_sci.fits';
+    var path1 = '/examples/data/CFHTLS_082_0001_i.fits.fz';
+    var path2 = '/examples/data/CFHTLS_082_0001_r.fits.fz';
+    var path3 = '/examples/data/CFHTLS_082_0001_g.fits.fz';
     
     // Initialize WebFITS object
     var el = document.querySelector('#wicked-science-visualization');
@@ -88,9 +90,9 @@
     // Store calibration on webfits object
     webfits.calibration = {};
     
-    var f1 = new astro.FITS.File(path1, getImage, {identifier: 'ir', webfits: webfits});
-    var f2 = new astro.FITS.File(path2, getImage, {identifier: 'red', webfits: webfits});
-    var f3 = new astro.FITS.File(path3, getImage, {identifier: 'green', webfits: webfits});
+    var f1 = new astro.FITS(path1, getImage, {identifier: 'ir', webfits: webfits});
+    var f2 = new astro.FITS(path2, getImage, {identifier: 'red', webfits: webfits});
+    var f3 = new astro.FITS(path3, getImage, {identifier: 'green', webfits: webfits});
     
     // Setup teardown button
     document.querySelector('.teardown').onclick = function(e) {

@@ -3,6 +3,8 @@ class BaseApi
   
   # Setup the DOM with a canvas and get context
   constructor: (@el, dimension) ->
+    @_reset()
+    
     @width = @height = dimension
     
     # Create and attach canvas to DOM

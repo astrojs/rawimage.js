@@ -18,7 +18,7 @@
     };
     
     // Asynchronously get pixels representing the image passing a callback and options
-    dataunit.getFrameAsync(0, createVisualization, opts);
+    dataunit.getFrame(0, createVisualization, opts);
   }
   
   // Callback to capture coordinates in image reference frame
@@ -40,7 +40,7 @@
     var el = document.querySelector('#' + opts.el);
     
     // Initialize the WebFITS context with a viewer of size width
-    var webfits = new astro.WebFITS(el, width);
+    var webfits = new astro.WebFITS(el, 400);
     
     // Add pan and zoom controls
     opts = {arr: arr, width: width};
@@ -59,11 +59,11 @@
   function main() {
     
     // Define the path and options
-    var path = '/examples/data/m101_i.fits';
+    var path = '/examples/data/m101.fits';
     var opts = {el: 'wicked-science-visualization'};
     
     // Initialize the FITS file, passing the function getImage as a callback
-    var f = new astro.FITS.File(path, getImage, opts);
+    var f = new astro.FITS(path, getImage, opts);
   }
   </script>
   

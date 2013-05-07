@@ -5,10 +5,6 @@ Shaders = @astro.WebFITS.Shaders
 class Api extends BaseApi
   fShaders: ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color']
   
-  constructor: ->
-    @_reset()
-    super
-  
   #
   # Private Methods
   #
