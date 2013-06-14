@@ -107,18 +107,14 @@ Shaders =
         "return log(value + sqrt(1.0 + value * value));"
     "}",
     
-    "float scaledArcsinh(float value) {"
-        "return arcsinh(value / -0.033) / arcsinh(1.0 / -0.033);"
-    "}"
-    
     "void main() {"
       "vec4 pixel_v = texture2D(u_tex, v_textureCoord);"
       
-      "float min = scaledArcsinh(u_extent[0]);"
-      "float max = scaledArcsinh(u_extent[1]);"
-      "float value = scaledArcsinh(pixel_v[0]);"
+      "float min = 0.0;"
+      "float max = arcsinh( (u_extent[1] - u_extent[0]) );"
+      "float value = arcsinh( (pixel_v[0] - u_extent[0]) );"
       
-      "float pixel = (value - min) / (max - min);"
+      "float pixel = value / max;"
       
       "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
     "}"

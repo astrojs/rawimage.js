@@ -39,7 +39,7 @@ class BaseApi
     @drag       = false
     
     @zoom       = 2 / @width
-    @minZoom    = @zoom
+    @minZoom    = @zoom / 8
     @maxZoom    = 12 * @zoom
     @zoomX      = @zoom
     @zoomY      = @zoom
