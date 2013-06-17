@@ -11,8 +11,18 @@ class BaseApi
     @canvas = document.createElement('canvas')
     @canvas.setAttribute('width', @width)
     @canvas.setAttribute('height', @height)
+    @canvas.setAttribute('class', 'visualization')
+    
+    @overlay = document.createElement('canvas')
+    @overlay.setAttribute('width', @width)
+    @overlay.setAttribute('height', @height)
+    @overlay.setAttribute('class', 'overlay')
+    
+    # Get overlay context
+    @overlayCtx = @overlay.getContext('2d')
     
     @el.appendChild(@canvas)
+    @el.appendChild(@overlay)
     
     # Lookup table for loaded images
     @nImages  = 0
@@ -29,7 +39,15 @@ class BaseApi
     parentStyle.width = "#{@canvas.width}px"
     parentStyle.height = "#{@canvas.height}px"
     parentStyle.overflow = 'hidden'
-    parentStyle.backgroundColor = '#151515'
+    parentStyle.backgroundColor = '#252525'
+    parentStyle.position = 'relative'
+    
+    # Style the canvases
+    canvasStyle = @canvas.style
+    overlayStyle = @overlay.style
+    canvasStyle.position = 'absolute'
+    overlayStyle.position = 'absolute'
+    overlayStyle.pointerEvents = 'none'
     
     # Set control parameters
     @xOffset    = -@width / 2
@@ -40,9 +58,12 @@ class BaseApi
     
     @zoom       = 2 / @width
     @minZoom    = @zoom / 8
-    @maxZoom    = 12 * @zoom
+    @maxZoom    = 20 * @zoom
     @zoomX      = @zoom
     @zoomY      = @zoom
+    
+    # Cursor setting
+    @crosshair = false
   
   # Setup panning and zooming with optional callback.
   # The callback is used to capture the coordinates in image space on mouse move.
@@ -71,6 +92,19 @@ class BaseApi
       @draw()
     
     _onmousemove = (e) =>
+      if @crosshair
+        @overlay.width = @overlay.width
+        @overlayCtx.lineWidth = 1
+        @overlayCtx.strokeStyle = '#0071e5'
+      
+        @overlayCtx.moveTo(0, e.layerY)
+        @overlayCtx.lineTo(@width, e.layerY)
+      
+        @overlayCtx.moveTo(e.layerX, 0)
+        @overlayCtx.lineTo(e.layerX, @height)
+      
+        @overlayCtx.stroke()
+      
       return unless @drag
       
       xDelta = e.clientX - @xMouseDown

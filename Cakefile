@@ -57,7 +57,7 @@ task 'build:webgl', 'Build lib/ from src/', ->
 task 'build:canvas', 'Build lib/ from src/', ->
   buildCanvas()
   
-task 'watch', 'Watch src for changes', ->
+task 'server', 'Watch src for changes', ->
   # Get parameters from package.json
   pkg = require('./package.json')
   
@@ -103,3 +103,10 @@ task 'watch', 'Watch src for changes', ->
     print data.toString()
   coffee.on 'exit', (code) ->
     callback?() if code is 0
+  
+  server = spawn 'http-server'
+  server.stderr.on 'data', (data) ->
+    process.stderr.write data.toString()
+  server.stdout.on 'data', (data) ->
+    print data.toString()
+  

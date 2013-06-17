@@ -1,12 +1,12 @@
 {
   "name": "WebFITS",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "author": "Amit Kapadia <amit@zooniverse.org>",
   "dependencies": { 
   },
   "devDependencies": {
-    "coffee-script" : "1.6.x",
-    "http-server": "0.5.x"
+    "coffee-script" : "~1.6.x",
+    "http-server": "~0.5.x"
   },
   "_dependencyOrder": [
     "Shaders",
