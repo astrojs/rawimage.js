@@ -188,5 +188,15 @@ class BaseApi
     @zoom = if @zoom < @minZoom then @minZoom else @zoom
     
     @zoomCallback?()
+  
+  setCursor: (type) ->
+    
+    # Clear canvas first
+    @overlay.width = @overlay.width
+    
+    if type is 'crosshair'
+      @crosshair = true
+    else
+      @crosshair = false
 
 @astro.WebFITS.BaseApi = BaseApi
