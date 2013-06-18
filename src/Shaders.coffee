@@ -39,8 +39,6 @@ Shaders =
         
         "vec3 pixel = (pixel_v.rgb - min) / (max - min);"
         "gl_FragColor = vec4(pixel * u_color, 1.0);"
-        # "float pixel = (pixel_v[0] - min) / (max - min);"
-        # "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
     "}"
   ].join("\n")
   
@@ -72,7 +70,7 @@ Shaders =
         
         "pixel = (pixel - minScaled) / (max - minScaled);"
         
-        "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
+        "gl_FragColor = vec4(vec3(pixel, pixel, pixel) * u_color, 1.0);"
     "}"
   ].join("\n")
   
@@ -95,7 +93,7 @@ Shaders =
       
       "pixel = sqrt(pixel_v[0] / max);"
       
-      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
+      "gl_FragColor = vec4(vec3(pixel, pixel, pixel) * u_color, 1.0);"
     "}"
   ].join("\n")
   
@@ -121,7 +119,7 @@ Shaders =
       
       "float pixel = value / max;"
       
-      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
+      "gl_FragColor = vec4(vec3(pixel, pixel, pixel) * u_color, 1.0);"
     "}"
   ].join("\n")
   
@@ -144,7 +142,7 @@ Shaders =
       
       "pixel = pow(pixel / max, 2.0);"
       
-      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
+      "gl_FragColor = vec4(vec3(pixel, pixel, pixel) * u_color, 1.0);"
     "}"
   ].join("\n")
   

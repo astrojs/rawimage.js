@@ -197,7 +197,7 @@ class Api extends BaseApi
   setExtent: (min, max) ->
     ctx = @ctx
     
-    # Update u_extent to all programs'
+    # Update u_extent for all programs'
     for stretch in ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
       program = @programs[stretch]
       ctx.useProgram(program)
@@ -212,8 +212,16 @@ class Api extends BaseApi
   # cmap should be an 3 element array representing each rgb channel.
   # TODO: Create divergent colormaps the correct way.
   setColorMap: (r, g, b) ->
-    colorLocation = @ctx.getUniformLocation(@currentProgram, 'u_color')
-    @ctx.uniform3f(colorLocation, r, g, b);
+    ctx = @ctx
+    
+    # Update u_color for all programs
+    for stretch in ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
+      program = @programs[stretch]
+      ctx.useProgram(program)
+      location = ctx.getUniformLocation(program, 'u_color')
+      ctx.uniform3f(location, r, g, b);
+    
+    ctx.useProgram(@currentProgram)
     @draw()
   
   # Set scales for each channel in the color composite
