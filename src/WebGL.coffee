@@ -114,10 +114,12 @@ class Api extends BaseApi
       texCoordLocation  = ctx.getAttribLocation(program, 'a_textureCoord')
       offsetLocation    = ctx.getUniformLocation(program, 'u_offset')
       scaleLocation     = ctx.getUniformLocation(program, 'u_scale')
+      colorLocation     = ctx.getUniformLocation(program, 'u_color')
       
       # Set uniforms
       ctx.uniform2f(offsetLocation, -width / 2, -height / 2)
       ctx.uniform1f(scaleLocation, 2 / width)
+      ctx.uniform3f(colorLocation, 1.0, 1.0, 1.0);
     
     # Set default program
     @currentProgram = @programs.linear
@@ -205,6 +207,14 @@ class Api extends BaseApi
     # Switch back to current program and draw
     ctx.useProgram(@currentProgram)
     ctx.drawArrays(ctx.TRIANGLES, 0, 6)
+  
+  # Set the color map.  This only works for r, g, or b for now.
+  # cmap should be an 3 element array representing each rgb channel.
+  # TODO: Create divergent colormaps the correct way.
+  setColorMap: (r, g, b) ->
+    colorLocation = @ctx.getUniformLocation(@currentProgram, 'u_color')
+    @ctx.uniform3f(colorLocation, r, g, b);
+    @draw()
   
   # Set scales for each channel in the color composite
   setScales: (r, g, b) ->

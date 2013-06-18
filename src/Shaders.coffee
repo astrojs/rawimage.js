@@ -27,6 +27,7 @@ Shaders =
     
     "uniform sampler2D u_tex;"
     "uniform vec2 u_extent;"
+    "uniform vec3 u_color;"
     
     "varying vec2 v_textureCoord;"
     
@@ -36,9 +37,10 @@ Shaders =
         "float min = u_extent[0];"
         "float max = u_extent[1];"
         
-        "float pixel = (pixel_v[0] - min) / (max - min);"
-        
-        "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
+        "vec3 pixel = (pixel_v.rgb - min) / (max - min);"
+        "gl_FragColor = vec4(pixel * u_color, 1.0);"
+        # "float pixel = (pixel_v[0] - min) / (max - min);"
+        # "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);"
     "}"
   ].join("\n")
   
@@ -47,6 +49,7 @@ Shaders =
     
     "uniform sampler2D u_tex;"
     "uniform vec2 u_extent;"
+    "uniform vec3 u_color;"
     
     "varying vec2 v_textureCoord;"
     
@@ -78,6 +81,7 @@ Shaders =
     
     "uniform sampler2D u_tex;"
     "uniform vec2 u_extent;"
+    "uniform vec3 u_color;"
     
     "varying vec2 v_textureCoord;"
     
@@ -100,6 +104,7 @@ Shaders =
     
     "uniform sampler2D u_tex;"
     "uniform vec2 u_extent;"
+    "uniform vec3 u_color;"
     
     "varying vec2 v_textureCoord;"
     
@@ -125,6 +130,7 @@ Shaders =
     
     "uniform sampler2D u_tex;"
     "uniform vec2 u_extent;"
+    "uniform vec3 u_color;"
     
     "varying vec2 v_textureCoord;"
     
