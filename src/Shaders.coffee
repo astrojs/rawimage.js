@@ -59,18 +59,15 @@ Shaders =
         "vec4 pixel_v = texture2D(u_tex, v_textureCoord);"
         
         "float min = u_extent[0];"
-        "float max = u_extent[1];"
+        "float max = logarithm(u_extent[1] - min);"
         
-        "max = max - min;"
-        
-        "float minScaled = logarithm(0.0);"
-        "max = logarithm(max);"
+        "float logMin = logarithm(0.0);"
         "float pixel = pixel_v[0] - min;"
         "pixel = logarithm(pixel);"
         
-        "pixel = (pixel - minScaled) / (max - minScaled);"
+        "pixel = (pixel - logMin) / (max - logMin);"
         
-        "gl_FragColor = vec4(vec3(pixel, pixel, pixel) * u_color, 1.0);"
+        "gl_FragColor = vec4( vec3(pixel, pixel, pixel) * u_color, 1.0);"
     "}"
   ].join("\n")
   
@@ -93,7 +90,7 @@ Shaders =
       
       "pixel = sqrt(pixel_v[0] / max);"
       
-      "gl_FragColor = vec4(vec3(pixel, pixel, pixel) * u_color, 1.0);"
+      "gl_FragColor = vec4( vec3(pixel, pixel, pixel) * u_color, 1.0);"
     "}"
   ].join("\n")
   
@@ -114,12 +111,12 @@ Shaders =
       "vec4 pixel_v = texture2D(u_tex, v_textureCoord);"
       
       "float min = 0.0;"
-      "float max = arcsinh( (u_extent[1] - u_extent[0]) );"
-      "float value = arcsinh( (pixel_v[0] - u_extent[0]) );"
+      "float max = arcsinh( u_extent[1] - u_extent[0] );"
+      "float value = arcsinh( pixel_v[0] - u_extent[0] );"
       
       "float pixel = value / max;"
       
-      "gl_FragColor = vec4(vec3(pixel, pixel, pixel) * u_color, 1.0);"
+      "gl_FragColor = vec4( vec3(pixel, pixel, pixel) * u_color, 1.0);"
     "}"
   ].join("\n")
   
@@ -142,7 +139,7 @@ Shaders =
       
       "pixel = pow(pixel / max, 2.0);"
       
-      "gl_FragColor = vec4(vec3(pixel, pixel, pixel) * u_color, 1.0);"
+      "gl_FragColor = vec4( vec3(pixel, pixel, pixel) * u_color, 1.0);"
     "}"
   ].join("\n")
   
