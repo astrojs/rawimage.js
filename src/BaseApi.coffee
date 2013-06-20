@@ -25,7 +25,7 @@ class BaseApi
     @el.appendChild(@overlay)
     
     # Lookup table for loaded images
-    @nImages  = 0
+    @nImages  = 1
     @lookup   = {}
     
     return null unless @getContext()

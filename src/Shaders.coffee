@@ -26,6 +26,7 @@ Shaders =
     "precision mediump float;"
     
     "uniform sampler2D u_tex;"
+    "uniform sampler2D uColorMap;"
     "uniform vec2 u_extent;"
     "uniform vec3 u_color;"
     
@@ -37,8 +38,8 @@ Shaders =
         "float min = u_extent[0];"
         "float max = u_extent[1];"
         
-        "vec3 pixel = (pixel_v.rgb - min) / (max - min);"
-        "gl_FragColor = vec4(pixel * u_color, 1.0);"
+        "float x = (pixel_v.r - min) / (max - min);"
+        "gl_FragColor = texture2D( uColorMap, vec2(x, 0) );"
     "}"
   ].join("\n")
   

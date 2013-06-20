@@ -1,6 +1,8 @@
 
-BaseApi = @astro.WebFITS.BaseApi
-Shaders = @astro.WebFITS.Shaders
+BaseApi   = @astro.WebFITS.BaseApi
+Shaders   = @astro.WebFITS.Shaders
+ColorMaps = @astro.WebFITS.ColorMaps
+
 
 class Api extends BaseApi
   fShaders: ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color']
@@ -143,7 +145,31 @@ class Api extends BaseApi
     @buffers.push(texCoordBuffer)
     @buffers.push(buffer)
     
+    @setupColorMap()
+    
     return ctx
+  
+  setupColorMap: ->
+    ctx = @ctx
+    
+    # Create new texture
+    ctx.activeTexture(ctx.TEXTURE0)
+    texture = ctx.createTexture()
+    ctx.bindTexture(ctx.TEXTURE_2D, texture)
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE)
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE)
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST)
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.NEAREST)
+    
+    # TODO: Remove need to cast to Float32 array
+    cmap = new Uint8Array( ColorMaps['binary'] )
+    ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGB, 255, 1, 0, ctx.RGB, ctx.UNSIGNED_BYTE, cmap)
+    
+    for stretch in ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
+      program = @programs[stretch]
+      ctx.useProgram(program)
+      location = ctx.getUniformLocation(program, 'uColorMap')
+      ctx.uniform1i(location, 0)
   
   # Create a texture from an array representing an image.  Optional parameter computes
   # relevant statistics used for rendering grayscale images.

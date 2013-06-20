@@ -68,6 +68,7 @@ task 'server', 'Watch src for changes', ->
     'src/WebFITS.coffee',
     'src/BaseApi.coffee',
     'src/Shaders.coffee',
+    'src/ColorMaps.coffee',
     'src/WebGL.coffee'
   ]
   
