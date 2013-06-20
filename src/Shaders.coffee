@@ -47,6 +47,7 @@ Shaders =
     "precision mediump float;"
     
     "uniform sampler2D u_tex;"
+    "uniform sampler2D uColorMap;"
     "uniform vec2 u_extent;"
     "uniform vec3 u_color;"
     
@@ -63,12 +64,11 @@ Shaders =
         "float max = logarithm(u_extent[1] - min);"
         
         "float logMin = logarithm(0.0);"
-        "float pixel = pixel_v[0] - min;"
-        "pixel = logarithm(pixel);"
+        "float pixel = logarithm(pixel_v[0] - min);"
         
-        "pixel = (pixel - logMin) / (max - logMin);"
+        "float x = (pixel - logMin) / (max - logMin);"
         
-        "gl_FragColor = vec4( vec3(pixel, pixel, pixel) * u_color, 1.0);"
+        "gl_FragColor = texture2D( uColorMap, vec2(x, 0) );"
     "}"
   ].join("\n")
   
@@ -76,6 +76,7 @@ Shaders =
     "precision mediump float;"
     
     "uniform sampler2D u_tex;"
+    "uniform sampler2D uColorMap;"
     "uniform vec2 u_extent;"
     "uniform vec3 u_color;"
     
@@ -87,11 +88,10 @@ Shaders =
       # Shift value by min to avoid negative numbers
       "float min = u_extent[0];"
       "float max = u_extent[1] - min;"
-      "float pixel = pixel_v[0] - min;"
       
-      "pixel = sqrt(pixel_v[0] / max);"
+      "float x = sqrt( (pixel_v[0] - min) / max);"
       
-      "gl_FragColor = vec4( vec3(pixel, pixel, pixel) * u_color, 1.0);"
+      "gl_FragColor = texture2D( uColorMap, vec2(x, 0) );"
     "}"
   ].join("\n")
   
@@ -99,6 +99,7 @@ Shaders =
     "precision mediump float;"
     
     "uniform sampler2D u_tex;"
+    "uniform sampler2D uColorMap;"
     "uniform vec2 u_extent;"
     "uniform vec3 u_color;"
     
@@ -113,11 +114,10 @@ Shaders =
       
       "float min = 0.0;"
       "float max = arcsinh( u_extent[1] - u_extent[0] );"
-      "float value = arcsinh( pixel_v[0] - u_extent[0] );"
       
-      "float pixel = value / max;"
+      "float x = arcsinh( pixel_v[0] - u_extent[0] ) / max;"
       
-      "gl_FragColor = vec4( vec3(pixel, pixel, pixel) * u_color, 1.0);"
+      "gl_FragColor = texture2D( uColorMap, vec2(x, 0) );"
     "}"
   ].join("\n")
   
@@ -125,6 +125,7 @@ Shaders =
     "precision mediump float;"
     
     "uniform sampler2D u_tex;"
+    "uniform sampler2D uColorMap;"
     "uniform vec2 u_extent;"
     "uniform vec3 u_color;"
     
@@ -136,11 +137,10 @@ Shaders =
       # Shift value by min to avoid negative numbers
       "float min = u_extent[0];"
       "float max = u_extent[1] - min;"
-      "float pixel = pixel_v[0] - min;"
       
-      "pixel = pow(pixel / max, 2.0);"
+      "float x = pow( (pixel_v[0] - min) / max, 2.0);"
       
-      "gl_FragColor = vec4( vec3(pixel, pixel, pixel) * u_color, 1.0);"
+      "gl_FragColor = texture2D( uColorMap, vec2(x, 0) );"
     "}"
   ].join("\n")
   

@@ -12,6 +12,7 @@ class Api extends BaseApi
   #
   
   _reset: ->
+    @hasColorMap = false
     @programs = {}
     @textures = {}
     @buffers = []
@@ -145,11 +146,9 @@ class Api extends BaseApi
     @buffers.push(texCoordBuffer)
     @buffers.push(buffer)
     
-    @setupColorMap()
-    
     return ctx
   
-  setupColorMap: ->
+  setupColorMap: (name) ->
     ctx = @ctx
     
     # Create new texture
@@ -162,7 +161,7 @@ class Api extends BaseApi
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.NEAREST)
     
     # TODO: Remove need to cast to Float32 array
-    cmap = new Uint8Array( ColorMaps['binary'] )
+    cmap = new Uint8Array( ColorMaps[name] )
     ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGB, 255, 1, 0, ctx.RGB, ctx.UNSIGNED_BYTE, cmap)
     
     for stretch in ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
@@ -170,6 +169,12 @@ class Api extends BaseApi
       ctx.useProgram(program)
       location = ctx.getUniformLocation(program, 'uColorMap')
       ctx.uniform1i(location, 0)
+    
+    # Switch back to current program and draw
+    ctx.useProgram(@currentProgram)
+    ctx.drawArrays(ctx.TRIANGLES, 0, 6)
+    
+    @hasColorMap = true
   
   # Create a texture from an array representing an image.  Optional parameter computes
   # relevant statistics used for rendering grayscale images.
@@ -202,6 +207,9 @@ class Api extends BaseApi
     # Add texture to object for referencing later
     @textures[identifier] = texture
     @nImages += 1
+    
+    # Set up color map
+    @setupColorMap('binary') unless @hasColorMap
   
   # Select the image to render.  This function is to be used only for grayscale renderings.
   setImage: (identifier) ->

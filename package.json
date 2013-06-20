@@ -1,6 +1,6 @@
 {
   "name": "WebFITS",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "author": "Amit Kapadia <amit@zooniverse.org>",
   "dependencies": { 
   },
@@ -10,6 +10,7 @@
   },
   "_dependencyOrder": [
     "Shaders",
+    "ColorMaps",
     "Api",
     "WebGL",
     "Canvas",
