@@ -28,7 +28,6 @@ Shaders =
     "uniform sampler2D u_tex;"
     "uniform sampler2D uColorMap;"
     "uniform vec2 u_extent;"
-    "uniform vec3 u_color;"
     
     "varying vec2 v_textureCoord;"
     
@@ -49,7 +48,6 @@ Shaders =
     "uniform sampler2D u_tex;"
     "uniform sampler2D uColorMap;"
     "uniform vec2 u_extent;"
-    "uniform vec3 u_color;"
     
     "varying vec2 v_textureCoord;"
     
@@ -78,7 +76,6 @@ Shaders =
     "uniform sampler2D u_tex;"
     "uniform sampler2D uColorMap;"
     "uniform vec2 u_extent;"
-    "uniform vec3 u_color;"
     
     "varying vec2 v_textureCoord;"
     
@@ -101,7 +98,6 @@ Shaders =
     "uniform sampler2D u_tex;"
     "uniform sampler2D uColorMap;"
     "uniform vec2 u_extent;"
-    "uniform vec3 u_color;"
     
     "varying vec2 v_textureCoord;"
     
@@ -127,7 +123,6 @@ Shaders =
     "uniform sampler2D u_tex;"
     "uniform sampler2D uColorMap;"
     "uniform vec2 u_extent;"
-    "uniform vec3 u_color;"
     
     "varying vec2 v_textureCoord;"
     
