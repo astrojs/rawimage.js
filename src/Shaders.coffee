@@ -131,9 +131,10 @@ Shaders =
       
       # Shift value by min to avoid negative numbers
       "float min = u_extent[0];"
-      "float max = u_extent[1] - min;"
+      "float max = pow(u_extent[1] - min, 2.0);"
       
-      "float x = pow( (pixel_v[0] - min) / max, 2.0);"
+      "float pixel = pow(pixel_v[0] - min, 2.0);"
+      "float x = pixel / max;"
       
       "gl_FragColor = texture2D( uColorMap, vec2(x, 0) );"
     "}"

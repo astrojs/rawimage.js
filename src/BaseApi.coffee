@@ -65,6 +65,19 @@ class BaseApi
     # Cursor setting
     @crosshair = false
   
+  drawCrosshair: ->
+    @overlay.width = @overlay.width
+    @overlayCtx.lineWidth = 1
+    @overlayCtx.strokeStyle = '#0071e5'
+    
+    @overlayCtx.moveTo(0, @yCurrent)
+    @overlayCtx.lineTo(@width, @yCurrent)
+    
+    @overlayCtx.moveTo(@xCurrent, 0)
+    @overlayCtx.lineTo(@xCurrent, @height)
+    
+    @overlayCtx.stroke()
+  
   # Setup panning and zooming with optional callback.
   # The callback is used to capture the coordinates in image space on mouse move.
   setupControls: (callbacks = null, opts = null) ->
@@ -93,17 +106,9 @@ class BaseApi
     
     _onmousemove = (e) =>
       if @crosshair
-        @overlay.width = @overlay.width
-        @overlayCtx.lineWidth = 1
-        @overlayCtx.strokeStyle = '#0071e5'
-      
-        @overlayCtx.moveTo(0, e.layerY)
-        @overlayCtx.lineTo(@width, e.layerY)
-      
-        @overlayCtx.moveTo(e.layerX, 0)
-        @overlayCtx.lineTo(e.layerX, @height)
-      
-        @overlayCtx.stroke()
+        @xCurrent = e.layerX
+        @yCurrent = e.layerY
+        @drawCrosshair()
       
       return unless @drag
       

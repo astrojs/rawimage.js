@@ -146,7 +146,7 @@ class Api extends BaseApi
     
     return ctx
   
-  setupColorMap: (name) ->
+  setColorMap: (name) ->
     ctx = @ctx
     
     # Create new texture
@@ -207,7 +207,7 @@ class Api extends BaseApi
     @nImages += 1
     
     # Set up color map
-    @setupColorMap('binary') unless @hasColorMap
+    @setColorMap('binary') unless @hasColorMap
   
   # Select the image to render.  This function is to be used only for grayscale renderings.
   setImage: (identifier) ->
