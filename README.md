@@ -62,10 +62,6 @@ and spin up a local server
 
     http-server
 
-otherwise a local server can be started using Python.
-
-    python -m SimpleHTTPServer
-
 
 #### TODO:
 
