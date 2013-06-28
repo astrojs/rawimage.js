@@ -8,17 +8,18 @@
   // Define callback to be executed after image is received from the server
   function getImage(f, opts) {
     
-    // Get first header and dataunit
+    // Get first header and data unit
+    var header = f.getHeader();
     var dataunit = f.getDataUnit();
-    opts.dataunit = dataunit;
-    opts.header = f.getHeader();
     
-    // Asynchronously get pixels representing the image
-    // dataunit.getFrame(0, createVisualization, opts);
-    arr = dataunit.getFrame(0);
-    createVisualization(arr, opts);
+    opts.dataunit = dataunit;
+    opts.header = header;
+    
+    // Get pixels representing the image and pass callback with options
+    dataunit.getFrame(0, createVisualization, opts);
   }
   
+  // Compute the calibration based on zero points in the header
   function getCalibration(header) {
     var zeroPoint = header.get('MZP_AB') || header.get('PHOT_C');
     var expTime = 1.0;
@@ -27,19 +28,22 @@
   
   // Define callback for when pixels have been read from file
   function createVisualization(arr, opts) {
-    var dataunit = opts.dataunit;
     
+    // Get dataunit, width, and height from options
+    var dataunit = opts.dataunit;
     var width = dataunit.width;
     var height = dataunit.height;
+    
+    // Get the minimum and maximum pixels
     var extent = dataunit.getExtent(arr);
     
-    // Reference WebFITS object and load the image
+    // Get reference to WebFITS object and load the image
     var webfits = opts.webfits;
     webfits.loadImage(opts.identifier, arr, width, height);
     webfits.setExtent(extent[0], extent[1]);
-    webfits.calibration[opts.identifier] = getCalibration(opts.header);
     
-    // Storing calibration on WebFITS object
+    // Get calibration and store on WebFITS object for later usage
+    webfits.calibration[opts.identifier] = getCalibration(opts.header);
     
     // Initialize the color shader when all three layers are imported
     if (Object.keys(webfits.lookup).length === 3) {
@@ -49,7 +53,7 @@
       var g = webfits.calibration['red'];
       var b = webfits.calibration['green'];
       
-      // Normalize scales
+      // Predefined scales
       var rscale = 0.4;
       var gscale = 0.6;
       var bscale = 1.7;
@@ -61,17 +65,12 @@
       
       // Set defaults for CFHTLS image
       webfits.setScales(0.4, 0.6, 1.7);
-      
-      console.log(rscale, gscale, bscale);
-      // webfits.setScales(rscale, gscale, bscale);
       webfits.setCalibrations(1, 1, 1);
-      // webfits.setCalibrations(r, g, b);
       webfits.setAlpha(0.09);
       webfits.setQ(1.7);
       
       // Color by specifying rgb channels using identifiers
       webfits.drawColor('ir', 'red', 'green');
-      window.webfits = webfits;
     }
   }
   
@@ -90,11 +89,12 @@
     // Store calibration on webfits object
     webfits.calibration = {};
     
+    // Initialize FITS files, passing getImage function as a callback
     var f1 = new astro.FITS(path1, getImage, {identifier: 'ir', webfits: webfits});
     var f2 = new astro.FITS(path2, getImage, {identifier: 'red', webfits: webfits});
     var f3 = new astro.FITS(path3, getImage, {identifier: 'green', webfits: webfits});
     
-    // Setup teardown button
+    // Setup teardown button to deconstruct WebFITS properly
     document.querySelector('.teardown').onclick = function(e) {
       webfits.teardown();
     }

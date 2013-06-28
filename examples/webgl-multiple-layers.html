@@ -10,21 +10,26 @@
     
     // Get first data unit
     var dataunit = f.getDataUnit();
+    
+    // Append dataunit to options
     opts.dataunit = dataunit
     
-    // Asynchronously get pixels representing the image
-    dataunit.getFrameAsync(0, createVisualization, opts);
+    // Get pixels representing the image and pass callback with options
+    dataunit.getFrame(0, createVisualization, opts);
   }
   
   // Define callback for when pixels have been read from file
   function createVisualization(arr, opts) {
-    var dataunit = opts.dataunit;
     
+    // Get dataunit, width, and height from options
+    var dataunit = opts.dataunit;
     var width = dataunit.width;
     var height = dataunit.height;
+    
+    // Get the minimum and maximum pixels
     var extent = dataunit.getExtent(arr);
     
-    // Reference WebFITS object and load the image
+    // Get reference to WebFITS object and load the image
     var webfits = opts.webfits;
     webfits.loadImage(opts.identifier, arr, width, height);
     webfits.setExtent(extent[0], extent[1]);
@@ -37,8 +42,8 @@
       webfits.setCalibrations(1.0, 1.0, 1.0);
       webfits.setAlpha(0.03);
       webfits.setQ(1.0);
+      
       webfits.drawColor('ir', 'red', 'green');
-      window.webfits = webfits;
     }
   }
   
@@ -54,9 +59,10 @@
     var webfits = new astro.WebFITS(el, 512);
     webfits.setupControls();
     
-    var f1 = new astro.FITS.File(path1, getImage, {identifier: 'ir', webfits: webfits});
-    var f2 = new astro.FITS.File(path2, getImage, {identifier: 'red', webfits: webfits});
-    var f3 = new astro.FITS.File(path3, getImage, {identifier: 'green', webfits: webfits});
+    // Initialize FITS files, passing getImage function as a callback
+    var f1 = new astro.FITS(path1, getImage, {identifier: 'ir', webfits: webfits});
+    var f2 = new astro.FITS(path2, getImage, {identifier: 'red', webfits: webfits});
+    var f3 = new astro.FITS(path3, getImage, {identifier: 'green', webfits: webfits});
   }
   </script>
   

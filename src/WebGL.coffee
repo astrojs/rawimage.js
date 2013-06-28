@@ -207,7 +207,6 @@ class Api extends BaseApi
   # Create a texture from an array representing an image.  Optional parameter computes
   # relevant statistics used for rendering grayscale images.
   loadImage: (identifier, arr, width, height) ->
-    
     # TODO: Set the min zoom based on the image size
     
     ctx = @ctx
