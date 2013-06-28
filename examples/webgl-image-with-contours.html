@@ -1,8 +1,11 @@
 <html>
 <head>
   <link rel="stylesheet" href="/examples/astrojs.css" type="text/css" charset="utf-8">
+  
+  <script type="text/javascript" src="/examples/lib/conrec.js"></script>
   <script type="text/javascript" src="/examples/lib/fits.js"></script>
   <script type="text/javascript" src="/lib/webfits-gl.js"></script>
+  
   <script type="text/javascript">
   
   // Define callback to be executed after image is received from the server
@@ -48,7 +51,61 @@
     webfits.setExtent(extent[0], extent[1]);
     webfits.setStretch('linear');
     
-    // webfits.setColorMap('terrain');
+    
+    // Testing contours
+    
+    // Manipulate data such that we have [ [x1, y1, z1], [x2, y2, z2], ..., [xn, yn, zn] ]
+    var width = dataunit.width;
+    var height = dataunit.height;
+    var data = [];
+    
+    for (var j = 0; j < height; i++) {
+      // var row = [];
+      
+      for (var i = 0; i < width; i++) {
+        var index = j * width + i;
+        
+        // var value = arr[index];
+        // row[i] = value;
+      }
+      // if (j === 10) break;
+      // data[j] = row;
+    }
+    
+    console.log(data);
+    return;
+    
+    // for (var i = 0; i < arr.length; i++) {
+    //   
+    //   var x = i % width;
+    //   var y = ~~(i / width);
+    //   var z = arr[i];
+    //   
+    //   data[i] = [x, y, z];
+    // }
+    
+    var con = new Conrec();
+    con.contour(data, 0, data.length - 1, 0, data[0].length - 1, [data.length], [data[0].length], 3, [0, 1, 2])
+    
+    var c = con.contourList();
+    console.log(c);
+    
+    var overlay = webfits.overlay;
+    var ctx = overlay.getContext('2d');
+    ctx.strokeStyle = 'red'
+    
+    for (l = 0; l < c.length; l++){
+      ctx.beginPath();
+      
+      // Move to the start of this contour
+      ctx.moveTo(c[l][0].x, c[l][0].y);
+      
+      // Join the dots
+      for (i = 1; i < c[l].length; i++) ctx.lineTo(c[l][i].x, c[l][i].y);
+      ctx.closePath();
+      ctx.stroke();
+    }
+    console.log('here');
   }
   
   function main() {
