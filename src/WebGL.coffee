@@ -7,12 +7,12 @@ ColorMaps = @astro.WebFITS.ColorMaps
 class Api extends BaseApi
   fShaders: ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color']
   
+  grayMap: 32
   #
   # Private Methods
   #
   
   _reset: ->
-    @hasColorMap = false
     @programs = {}
     @textures = {}
     @buffers = []
@@ -118,9 +118,12 @@ class Api extends BaseApi
       offsetLocation    = ctx.getUniformLocation(program, 'u_offset')
       scaleLocation     = ctx.getUniformLocation(program, 'u_scale')
       
+      colorIndexLocation = ctx.getUniformLocation(program, 'uColorMapIndex')
+      
       # Set uniforms
       ctx.uniform2f(offsetLocation, -width / 2, -height / 2)
       ctx.uniform1f(scaleLocation, 2 / width)
+      ctx.uniform1f(colorIndexLocation, ColorMaps.binary)
     
     # Set default program
     @currentProgram = @programs.linear
@@ -144,35 +147,62 @@ class Api extends BaseApi
     @buffers.push(texCoordBuffer)
     @buffers.push(buffer)
     
+    @setupColorMapTexture()
+    
     return ctx
+  
+  # Create a color map texture by using a base64 representation of an image
+  # containing various color maps from Matplotlib.
+  setupColorMapTexture: ->
+    ctx = @ctx
+    
+    # Initialize Image object
+    img = new Image()
+    img.onload = (e) =>
+      
+      # Create new texture
+      ctx.activeTexture(ctx.TEXTURE0)
+      texture = ctx.createTexture()
+      ctx.bindTexture(ctx.TEXTURE_2D, texture)
+      ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE)
+      ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE)
+      ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST)
+      ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.NEAREST)
+      
+      ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGB, ctx.RGB, ctx.UNSIGNED_BYTE, img)
+      
+      for stretch in ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
+        program = @programs[stretch]
+        ctx.useProgram(program)
+        location = ctx.getUniformLocation(program, 'uColorMap')
+        ctx.uniform1i(location, 0)
+      
+      # Switch back to current program and draw
+      ctx.useProgram(@currentProgram)
+      ctx.drawArrays(ctx.TRIANGLES, 0, 6)
+    
+    img.src = "data:image/png;base64,#{ColorMaps.base64}"
   
   setColorMap: (name) ->
     ctx = @ctx
     
-    # Create new texture
-    ctx.activeTexture(ctx.TEXTURE0)
-    texture = ctx.createTexture()
-    ctx.bindTexture(ctx.TEXTURE_2D, texture)
-    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE)
-    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE)
-    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST)
-    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.NEAREST)
+    # Get list of colormaps and remove base64 texture
+    cmaps = Object.keys(ColorMaps)
+    cmaps.shift()
     
-    # TODO: Remove need to cast to Float32 array
-    cmap = new Uint8Array( ColorMaps[name] )
-    ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGB, 255, 1, 0, ctx.RGB, ctx.UNSIGNED_BYTE, cmap)
+    # Check name in list of colormaps
+    name = if cmaps.indexOf(name) > -1 then name else 'binary'
     
+    # Update uColorMapIndex for all programs
     for stretch in ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
       program = @programs[stretch]
       ctx.useProgram(program)
-      location = ctx.getUniformLocation(program, 'uColorMap')
-      ctx.uniform1i(location, 0)
-    
+      location = ctx.getUniformLocation(program, 'uColorMapIndex')
+      ctx.uniform1f(location, ColorMaps[name])
+      
     # Switch back to current program and draw
     ctx.useProgram(@currentProgram)
     ctx.drawArrays(ctx.TRIANGLES, 0, 6)
-    
-    @hasColorMap = true
   
   # Create a texture from an array representing an image.  Optional parameter computes
   # relevant statistics used for rendering grayscale images.
@@ -205,9 +235,6 @@ class Api extends BaseApi
     # Add texture to object for referencing later
     @textures[identifier] = texture
     @nImages += 1
-    
-    # Set up color map
-    @setColorMap('binary') unless @hasColorMap
   
   # Select the image to render.  This function is to be used only for grayscale renderings.
   setImage: (identifier) ->
@@ -229,7 +256,7 @@ class Api extends BaseApi
   setExtent: (min, max) ->
     ctx = @ctx
     
-    # Update u_extent for all programs'
+    # Update u_extent for all programs
     for stretch in ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power']
       program = @programs[stretch]
       ctx.useProgram(program)
