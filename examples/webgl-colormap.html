@@ -1,0 +1,153 @@
+<html>
+<head>
+  <link rel="stylesheet" href="examples/astrojs.css" type="text/css" charset="utf-8">
+  <script type="text/javascript" src="examples/lib/fits.js"></script>
+  <script type="text/javascript" src="../lib/webfits-gl.js"></script>
+  <script type="text/javascript">
+  
+  var webfits;
+  
+  // Define callback to be executed after FITS is received from the server
+  function getImage(f, opts) {
+    
+    // Get first data unit
+    var dataunit = f.getDataUnit();
+    
+    // Set options to pass to the next callback
+    opts = {
+      dataunit: dataunit,
+      el: opts.el
+    };
+    
+    // Get pixels representing the image and pass callback with options
+    dataunit.getFrame(0, createVisualization, opts);
+    
+  }
+  
+  // Define callback for when pixels have been read from file
+  function createVisualization(arr, opts) {
+    
+    // Get dataunit, width, and height from options
+    var dataunit = opts.dataunit;
+    var width = dataunit.width;
+    var height = dataunit.height;
+    
+    // Get the minimum and maximum pixels
+    var extent = dataunit.getExtent(arr);
+    
+    // Get the DOM element
+    var el = document.querySelector('#' + opts.el);
+    
+    // Initialize a WebFITS context with a viewer of size width
+    webfits = new astro.WebFITS(el, width);
+    
+    // Enable pan and zoom controls
+    webfits.setupControls();
+    
+    // Load array representation of image
+    webfits.loadImage('some-identifier', arr, width, height);
+    
+    // Set the intensity range and stretch
+    webfits.setExtent(extent[0], extent[1]);
+    webfits.setStretch('linear');
+    
+  }
+  
+  function main() {
+    
+    // Define the path and options
+    var path = '/examples/data/m101.fits'
+    var opts = {el: 'wicked-science-visualization'};
+    
+    // Initialize a FITS file, passing getImage function as a callback
+    var f = new astro.FITS(path, getImage, opts);
+    document.querySelector('select').addEventListener('change', setColorMap, false);
+  }
+  
+  function setColorMap(e) {
+    webfits.setColorMap(e.target.value);
+  }
+  </script>
+  
+  
+</head>
+
+<body onload='main()'>
+  <div class='content'>
+    <h3>WebFITS Colormaps</h3>
+    <select>
+      <option>Accent</option>
+      <option>Blues</option>
+      <option>BrBG</option>
+      <option>BuGn</option>
+      <option>BuPu</option>
+      <option>CMRmap</option>
+      <option>Dark2</option>
+      <option>GnBu</option>
+      <option>Greens</option>
+      <option>Greys</option>
+      <option>OrRd</option>
+      <option>Oranges</option>
+      <option>PRGn</option>
+      <option>Paired</option>
+      <option>Pastel1</option>
+      <option>Pastel2</option>
+      <option>PiYG</option>
+      <option>PuBuGn</option>
+      <option>PuBu</option>
+      <option>PuOr</option>
+      <option>PuRd</option>
+      <option>Purples</option>
+      <option>RdBu</option>
+      <option>RdGy</option>
+      <option>RdPu</option>
+      <option>RdYlBu</option>
+      <option>RdYlGn</option>
+      <option>Reds</option>
+      <option>Set1</option>
+      <option>Set2</option>
+      <option>Set3</option>
+      <option>Spectral</option>
+      <option>YlGnBu</option>
+      <option>YlGn</option>
+      <option>YlOrBr</option>
+      <option>YlOrRd</option>
+      <option>afmhot</option>
+      <option>autumn</option>
+      <option selected>binary</option>
+      <option>bone</option>
+      <option>brg</option>
+      <option>bwr</option>
+      <option>cool</option>
+      <option>coolwarm</option>
+      <option>copper</option>
+      <option>cubehelix</option>
+      <option>flag</option>
+      <option>gist_earth</option>
+      <option>gist_gray</option>
+      <option>gist_heat</option>
+      <option>gist_ncar</option>
+      <option>gistainbow</option>
+      <option>gist_stern</option>
+      <option>gist_yarg</option>
+      <option>gnuplot2</option>
+      <option>gnuplot</option>
+      <option>gray</option>
+      <option>hot</option>
+      <option>hsv</option>
+      <option>jet</option>
+      <option>ocean</option>
+      <option>pink</option>
+      <option>prism</option>
+      <option>rainbow</option>
+      <option>seismic</option>
+      <option>spectral</option>
+      <option>spring</option>
+      <option>summer</option>
+      <option>terrain</option>
+      <option>winter</option>
+    </select>
+    <div id="wicked-science-visualization"></div>
+  </div>
+</body>
+</html>
