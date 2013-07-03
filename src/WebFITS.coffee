@@ -1,6 +1,6 @@
 @astro = {} unless @astro?
 
 WebFITS = {}
-WebFITS.version = '0.4.0'
+WebFITS.version = '0.4.1'
 
 @astro.WebFITS = WebFITS

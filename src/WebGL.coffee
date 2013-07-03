@@ -326,6 +326,7 @@ class Api extends BaseApi
   
   drawColor: (r, g, b) ->
     ctx = @ctx
+    ctx.clear(ctx.COLOR_BUFFER_BIT)
     
     program = @currentProgram = @programs.color
     ctx.useProgram(program)
