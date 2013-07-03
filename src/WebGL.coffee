@@ -155,6 +155,7 @@ class Api extends BaseApi
   # containing various color maps from Matplotlib.
   setupColorMapTexture: ->
     ctx = @ctx
+    @_setRectangle(ctx, 256, 70)
     
     # Initialize Image object
     img = new Image()

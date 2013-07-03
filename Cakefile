@@ -8,19 +8,20 @@ build = (order, output) ->
   
   # Compile to JavaScript
   coffee = spawn 'coffee', flags
+  
   coffee.stderr.on 'data', (data) ->
     process.stderr.write data.toString()
   coffee.stdout.on 'data', (data) ->
     print data.toString()
-  coffee.on 'exit', (code) ->
-    callback?() if code is 0
 
 buildWebGl = ->
-  # Get parameters from package.json
+  
+  # Get package.json
   pkg = require('./package.json')
+  name = pkg['name'].toLowerCase()
   
   # Specify the name of the library
-  output = "lib/#{pkg['name'].toLowerCase()}-gl.js"
+  output = "lib/#{name}-gl.js"
   
   order = [
     'src/WebFITS.coffee',
@@ -34,11 +35,12 @@ buildWebGl = ->
 
 buildCanvas = ->
   
-  # Get parameters from package.json
+  # Get package.json
   pkg = require('./package.json')
+  name = pkg['name'].toLowerCase()
   
   # Specify the name of the library
-  output = "lib/#{pkg['name'].toLowerCase()}-canvas.js"
+  output = "lib/#{name}-canvas.js"
   
   order = [
     'src/WebFITS.coffee',
@@ -59,11 +61,13 @@ task 'build:canvas', 'Build lib/ from src/', ->
   buildCanvas()
   
 task 'server', 'Watch src for changes', ->
-  # Get parameters from package.json
-  pkg = require('./package.json')
   
+  # Get package.json
+  pkg = require('./package.json')
+  name = pkg['name'].toLowerCase()
+    
   # Specify the name of the WebGL library
-  output = "lib/#{pkg['name'].toLowerCase()}-gl.js"
+  output = "lib/#{name}-gl.js"
   
   order = [
     'src/WebFITS.coffee',
@@ -77,16 +81,10 @@ task 'server', 'Watch src for changes', ->
   flags = ['-w', '-j', output, '-c'].concat order
   
   # Compile to JavaScript
-  coffee = spawn 'coffee', flags
-  coffee.stderr.on 'data', (data) ->
-    process.stderr.write data.toString()
-  coffee.stdout.on 'data', (data) ->
-    print data.toString()
-  coffee.on 'exit', (code) ->
-    callback?() if code is 0
+  coffee_webgl = spawn 'coffee', flags
     
   # Specify the name of the Canvas library
-  output = "lib/#{pkg['name'].toLowerCase()}-canvas.js"
+  output = "lib/#{name}-canvas.js"
   
   order = [
     'src/WebFITS.coffee',
@@ -98,17 +96,15 @@ task 'server', 'Watch src for changes', ->
   flags = ['-w', '-j', output, '-c'].concat order
   
   # Compile to JavaScript
-  coffee = spawn 'coffee', flags
-  coffee.stderr.on 'data', (data) ->
-    process.stderr.write data.toString()
-  coffee.stdout.on 'data', (data) ->
-    print data.toString()
-  coffee.on 'exit', (code) ->
-    callback?() if code is 0
+  coffee_canvas = spawn 'coffee', flags
   
+  # Start local server
   server = spawn 'http-server'
-  server.stderr.on 'data', (data) ->
-    process.stderr.write data.toString()
-  server.stdout.on 'data', (data) ->
-    print data.toString()
+  
+  for p in [coffee_webgl, coffee_canvas, server]
+    p.stderr.on 'data', (data) ->
+      process.stderr.write data.toString()
+    p.stdout.on 'data', (data) ->
+      print data.toString()
+  
   
