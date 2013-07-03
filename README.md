@@ -35,6 +35,9 @@ Sets the stretch for the image, the default is `linear`.  Current valid values f
 
 -
 
+    setColorMap(cmap)
+Set a colormap for the image.  Default colormap is grayscale.  Any colormap listed in [ColorMaps](https://github.com/astrojs/webfits/blob/master/src/ColorMaps.coffee#L7-L76) may be used.
+
     setScales(r, g, b)
 This function is relevant to color composites, setting a normalized scale for each rgb channel.
 
