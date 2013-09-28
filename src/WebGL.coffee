@@ -211,6 +211,12 @@ class Api extends BaseApi
     # TODO: Set the min zoom based on the image size
     
     ctx = @ctx
+    if identifier of @lookup
+      index = @lookup[identifier]
+      ctx.activeTexture(ctx.TEXTURE0 + index)
+      ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.LUMINANCE, width, height, 0, ctx.LUMINANCE, ctx.FLOAT, new Float32Array(arr))
+      return
+    
     @_setRectangle(ctx, width, height)
     
     # Cache id, assign image to identifier and increment
