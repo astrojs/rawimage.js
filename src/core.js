@@ -4,7 +4,7 @@ function rawimage(el, dimension) {
   
   this.el = el;
   this.width = this.height = dimension;
-  this._reset();
+  this.reset();
   
   // Createa a canvas for the WebGL context
   this.canvas = document.createElement('canvas');
@@ -60,7 +60,7 @@ function rawimage(el, dimension) {
   this.zoomY = this.zoom;
   
   this.crosshair = false;
-}
+};
 
 rawimage.prototype.drawCrosshair = function() {
   
@@ -76,7 +76,7 @@ rawimage.prototype.drawCrosshair = function() {
   this.overlayCtx.lineTo(this.xCurrent, this.height);
   
   this.overlayCtx.stroke();
-}
+};
 
 
 // Setup panning and zooming with optional user-specified callbacks.
@@ -181,15 +181,154 @@ rawimage.prototype.setupControls = function(callbacks, opts) {
     target.zoom = target.zoom < target.minZoom ? target.minZoom : target.zoom;
     
     callbacks.onzoom();
-  }
+  };
   
   this.canvas.addEventListener('mousewheel', onzoom, false);
   this.canvas.addEventListener('wheel', onzoom, false);
-}
+};
 
 // Toggle a cursor over the image.
 // TODO: This check might be avoidable by redefining a cursor function
 rawimage.prototype.setCursor = function() {
   this.overlay.width = this.overlay.width;
   this.crosshair = (type === 'crosshair' ? true : false);
-}
+};
+
+rawimage.prototype.reset = function() {
+  this.programs = {};
+  this.textures = {};
+  this.buffers = [];
+  this.shaders = [];
+};
+
+rawimage.prototype.fragmentShaders = ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color'];
+rawimage.prototype.grayscale = 32;
+
+// Get necessary WebGL extensions (e.g. floating point textures).
+rawimage.prototype.getExtension = function() {
+  return this.gl.getExtension('OES_texture_float');
+};
+
+rawimage.prototype.loadShader = function(source, type) {
+  var gl, shader, compiled, error;
+  
+  gl = this.gl;
+  
+  shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  
+  compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+  if (!compiled) {
+    gl.deleteShader(shader);
+    error = gl.getShaderInfoLog(shader);
+    throw "Error compiling shader " + shader + ": " + error;
+    return null;
+  }
+  this.shaders.push(shader);
+  
+  return shader;
+};
+
+rawimage.prototype.createProgram = function(vshader, fshader) {
+  var gl, linked, program;
+  
+  gl = this.gl;
+  
+  program = gl.createProgram();
+  gl.attachShader(program, vshader);
+  gl.attachShader(program, fshader);
+  gl.linkProgram(program);
+  
+  linked = gl.getProgramParameter(program, gl.LINK_STATUS);
+  if (!linked) {
+    gl.deleteProgram(program);
+    throw "Error in program linking: " + (gl.getProgramInfoLog(program));
+    return null;
+  }
+  
+  return program;
+};
+
+// TODO: Find out how to support non-square viewports
+rawimage.prototype.setRectangle = function(gl, width, height) {
+  var x1, x2, y1, y2;
+  
+  x1 = 0, x2 = width;
+  y1 = 0, y2 = height;
+  
+  return gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW);
+};
+
+rawimage.prototype.updateUniforms = function(program) {
+  var offsetLocation, scaleLocation;
+  
+  // TODO: Store uniforms on rawimage object. This is an expensive lookup.
+  offsetLocation = this.gl.getUniformLocation(program, 'u_offset');
+  scaleLocation = this.gl.getUniformLocation(program, 'u_scale');
+  
+  this.gl.uniform2f(offsetLocation, this.xOffset, this.yOffset);
+  this.gl.uniform1f(scaleLocation, this.zoom);
+};
+
+//
+//  Public API
+//
+rawimage.prototype.getContext = function() {
+  var width, height, ext, vertexShader, fragmentShader, key, i;
+  
+  this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
+  if (!this.gl) return null;
+  
+  width = this.canvas.width;
+  height = this.canvas.height;
+  this.gl.viewport(0, 0, width, height);
+  
+  ext = this.getExtension();
+  if (!ext) return null;
+  
+  vertexShader = this.loadShader(this.shaders.vertex, gl.VERTEX_SHADER);
+  if (!vertexShader) return null;
+  
+  // Create all fragment shaders
+  // TODO: Could be more GPU memory efficient by loading only shaders when called
+  //       and removing those when not used.
+  for (i = 0; i < this.fragmentShaders.length; i += 1) {
+    key = fragmentShaders[i];
+    fragmentShader = this.loadShader(this.shaders[key], this.gl.FRAGMENT_SHADER);
+    if (!fragmentShader) return null;
+    
+    this.programs[key] = this.createProgram(vertexShader, fragmentShader);
+    if (!this.programs[key]) return null;
+  }
+  
+  // TODO: RESUME HERE!
+  
+  _ref3 = this.programs;
+  for (key in _ref3) {
+    program = _ref3[key];
+    ctx.useProgram(program);
+    positionLocation = ctx.getAttribLocation(program, 'a_position');
+    texCoordLocation = ctx.getAttribLocation(program, 'a_textureCoord');
+    offsetLocation = ctx.getUniformLocation(program, 'u_offset');
+    scaleLocation = ctx.getUniformLocation(program, 'u_scale');
+    colorIndexLocation = ctx.getUniformLocation(program, 'uColorMapIndex');
+    ctx.uniform2f(offsetLocation, -width / 2, -height / 2);
+    ctx.uniform1f(scaleLocation, 2 / width);
+    ctx.uniform1f(colorIndexLocation, ColorMaps.binary);
+  }
+  this.currentProgram = this.programs.linear;
+  texCoordBuffer = ctx.createBuffer();
+  ctx.bindBuffer(ctx.ARRAY_BUFFER, texCoordBuffer);
+  ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), ctx.STATIC_DRAW);
+  ctx.enableVertexAttribArray(texCoordLocation);
+  ctx.vertexAttribPointer(texCoordLocation, 2, ctx.FLOAT, false, 0, 0);
+  buffer = ctx.createBuffer();
+  ctx.bindBuffer(ctx.ARRAY_BUFFER, buffer);
+  ctx.enableVertexAttribArray(positionLocation);
+  ctx.vertexAttribPointer(positionLocation, 2, ctx.FLOAT, false, 0, 0);
+  this.buffers.push(texCoordBuffer);
+  this.buffers.push(buffer);
+  this.setupColorMapTexture();
+  return ctx;
+};

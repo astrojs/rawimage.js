@@ -22,13 +22,6 @@
 
     Api.prototype.grayMap = 32;
 
-    Api.prototype._reset = function() {
-      this.programs = {};
-      this.textures = {};
-      this.buffers = [];
-      return this.shaders = [];
-    };
-
     Api.prototype._getExtension = function() {
       return this.ctx.getExtension('OES_texture_float');
     };
