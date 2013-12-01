@@ -196,6 +196,7 @@ rawimage.prototype.setCursor = function() {
 
 rawimage.prototype.reset = function() {
   this.programs = {};
+  this.locations = {};
   this.textures = {};
   this.buffers = [];
   this.shaders = [];
@@ -275,13 +276,13 @@ rawimage.prototype.updateUniforms = function(program) {
 //  Public API
 //
 rawimage.prototype.getContext = function() {
-  var width, height, ext, vertexShader, fragmentShader, key, i;
+  var width, height, ext, vertexShader, fragmentShader, key, i, program, buffer;
   
   this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
   if (!this.gl) return null;
   
-  width = this.canvas.width;
-  height = this.canvas.height;
+  width = this.width;
+  height = this.height;
   this.gl.viewport(0, 0, width, height);
   
   ext = this.getExtension();
@@ -298,26 +299,34 @@ rawimage.prototype.getContext = function() {
     fragmentShader = this.loadShader(this.shaders[key], this.gl.FRAGMENT_SHADER);
     if (!fragmentShader) return null;
     
-    this.programs[key] = this.createProgram(vertexShader, fragmentShader);
-    if (!this.programs[key]) return null;
+    program = this.createProgram(vertexShader, fragmentShader);
+    this.programs[key] = program;
+    if (!program) return null;
+    
+    // Get attribute and uniform locations and set parameters
+    this.gl.useProgram(program);
+    this.locations[key] = {
+      aPosition: gl.getAttribLocation(program, 'aPosition'),
+      aTextureCoordinate: gl.getAttribLocation(program, 'aTextureCoordinate'),
+      uOffset: gl.getUniformLocation(program, 'uOffset'),
+      uScale: gl.getUniformLocation(program, 'uScale'),
+      uColorIndex: gl.getUniformLocation(program, 'uColorIndex')
+    };
+    
+    // TODO: Offset the image so that it's centered on load
+    gl.uniform2f(this.locations[key].uOffset, -width / 2, -height / 2);
+    gl.uniform1f(this.locations[key].uScale, 2 / width);
+    gl.uniform1f(this.locations[key].uColorIndex, this.colormaps.binary);
   }
   
-  // TODO: RESUME HERE!
+  // Start with the linearly scaled image
+  this.program = this.programs.linear;
   
-  _ref3 = this.programs;
-  for (key in _ref3) {
-    program = _ref3[key];
-    ctx.useProgram(program);
-    positionLocation = ctx.getAttribLocation(program, 'a_position');
-    texCoordLocation = ctx.getAttribLocation(program, 'a_textureCoord');
-    offsetLocation = ctx.getUniformLocation(program, 'u_offset');
-    scaleLocation = ctx.getUniformLocation(program, 'u_scale');
-    colorIndexLocation = ctx.getUniformLocation(program, 'uColorMapIndex');
-    ctx.uniform2f(offsetLocation, -width / 2, -height / 2);
-    ctx.uniform1f(scaleLocation, 2 / width);
-    ctx.uniform1f(colorIndexLocation, ColorMaps.binary);
-  }
-  this.currentProgram = this.programs.linear;
+  // Create buffers
+  buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), gl.STATIC_DRAW);
+  
   texCoordBuffer = ctx.createBuffer();
   ctx.bindBuffer(ctx.ARRAY_BUFFER, texCoordBuffer);
   ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), ctx.STATIC_DRAW);
