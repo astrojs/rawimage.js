@@ -1,7 +1,8 @@
 
 FILES='
   core.js
-  shaders.js'
+  shaders.js
+  colormaps.js'
   
 mkdir -vp tmp
 for f in $FILES

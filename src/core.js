@@ -196,7 +196,7 @@ rawimage.prototype.setCursor = function() {
 
 rawimage.prototype.reset = function() {
   this.programs = {};
-  this.locations = {};
+  this.uniforms = {};
   this.textures = {};
   this.buffers = [];
   this.shaders = [];
@@ -279,65 +279,104 @@ rawimage.prototype.getContext = function() {
   var width, height, ext, vertexShader, fragmentShader, key, i, program, buffer;
   
   this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
-  if (!this.gl) return null;
+  if (!this.gl) return false;
   
   width = this.width;
   height = this.height;
   this.gl.viewport(0, 0, width, height);
   
   ext = this.getExtension();
-  if (!ext) return null;
+  if (!ext) return false;
   
-  vertexShader = this.loadShader(this.shaders.vertex, gl.VERTEX_SHADER);
-  if (!vertexShader) return null;
+  vertexShader = this.loadShader(rawimage.shaders.vertex, this.gl.VERTEX_SHADER);
+  if (!vertexShader) return false;
   
   // Create all fragment shaders
   // TODO: Could be more GPU memory efficient by loading only shaders when called
   //       and removing those when not used.
   for (i = 0; i < this.fragmentShaders.length; i += 1) {
-    key = fragmentShaders[i];
-    fragmentShader = this.loadShader(this.shaders[key], this.gl.FRAGMENT_SHADER);
-    if (!fragmentShader) return null;
+    key = this.fragmentShaders[i];
+    fragmentShader = this.loadShader(rawimage.shaders[key], this.gl.FRAGMENT_SHADER);
+    if (!fragmentShader) return false;
     
     program = this.createProgram(vertexShader, fragmentShader);
     this.programs[key] = program;
-    if (!program) return null;
+    if (!program) return false;
     
-    // Get attribute and uniform locations and set parameters
+    // Cache and set uniform locations
     this.gl.useProgram(program);
-    this.locations[key] = {
-      aPosition: gl.getAttribLocation(program, 'aPosition'),
-      aTextureCoordinate: gl.getAttribLocation(program, 'aTextureCoordinate'),
-      uOffset: gl.getUniformLocation(program, 'uOffset'),
-      uScale: gl.getUniformLocation(program, 'uScale'),
-      uColorIndex: gl.getUniformLocation(program, 'uColorIndex')
+    this.uniforms[key] = {
+      uOffset: this.gl.getUniformLocation(program, 'uOffset'),
+      uScale: this.gl.getUniformLocation(program, 'uScale'),
+      uColorIndex: this.gl.getUniformLocation(program, 'uColorIndex')
     };
     
     // TODO: Offset the image so that it's centered on load
-    gl.uniform2f(this.locations[key].uOffset, -width / 2, -height / 2);
-    gl.uniform1f(this.locations[key].uScale, 2 / width);
-    gl.uniform1f(this.locations[key].uColorIndex, this.colormaps.binary);
+    this.gl.uniform2f(this.uniforms[key].uOffset, -width / 2, -height / 2);
+    this.gl.uniform1f(this.uniforms[key].uScale, 2 / width);
+    this.gl.uniform1f(this.uniforms[key].uColorIndex, rawimage.colormaps.binary);
   }
   
+  // Cache attribute locations
+  this.aPosition = this.gl.getAttribLocation(program, 'aPosition');
+  this.aTextureCoordinate = this.gl.getAttribLocation(program, 'aTextureCoordinate');
+  
   // Start with the linearly scaled image
-  this.program = this.programs.linear;
+  this.program = 'linear';
+  this.gl.useProgram(this.programs[this.program]);
   
-  // Create buffers
-  buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), gl.STATIC_DRAW);
-  
-  texCoordBuffer = ctx.createBuffer();
-  ctx.bindBuffer(ctx.ARRAY_BUFFER, texCoordBuffer);
-  ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), ctx.STATIC_DRAW);
-  ctx.enableVertexAttribArray(texCoordLocation);
-  ctx.vertexAttribPointer(texCoordLocation, 2, ctx.FLOAT, false, 0, 0);
-  buffer = ctx.createBuffer();
-  ctx.bindBuffer(ctx.ARRAY_BUFFER, buffer);
-  ctx.enableVertexAttribArray(positionLocation);
-  ctx.vertexAttribPointer(positionLocation, 2, ctx.FLOAT, false, 0, 0);
-  this.buffers.push(texCoordBuffer);
+  // Create texture and position buffers
+  buffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+  this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), this.gl.STATIC_DRAW);
+  this.gl.enableVertexAttribArray(this.aTextureCoordinate);
+  this.gl.vertexAttribPointer(this.aTextureCoordinate, 2, this.gl.FLOAT, false, 0, 0);
   this.buffers.push(buffer);
-  this.setupColorMapTexture();
-  return ctx;
+  
+  buffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+  this.gl.enableVertexAttribArray(this.aPosition);
+  this.gl.vertexAttribPointer(this.aPosition, 2, this.gl.FLOAT, false, 0, 0);
+  this.buffers.push(buffer);
+  
+  this.loadColorMap();
+  return true;
+};
+
+
+rawimage.prototype.loadColorMap = function() {
+  var img, target;
+  
+  this.setRectangle(this.gl, 256, 70);
+  img = new Image();
+  img.onload = function() {
+    var texture, name, program, uniform;
+    
+    this.gl.activeTexture(this.gl.TEXTURE0);
+    texture = this.gl.createTexture();
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+    
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, this.gl.RGB, this.gl.UNSIGNED_BYTE, img);
+    
+    // TODO: Loop over programs object instead
+    for (i = 0; i < this.fragmentShaders; i += 1) {
+      
+      // TODO: Find out if we must switch programs to update a uniform on another program.
+      name = this.fragmentShaders[i];
+      program = this.programs[name];
+      this.gl.useProgram(program);
+      
+      uniform = this.uniforms[name];
+      this.gl.uniform1i(uniform, 0);
+    }
+    
+    // Switch back to current program
+    this.gl.useProgram(this.program);
+    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+  };
+  img.src = "data:image/png;base64," + rawimage.colormaps.base64;
 };
