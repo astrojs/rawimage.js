@@ -1,23 +1,22 @@
 {
-  "name": "WebFITS",
+  "name": "rawimage.js",
   "version": "0.4.3",
-  "author": "Amit Kapadia <amit@zooniverse.org>",
+  "description": "A lightweight WebGL library for displaying complex imagery.",
+  "keywords": [
+    "webgl",
+    "science",
+    "raw images",
+    "high bit depth",
+    "visualization"
+  ],
+  "author": "Amit Kapadia <akapad@gmail.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/astrojs/webfits.git"
   },
-  "dependencies": { 
-  },
   "devDependencies": {
-    "coffee-script" : "~1.6.x",
-    "http-server": "~0.5.x"
+    "http-server": "0.5.x",
+    "uglify-js": "~2.4.x"
   },
-  "_dependencyOrder": [
-    "Shaders",
-    "ColorMaps",
-    "Api",
-    "WebGL",
-    "Canvas",
-    "WebFITS"
-  ]
+  "license": "MIT"
 }
