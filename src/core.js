@@ -171,7 +171,7 @@ rawimage.prototype.setupControls = function(callbacks, opts) {
   };
   
   onzoom = function(e) {
-    var factor;
+    var factor, uScale;
     
     e.preventDefault();
     factor = e.shiftKey ? 1.01 : 1.1;
@@ -180,6 +180,7 @@ rawimage.prototype.setupControls = function(callbacks, opts) {
     target.zoom = target.zoom > target.maxZoom ? target.maxZoom : target.zoom;
     target.zoom = target.zoom < target.minZoom ? target.minZoom : target.zoom;
     
+    target.draw();
     callbacks.onzoom();
   };
   
@@ -260,15 +261,10 @@ rawimage.prototype.setRectangle = function(width, height) {
   this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), this.gl.STATIC_DRAW);
 };
 
-rawimage.prototype.updateUniforms = function(program) {
-  var offsetLocation, scaleLocation;
-  
-  // TODO: Store uniforms on rawimage object. This is an expensive lookup.
-  offsetLocation = this.gl.getUniformLocation(program, 'uOffset');
-  scaleLocation = this.gl.getUniformLocation(program, 'uScale');
-  
-  this.gl.uniform2f(offsetLocation, this.xOffset, this.yOffset);
-  this.gl.uniform1f(scaleLocation, this.zoom);
+rawimage.prototype.updateUniforms = function() {
+  var uniforms = this.uniforms[this.program];
+  this.gl.uniform2f(uniforms.uOffset, this.xOffset, this.yOffset);
+  this.gl.uniform1f(uniforms.uScale, this.zoom);
 };
 
 rawimage.prototype.getContext = function() {
@@ -304,6 +300,7 @@ rawimage.prototype.getContext = function() {
     this.uniforms[key] = {
       uOffset: this.gl.getUniformLocation(program, 'uOffset'),
       uScale: this.gl.getUniformLocation(program, 'uScale'),
+      uExtent: this.gl.getUniformLocation(program, 'uExtent'),
       uColorIndex: this.gl.getUniformLocation(program, 'uColorIndex'),
       uColorMap: this.gl.getUniformLocation(program, 'uColorMap')
     };
@@ -323,21 +320,22 @@ rawimage.prototype.getContext = function() {
   this.gl.useProgram(this.programs[this.program]);
   
   // Create texture and position buffers
-  buffer = this.gl.createBuffer();
-  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+  var textureBuffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textureBuffer);
   this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), this.gl.STATIC_DRAW);
   this.gl.enableVertexAttribArray(this.aTextureCoordinate);
   this.gl.vertexAttribPointer(this.aTextureCoordinate, 2, this.gl.FLOAT, false, 0, 0);
-  this.buffers.push(buffer);
+  this.buffers.push(textureBuffer);
   
-  buffer = this.gl.createBuffer();
-  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+  var positionBuffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
   this.gl.enableVertexAttribArray(this.aPosition);
   this.gl.vertexAttribPointer(this.aPosition, 2, this.gl.FLOAT, false, 0, 0);
-  this.buffers.push(buffer);
+  this.buffers.push(positionBuffer);
   
   this.loadColorMap();
   this.currentImage = null;
+  
   return true;
 };
 
@@ -402,8 +400,7 @@ rawimage.prototype.loadImage = function(id, arr, width, height) {
   
   // TODO: Remove need to cast to Float32 array. Check if WebGL supports other data types now.
   this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, new Float32Array(arr));
-  if (this.currentImage === null)
-      this.currentImage = id;
+  this.currentImage = this.currentImage || id;
   
   this.textures[id] = texture;
   this.nImages += 1;
@@ -435,20 +432,18 @@ rawimage.prototype.setColorMap = function(cmap) {
 };
 
 rawimage.prototype.setImage = function(id) {
-  var index, program, location;
+  var index, program, uTexture;
   
   index = this.lookup[id];
-  console.log(index, this.lookup, id);
   this.gl.activeTexture(this.gl.TEXTURE0 + index);
   
   program = this.programs[this.program];
-  location = this.gl.getUniformLocation(program, 'uTexture');
-  this.gl.uniform1i(location, index);
+  uTexture = this.gl.getUniformLocation(program, 'uTexture');
+  this.gl.uniform1i(uTexture, index);
   this.currentImage = id;
 };
 
 rawimage.prototype.setStretch = function(stretch) {
-  console.log(this.currentImage);
   this.program = stretch;
   this.gl.useProgram(this.programs[stretch]);
   this.setImage(this.currentImage);
@@ -479,7 +474,7 @@ rawimage.prototype.setAlpha = function(alpha) {};
 rawimage.prototype.setQ = function(Q) {};
 
 rawimage.prototype.draw = function() {
-  this.updateUniforms(this.programs[this.program]);
+  this.updateUniforms(this.program);
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
 

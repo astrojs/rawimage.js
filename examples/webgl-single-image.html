@@ -48,7 +48,7 @@
     // Set the intensity range and stretch
     raw.setExtent(extent[0], extent[1]);
     raw.setStretch('linear');
-    
+    window.raw = raw;
     // Optionally set colormap.  WebFITS defaults to grayscale mapping.
     // raw.setColorMap('Spectral');
   }
