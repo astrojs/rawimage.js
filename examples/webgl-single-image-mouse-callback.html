@@ -2,7 +2,7 @@
 <head>
   <link rel="stylesheet" href="/examples/astrojs.css" type="text/css" charset="utf-8">
   <script type="text/javascript" src="/examples/lib/fits.js"></script>
-  <script type="text/javascript" src="/lib/webfits-gl.js"></script>
+  <script type="text/javascript" src="/rawimage.js"></script>
   <script type="text/javascript">
   
   // Define callback to be executed after FITS is received from the server
@@ -43,20 +43,21 @@
     var el = document.querySelector('#' + opts.el);
     
     // Initialize a WebFITS context with a viewer of size width
-    var webfits = new astro.WebFITS(el, width);
+    var raw = new rawimage(el, width);
+    window.raw = raw;
     
     // Add pan and zoom controls
     opts = {arr: arr, width: width};
     callbacks = {onmousemove: onmousemove}
-      
-    webfits.setupControls(callbacks, opts);
+    
+    raw.setupControls(callbacks, opts);
     
     // Load array representation of image
-    webfits.loadImage('some-identifier', arr, width, height);
+    raw.loadImage('some-identifier', arr, width, height);
     
     // Set the intensity range and stretch
-    webfits.setExtent(extent[0], extent[1]);
-    webfits.setStretch('linear');
+    raw.setExtent(extent[0], extent[1]);
+    raw.setStretch('linear');
   }
   
   function main() {

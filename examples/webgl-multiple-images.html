@@ -1,8 +1,8 @@
 <html>
 <head>
-  <link rel="stylesheet" href="/examples/astrojs.css" type="text/css" charset="utf-8">
+  <link rel="stylesheet" href="astrojs.css" type="text/css" charset="utf-8">
   <script type="text/javascript" src="lib/fits.js"></script>
-  <script type="text/javascript" src="/lib/webfits-gl.js"></script>
+  <script type="text/javascript" src="/rawimage.js"></script>
   <script type="text/javascript">
   
   // Define callback to be executed after image is received from the server
@@ -34,17 +34,17 @@
     var el = document.querySelector('#' + opts.el);
     
     // Initialize a WebFITS context with a viewer of size width
-    var webfits = new astro.WebFITS(el, width);
+    var raw = new rawimage(el, width);
     
     // Enable pan and zoom controls
-    webfits.setupControls();
+    raw.setupControls();
     
     // Load array representation of image
-    webfits.loadImage('some-identifier', arr, width, height);
+    raw.loadImage('some-identifier', arr, width, height);
     
     // Set the intensity range and stretch
-    webfits.setExtent(extent[0], extent[1]);
-    webfits.setStretch('logarithm');
+    raw.setExtent(extent[0], extent[1]);
+    raw.setStretch('logarithm');
   }
   
   function main() {
@@ -70,7 +70,7 @@
 
 <body onload='main()'>
   <div class='content'>
-    <h3>Multiple WebFITS Instances (WebGL)</h3>
+    <h3>Multiple rawimage Instances</h3>
     <div id="green-wicked-science-visualization" class='visualization'></div>
     <div id="red-wicked-science-visualization" class='visualization'></div>
     <div id="ir-wicked-science-visualization" class='visualization'></div>

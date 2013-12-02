@@ -2,7 +2,7 @@
 <head>
   <link rel="stylesheet" href="/examples/astrojs.css" type="text/css" charset="utf-8">
   <script type="text/javascript" src="lib/fits.js"></script>
-  <script type="text/javascript" src="/lib/webfits-gl.js"></script>
+  <script type="text/javascript" src="/rawimage.js"></script>
   <script type="text/javascript">
   
   // Define callback to be executed after image is received from the server
@@ -30,20 +30,20 @@
     var extent = dataunit.getExtent(arr);
     
     // Get reference to WebFITS object and load the image
-    var webfits = opts.webfits;
-    webfits.loadImage(opts.identifier, arr, width, height);
-    webfits.setExtent(extent[0], extent[1]);
+    var raw = opts.raw;
+    raw.loadImage(opts.identifier, arr, width, height);
+    raw.setExtent(extent[0], extent[1]);
     
     // Initialize the color shader when all three layers are imported
-    if (Object.keys(webfits.lookup).length === 3) {
+    if (Object.keys(raw.lookup).length === 3) {
       
       // Specify each rgb channel using the identifiers
-      webfits.setScales(1.0, 1.0, 1.0);
-      webfits.setCalibrations(1.0, 1.0, 1.0);
-      webfits.setAlpha(0.03);
-      webfits.setQ(1.0);
+      raw.setScales(1.0, 1.0, 1.0);
+      raw.setCalibrations(1.0, 1.0, 1.0);
+      raw.setAlpha(0.03);
+      raw.setQ(1.0);
       
-      webfits.drawColor('ir', 'red', 'green');
+      raw.drawColor('ir', 'red', 'green');
     }
   }
   
@@ -56,13 +56,14 @@
     
     // Initialize WebFITS object
     var el = document.querySelector('#wicked-science-visualization');
-    var webfits = new astro.WebFITS(el, 512);
-    webfits.setupControls();
+    var raw = new rawimage(el, 512);
+    window.raw = raw;
+    raw.setupControls();
     
     // Initialize FITS files, passing getImage function as a callback
-    var f1 = new astro.FITS(path1, getImage, {identifier: 'ir', webfits: webfits});
-    var f2 = new astro.FITS(path2, getImage, {identifier: 'red', webfits: webfits});
-    var f3 = new astro.FITS(path3, getImage, {identifier: 'green', webfits: webfits});
+    var f1 = new astro.FITS(path1, getImage, {identifier: 'ir', raw: raw});
+    var f2 = new astro.FITS(path2, getImage, {identifier: 'red', raw: raw});
+    var f3 = new astro.FITS(path3, getImage, {identifier: 'green', raw: raw});
   }
   </script>
   
@@ -71,7 +72,7 @@
 
 <body onload='main()'>
   <div class='content'>
-    <h3>Single WebFITS Instance with Multiple Layers (WebGL)</h3>
+    <h3>Single RawImage Instance with Multiple Layers (WebGL)</h3>
     <div id="wicked-science-visualization"></div>
   </div>
 </body>

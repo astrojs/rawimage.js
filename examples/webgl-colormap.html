@@ -1,11 +1,11 @@
 <html>
 <head>
-  <link rel="stylesheet" href="examples/astrojs.css" type="text/css" charset="utf-8">
-  <script type="text/javascript" src="examples/lib/fits.js"></script>
-  <script type="text/javascript" src="../lib/webfits-gl.js"></script>
+  <link rel="stylesheet" href="astrojs.css" type="text/css" charset="utf-8">
+  <script type="text/javascript" src="lib/fits.js"></script>
+  <script type="text/javascript" src="/rawimage.js"></script>
   <script type="text/javascript">
   
-  var webfits;
+  var raw;
   
   // Define callback to be executed after FITS is received from the server
   function getImage(f, opts) {
@@ -39,17 +39,17 @@
     var el = document.querySelector('#' + opts.el);
     
     // Initialize a WebFITS context with a viewer of size width
-    webfits = new astro.WebFITS(el, width);
+    raw = new rawimage(el, width);
     
     // Enable pan and zoom controls
-    webfits.setupControls();
+    raw.setupControls();
     
     // Load array representation of image
-    webfits.loadImage('some-identifier', arr, width, height);
+    raw.loadImage('some-identifier', arr, width, height);
     
     // Set the intensity range and stretch
-    webfits.setExtent(extent[0], extent[1]);
-    webfits.setStretch('linear');
+    raw.setExtent(extent[0], extent[1]);
+    raw.setStretch('linear');
     
   }
   
@@ -65,7 +65,7 @@
   }
   
   function setColorMap(e) {
-    webfits.setColorMap(e.target.value);
+    raw.setColorMap(e.target.value);
   }
   </script>
   
@@ -74,7 +74,7 @@
 
 <body onload='main()'>
   <div class='content'>
-    <h3>WebFITS Colormaps</h3>
+    <h3>rawimage Colormaps</h3>
     <select>
       <option>Accent</option>
       <option>Blues</option>

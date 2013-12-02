@@ -101,6 +101,8 @@ rawimage.prototype.setupControls = function(callbacks, opts) {
   callbacks.onmouseover = callbacks.onmouseover || voidfn;
   callbacks.onzoom = callbacks.onzoom || voidfn;
   
+  console.log(callbacks.onmousemove);
+  
   // Event handlers for interactions
   this.canvas.onmousedown = function(e) {
     target.drag = true;
@@ -137,15 +139,15 @@ rawimage.prototype.setupControls = function(callbacks, opts) {
       target.yCurrent = e.layerY;
       target.drawCrosshair();
     }
-    if (!target.drag) return;
-    
-    dx = e.clientX - target.xMouseDown;
-    dy = e.clientY - target.yMouseDown;
-    
-    target.xOffset = target.xOldOffset + (dx / target.width / target.zoom * 2.0);
-    target.yOffset = target.yOldOffset - (dy / target.height / target.zoom * 2.0);
-    
-    target.draw();
+    if (target.drag) {
+      dx = e.clientX - target.xMouseDown;
+      dy = e.clientY - target.yMouseDown;
+
+      target.xOffset = target.xOldOffset + (dx / target.width / target.zoom * 2.0);
+      target.yOffset = target.yOldOffset - (dy / target.height / target.zoom * 2.0);
+
+      target.draw();
+    }
     
     // Compute the coordinates in the image reference frame
     xOffset = e.clientX - target.offsetLeft;
@@ -514,7 +516,11 @@ rawimage.prototype.drawColor = function(rId, gId, bId) {
   
   this.gl.uniform1i(this.uniforms.color.uTexture0, this.lookup[rId]);
   this.gl.uniform1i(this.uniforms.color.uTexture1, this.lookup[gId]);
-  this.gl.uniform1i(this.uniforms.color.uTexture2, this.lookup[BId]);
+  this.gl.uniform1i(this.uniforms.color.uTexture2, this.lookup[bId]);
   
   this.draw();
-}
+};
+
+rawimage.prototype.destroy = function() {
+  
+};
