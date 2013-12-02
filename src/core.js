@@ -22,8 +22,8 @@ function rawimage(el, dimension) {
   this.el.appendChild(this.canvas);
   this.el.appendChild(this.overlay);
   
-  // Index textures uploaded to GPU
-  this.nImages = 1;
+  // Keep track of textures uploaded to GPU
+  this.nTextures = 1;
   this.lookup = {};
   
   // TODO: Rename this function since porting to only WebGL implementation
@@ -286,30 +286,35 @@ rawimage.prototype.getContext = function() {
   // Create all fragment shaders
   // TODO: Could be more GPU memory efficient by loading only shaders when called
   //       and removing those when not used.
-  for (i = 0; i < this.fragmentShaders.length; i += 1) {
-    key = this.fragmentShaders[i];
+  this.fragmentShaders.forEach(function(key) {
     fragmentShader = this.loadShader(rawimage.shaders[key], this.gl.FRAGMENT_SHADER);
     if (!fragmentShader) return false;
     
     program = this.createProgram(vertexShader, fragmentShader);
-    this.programs[key] = program;
     if (!program) return false;
+    this.programs[key] = program;
     
-    // Cache and set uniform locations
+    // Cache uniforms since they are expensive to look up
     this.gl.useProgram(program);
-    this.uniforms[key] = {
-      uOffset: this.gl.getUniformLocation(program, 'uOffset'),
-      uScale: this.gl.getUniformLocation(program, 'uScale'),
-      uExtent: this.gl.getUniformLocation(program, 'uExtent'),
-      uColorIndex: this.gl.getUniformLocation(program, 'uColorIndex'),
-      uColorMap: this.gl.getUniformLocation(program, 'uColorMap')
-    };
+    this.uniforms[key] = {};
+    ['uOffset', 'uScale', 'uExtent', 'uColorIndex', 'uColorMap', 'uTexture0'].forEach(function(u){
+      this.uniforms[key][u] = this.gl.getUniformLocation(program, u);
+    }, this);
     
     // TODO: Offset the image so that it's centered on load
     this.gl.uniform2f(this.uniforms[key].uOffset, -width / 2, -height / 2);
     this.gl.uniform1f(this.uniforms[key].uScale, 2 / width);
     this.gl.uniform1f(this.uniforms[key].uColorIndex, rawimage.colormaps.binary);
-  }
+    this.gl.uniform1i(this.uniforms[key].uTexture0, 1);
+  }, this);
+  
+  // Cache color program uniforms (no need to switch programs since color is current)
+  ['uScaleR', 'uScaleG', 'uScaleB',
+   'uCalibrationR', 'uCalibrationG', 'uCalibrationB',
+   'uAlpha', 'uQ',
+   'uTexture1', 'uTexture2'].forEach(function(key) {
+    this.uniforms['color'][key] = this.gl.getUniformLocation(program, key);
+  }, this);
   
   // Cache attribute locations
   this.aPosition = this.gl.getAttribLocation(program, 'aPosition');
@@ -320,18 +325,18 @@ rawimage.prototype.getContext = function() {
   this.gl.useProgram(this.programs[this.program]);
   
   // Create texture and position buffers
-  var textureBuffer = this.gl.createBuffer();
-  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textureBuffer);
+  buffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
   this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), this.gl.STATIC_DRAW);
   this.gl.enableVertexAttribArray(this.aTextureCoordinate);
   this.gl.vertexAttribPointer(this.aTextureCoordinate, 2, this.gl.FLOAT, false, 0, 0);
-  this.buffers.push(textureBuffer);
+  this.buffers.push(buffer);
   
-  var positionBuffer = this.gl.createBuffer();
-  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+  buffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
   this.gl.enableVertexAttribArray(this.aPosition);
   this.gl.vertexAttribPointer(this.aPosition, 2, this.gl.FLOAT, false, 0, 0);
-  this.buffers.push(positionBuffer);
+  this.buffers.push(buffer);
   
   this.loadColorMap();
   this.currentImage = null;
@@ -378,7 +383,8 @@ rawimage.prototype.loadColorMap = function() {
 rawimage.prototype.loadImage = function(id, arr, width, height) {
   var index, texture;
   
-  if (id in this.lookup) {
+  // Save on GPU memory by reusing the texture instead of creating a new one.
+  if (this.lookup.hasOwnProperty(id)) {
     index = this.lookup[id];
     this.gl.activeTexture(this.gl.TEXTURE0 + index);
     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, new Float32Array(arr));
@@ -387,10 +393,10 @@ rawimage.prototype.loadImage = function(id, arr, width, height) {
   
   this.setRectangle(width, height);
   
-  index = this.nImages;
-  this.lookup[id] = this.nImages;
+  index = this.nTextures;
+  this.lookup[id] = this.nTextures;
   
-  this.gl.activeTexture(this.gl.TEXTURE0 + this.nImages);
+  this.gl.activeTexture(this.gl.TEXTURE0 + index);
   texture = this.gl.createTexture();
   this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
   this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
@@ -399,11 +405,14 @@ rawimage.prototype.loadImage = function(id, arr, width, height) {
   this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
   
   // TODO: Remove need to cast to Float32 array. Check if WebGL supports other data types now.
+  //       This might be due to the use of the floating point extension. Need to look at this in depth.
   this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, new Float32Array(arr));
+  
+  // Current image defaults to the first texture uploaded.
   this.currentImage = this.currentImage || id;
   
   this.textures[id] = texture;
-  this.nImages += 1;
+  this.nTextures += 1;
 }
 
 rawimage.prototype.setColorMap = function(cmap) {
@@ -432,21 +441,15 @@ rawimage.prototype.setColorMap = function(cmap) {
 };
 
 rawimage.prototype.setImage = function(id) {
-  var index, program, uTexture;
-  
-  index = this.lookup[id];
+  var index = this.lookup[id];
   this.gl.activeTexture(this.gl.TEXTURE0 + index);
-  
-  program = this.programs[this.program];
-  uTexture = this.gl.getUniformLocation(program, 'uTexture');
-  this.gl.uniform1i(uTexture, index);
+  this.gl.uniform1i(this.uniforms[this.program].uTexture0, index);
   this.currentImage = id;
 };
 
 rawimage.prototype.setStretch = function(stretch) {
   this.program = stretch;
   this.gl.useProgram(this.programs[stretch]);
-  this.setImage(this.currentImage);
   this.draw();
 };
 
@@ -468,13 +471,50 @@ rawimage.prototype.setExtent = function(min, max) {
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
 
-rawimage.prototype.setScales = function(r, g, b) {};
-rawimage.prototype.setCalibrations = function(r, g, b) {};
-rawimage.prototype.setAlpha = function(alpha) {};
-rawimage.prototype.setQ = function(Q) {};
-
-rawimage.prototype.draw = function() {
-  this.updateUniforms(this.program);
+rawimage.prototype.setScales = function(r, g, b) {
+  this.gl.useProgram(this.programs.color);
+  
+  this.gl.uniform1f(this.uniforms.color.uScaleR, r);
+  this.gl.uniform1f(this.uniforms.color.uScaleG, g);
+  this.gl.uniform1f(this.uniforms.color.uScaleB, b);
+  
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
 
+rawimage.prototype.setCalibrations = function(r, g, b) {
+  this.gl.useProgram(this.programs.color);
+  
+  this.gl.uniform1f(this.uniforms.color.uCalibrationR, r);
+  this.gl.uniform1f(this.uniforms.color.uCalibrationG, g);
+  this.gl.uniform1f(this.uniforms.color.uCalibrationB, b);
+  
+  this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+};
+
+rawimage.prototype.setAlpha = function(alpha) {
+  this.gl.useProgram(this.programs.color);
+  this.gl.uniform1f(this.uniforms.color.uAlpha, alpha);
+  this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+};
+rawimage.prototype.setQ = function(Q) {
+  this.gl.useProgram(this.programs.color);
+  this.gl.uniform1f(this.uniforms.color.uQ, Q);
+  this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+};
+
+rawimage.prototype.draw = function() {
+  this.updateUniforms();
+  this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+};
+
+rawimage.prototype.drawColor = function(rId, gId, bId) {
+  this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+  this.program = 'color';
+  this.gl.useProgram(this.programs.color);
+  
+  this.gl.uniform1i(this.uniforms.color.uTexture0, this.lookup[rId]);
+  this.gl.uniform1i(this.uniforms.color.uTexture1, this.lookup[gId]);
+  this.gl.uniform1i(this.uniforms.color.uTexture2, this.lookup[BId]);
+  
+  this.draw();
+}

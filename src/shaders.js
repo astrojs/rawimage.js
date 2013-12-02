@@ -23,7 +23,7 @@ rawimage.shaders = {
   linear: [
     "precision mediump float;",
     
-    "uniform sampler2D uTexture;",
+    "uniform sampler2D uTexture0;",
     "uniform sampler2D uColorMap;",
     "uniform float uColorIndex;",
     "uniform vec2 uExtent;",
@@ -31,7 +31,7 @@ rawimage.shaders = {
     "varying vec2 vTextureCoordinate;",
     
     "void main() {",
-        "vec4 pixel_v = texture2D(uTexture, vTextureCoordinate);",
+        "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
         
         "float min = uExtent[0];",
         "float max = uExtent[1];",
@@ -44,7 +44,7 @@ rawimage.shaders = {
   logarithm: [
     "precision mediump float;",
     
-    "uniform sampler2D uTexture;",
+    "uniform sampler2D uTexture0;",
     "uniform sampler2D uColorMap;",
     "uniform float uColorIndex;",
     "uniform vec2 uExtent;",
@@ -56,7 +56,7 @@ rawimage.shaders = {
     "}",
     
     "void main() {",
-        "vec4 pixel_v = texture2D(uTexture, vTextureCoordinate);",
+        "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
         
         "float min = uExtent[0];",
         "float max = logarithm(uExtent[1] - min);",
@@ -73,7 +73,7 @@ rawimage.shaders = {
   sqrt: [
     "precision mediump float;",
     
-    "uniform sampler2D uTexture;",
+    "uniform sampler2D uTexture0;",
     "uniform sampler2D uColorMap;",
     "uniform float uColorIndex;",
     "uniform vec2 uExtent;",
@@ -81,7 +81,7 @@ rawimage.shaders = {
     "varying vec2 vTextureCoordinate;",
     
     "void main() {",
-      "vec4 pixel_v = texture2D(uTexture, vTextureCoordinate);",
+      "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
       
       // Shift value by min to avoid negative numbers
       "float min = uExtent[0];",
@@ -96,7 +96,7 @@ rawimage.shaders = {
   arcsinh: [
     "precision mediump float;",
     
-    "uniform sampler2D uTexture;",
+    "uniform sampler2D uTexture0;",
     "uniform sampler2D uColorMap;",
     "uniform float uColorIndex;",
     "uniform vec2 uExtent;",
@@ -108,7 +108,7 @@ rawimage.shaders = {
     "}",
     
     "void main() {",
-      "vec4 pixel_v = texture2D(uTexture, vTextureCoordinate);",
+      "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
       
       "float min = 0.0;",
       "float max = arcsinh( uExtent[1] - uExtent[0] );",
@@ -122,7 +122,7 @@ rawimage.shaders = {
   power: [
     "precision mediump float;",
     
-    "uniform sampler2D uTexture;",
+    "uniform sampler2D uTexture0;",
     "uniform sampler2D uColorMap;",
     "uniform float uColorIndex;",
     "uniform vec2 uExtent;",
@@ -130,7 +130,7 @@ rawimage.shaders = {
     "varying vec2 vTextureCoordinate;",
     
     "void main() {",
-      "vec4 pixel_v = texture2D(uTexture, vTextureCoordinate);",
+      "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
       
       // Shift value by min to avoid negative numbers
       "float min = uExtent[0];",
