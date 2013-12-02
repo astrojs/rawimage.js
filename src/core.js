@@ -203,7 +203,6 @@ rawimage.prototype.reset = function() {
 };
 
 rawimage.prototype.fragmentShaders = ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color'];
-rawimage.prototype.grayscale = 32;
 
 // Get necessary WebGL extensions (e.g. floating point textures).
 rawimage.prototype.getExtension = function() {
@@ -252,29 +251,26 @@ rawimage.prototype.createProgram = function(vshader, fshader) {
 };
 
 // TODO: Find out how to support non-square viewports
-rawimage.prototype.setRectangle = function(gl, width, height) {
+rawimage.prototype.setRectangle = function(width, height) {
   var x1, x2, y1, y2;
   
   x1 = 0, x2 = width;
   y1 = 0, y2 = height;
   
-  return gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW);
+  this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), this.gl.STATIC_DRAW);
 };
 
 rawimage.prototype.updateUniforms = function(program) {
   var offsetLocation, scaleLocation;
   
   // TODO: Store uniforms on rawimage object. This is an expensive lookup.
-  offsetLocation = this.gl.getUniformLocation(program, 'u_offset');
-  scaleLocation = this.gl.getUniformLocation(program, 'u_scale');
+  offsetLocation = this.gl.getUniformLocation(program, 'uOffset');
+  scaleLocation = this.gl.getUniformLocation(program, 'uScale');
   
   this.gl.uniform2f(offsetLocation, this.xOffset, this.yOffset);
   this.gl.uniform1f(scaleLocation, this.zoom);
 };
 
-//
-//  Public API
-//
 rawimage.prototype.getContext = function() {
   var width, height, ext, vertexShader, fragmentShader, key, i, program, buffer;
   
@@ -308,7 +304,8 @@ rawimage.prototype.getContext = function() {
     this.uniforms[key] = {
       uOffset: this.gl.getUniformLocation(program, 'uOffset'),
       uScale: this.gl.getUniformLocation(program, 'uScale'),
-      uColorIndex: this.gl.getUniformLocation(program, 'uColorIndex')
+      uColorIndex: this.gl.getUniformLocation(program, 'uColorIndex'),
+      uColorMap: this.gl.getUniformLocation(program, 'uColorMap')
     };
     
     // TODO: Offset the image so that it's centered on load
@@ -340,43 +337,149 @@ rawimage.prototype.getContext = function() {
   this.buffers.push(buffer);
   
   this.loadColorMap();
+  this.currentImage = null;
   return true;
 };
 
-
 rawimage.prototype.loadColorMap = function() {
-  var img, target;
+  var img,
+      target = this;
   
-  this.setRectangle(this.gl, 256, 70);
+  this.setRectangle(256, 70);
   img = new Image();
   img.onload = function() {
-    var texture, name, program, uniform;
+    var texture, name, program, uColorMap;
     
-    this.gl.activeTexture(this.gl.TEXTURE0);
-    texture = this.gl.createTexture();
-    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+    target.gl.activeTexture(target.gl.TEXTURE0);
+    texture = target.gl.createTexture();
+    target.gl.bindTexture(target.gl.TEXTURE_2D, texture);
+    target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_WRAP_S, target.gl.CLAMP_TO_EDGE);
+    target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_WRAP_T, target.gl.CLAMP_TO_EDGE);
+    target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_MIN_FILTER, target.gl.NEAREST);
+    target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_MAG_FILTER, target.gl.NEAREST);
     
-    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, this.gl.RGB, this.gl.UNSIGNED_BYTE, img);
+    target.gl.texImage2D(target.gl.TEXTURE_2D, 0, target.gl.RGB, target.gl.RGB, target.gl.UNSIGNED_BYTE, img);
     
-    // TODO: Loop over programs object instead
-    for (i = 0; i < this.fragmentShaders; i += 1) {
+    for (name in target.programs) {
+      if (name === 'color') continue;
       
-      // TODO: Find out if we must switch programs to update a uniform on another program.
-      name = this.fragmentShaders[i];
-      program = this.programs[name];
-      this.gl.useProgram(program);
+      program = target.programs[name];
+      target.gl.useProgram(program);
       
-      uniform = this.uniforms[name];
-      this.gl.uniform1i(uniform, 0);
-    }
+      uColorMap = target.uniforms[name].uColorMap;
+      target.gl.uniform1i(uColorMap, 0);
+    };
     
     // Switch back to current program
-    this.gl.useProgram(this.program);
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+    target.gl.useProgram(target.programs[target.program]);
+    target.gl.drawArrays(target.gl.TRIANGLES, 0, 6);
   };
   img.src = "data:image/png;base64," + rawimage.colormaps.base64;
 };
+
+rawimage.prototype.loadImage = function(id, arr, width, height) {
+  var index, texture;
+  
+  if (id in this.lookup) {
+    index = this.lookup[id];
+    this.gl.activeTexture(this.gl.TEXTURE0 + index);
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, new Float32Array(arr));
+    return;
+  }
+  
+  this.setRectangle(width, height);
+  
+  index = this.nImages;
+  this.lookup[id] = this.nImages;
+  
+  this.gl.activeTexture(this.gl.TEXTURE0 + this.nImages);
+  texture = this.gl.createTexture();
+  this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+  
+  // TODO: Remove need to cast to Float32 array. Check if WebGL supports other data types now.
+  this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, new Float32Array(arr));
+  if (this.currentImage === null)
+      this.currentImage = id;
+  
+  this.textures[id] = texture;
+  this.nImages += 1;
+}
+
+rawimage.prototype.setColorMap = function(cmap) {
+  var cmaps, index, name, program, uColorIndex;
+  
+  cmaps = Object.keys(rawimage.colormaps);
+  index = cmaps.indexOf('base64');
+  cmaps.splice(index, 1);
+  
+  // Default to grayscale colormap if user-specified colormap does not exist
+  cmap = cmaps.indexOf(cmap) > -1 ? cmap : 'binary';
+  
+  for (name in this.programs) {
+    if (name === 'color') continue;
+    
+    program = this.programs[name];
+    this.gl.useProgram(program);
+    
+    uColorIndex = this.uniforms[name].uColorIndex;
+    this.gl.uniform1f(uColorIndex, rawimage.colormaps[cmap]);
+  };
+  
+  // Switch back to current program
+  this.gl.useProgram(this.programs[this.program]);
+  this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+};
+
+rawimage.prototype.setImage = function(id) {
+  var index, program, location;
+  
+  index = this.lookup[id];
+  console.log(index, this.lookup, id);
+  this.gl.activeTexture(this.gl.TEXTURE0 + index);
+  
+  program = this.programs[this.program];
+  location = this.gl.getUniformLocation(program, 'uTexture');
+  this.gl.uniform1i(location, index);
+  this.currentImage = id;
+};
+
+rawimage.prototype.setStretch = function(stretch) {
+  console.log(this.currentImage);
+  this.program = stretch;
+  this.gl.useProgram(this.programs[stretch]);
+  this.setImage(this.currentImage);
+  this.draw();
+};
+
+rawimage.prototype.setExtent = function(min, max) {
+  var name, program, uExtent;
+  
+  for (name in this.programs) {
+    if (name === 'color') continue;
+    
+    program = this.programs[name];
+    this.gl.useProgram(program);
+    
+    uExtent = this.uniforms[name].uExtent;
+    this.gl.uniform2f(uExtent, min, max);
+  }
+  
+  // Switch back to current program
+  this.gl.useProgram(this.programs[this.program]);
+  this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+};
+
+rawimage.prototype.setScales = function(r, g, b) {};
+rawimage.prototype.setCalibrations = function(r, g, b) {};
+rawimage.prototype.setAlpha = function(alpha) {};
+rawimage.prototype.setQ = function(Q) {};
+
+rawimage.prototype.draw = function() {
+  this.updateUniforms(this.programs[this.program]);
+  this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+};
+
