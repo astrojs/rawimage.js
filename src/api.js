@@ -35,7 +35,7 @@ rawimage.prototype.loadImage = function(id, arr, width, height) {
 
 rawimage.prototype.setColorMap = function(cmap) {
   var cmaps, index, name, program, uColorIndex;
-  
+
   cmaps = Object.keys(rawimage.colormaps);
   index = cmaps.indexOf('base64');
   cmaps.splice(index, 1);
@@ -50,7 +50,10 @@ rawimage.prototype.setColorMap = function(cmap) {
     this.gl.useProgram(program);
     
     uColorIndex = this.uniforms[name].uColorIndex;
-    this.gl.uniform1f(uColorIndex, rawimage.colormaps[cmap]);
+    
+    // The color index must be offset by 0.5 since graphics cards
+    // approximate the pixel coordinate differently. 
+    this.gl.uniform1f(uColorIndex, rawimage.colormaps[cmap] - 0.5);
   };
   
   // Switch back to current program
