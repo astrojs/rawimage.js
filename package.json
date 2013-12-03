@@ -1,6 +1,6 @@
 {
   "name": "rawimage.js",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "description": "A lightweight WebGL library for displaying complex imagery.",
   "keywords": [
     "webgl",
@@ -12,7 +12,7 @@
   "author": "Amit Kapadia <akapad@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/astrojs/webfits.git"
+    "url": "https://github.com/astrojs/rawimage.js.git"
   },
   "devDependencies": {
     "http-server": "0.5.x",
