@@ -42,8 +42,10 @@
     // Enable pan and zoom controls
     raw.setupControls();
     
+    var downsampled = raw.downsample(arr, width, height, 2);
+    
     // Load array representation of image
-    raw.loadImage('some-identifier', arr, width, height);
+    raw.loadImage('some-identifier', downsampled.arr, downsampled.width, downsampled.height);
     
     // Set the intensity range and stretch
     raw.setExtent(extent[0], extent[1]);
@@ -51,6 +53,7 @@
     window.raw = raw;
     // Optionally set colormap.  WebFITS defaults to grayscale mapping.
     raw.setColorMap('binary');
+    
   }
   
   function main() {

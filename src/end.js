@@ -1,3 +1,3 @@
-  rawimage.version = "0.5.0";
+  rawimage.version = "0.5.1";
   return rawimage;
 })();

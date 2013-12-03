@@ -6,6 +6,7 @@ FILES='
   controls.js
   gl.js
   api.js
+  downsample.js
   astro.js'
   
 mkdir -vp tmp
