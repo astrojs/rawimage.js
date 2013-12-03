@@ -1,0 +1,28 @@
+{
+  "name": "rawimage.js",
+  "main": "rawimage.js",
+  "version": "0.5.0",
+  "homepage": "http://github.com/astrojs/rawimage.js",
+  "authors": [
+    "Amit Kapadia <akapad@gmail.com>"
+  ],
+  "description": "A lightweight WebGL library for displaying complex imagery",
+  "keywords": [
+    "webgl",
+    "science",
+    "raw image",
+    "high bit depth",
+    "visualization"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "build.sh",
+    "package.json",
+    "src",
+    "scripts",
+    "examples"
+  ]
+}
