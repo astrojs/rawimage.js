@@ -70,12 +70,6 @@ rawimage.prototype.reset = function() {
   this.shaders = [];
 };
 
-rawimage.prototype.setStretch = function(stretch) {
-  this.program = stretch;
-  this.gl.useProgram(this.programs[stretch]);
-  this.draw();
-};
-
 // Release all objects on the GPU
 // TODO: Make functions to release specific texture/program/buffer
 rawimage.prototype.destroy = function() {

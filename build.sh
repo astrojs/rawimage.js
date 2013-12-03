@@ -6,7 +6,7 @@ FILES='
   controls.js
   gl.js
   api.js
-  composite.js'
+  astro.js'
   
 mkdir -vp tmp
 for f in $FILES

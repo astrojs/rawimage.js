@@ -70,14 +70,33 @@ rawimage = (function(){
     this.shaders = [];
   };
   
-  rawimage.prototype.setStretch = function(stretch) {
-    this.program = stretch;
-    this.gl.useProgram(this.programs[stretch]);
-    this.draw();
-  };
-  
+  // Release all objects on the GPU
+  // TODO: Make functions to release specific texture/program/buffer
   rawimage.prototype.destroy = function() {
+    var item;
     
+    // Delete textures
+    for (item in this.textures) {
+      this.gl.deleteTexture(this.textures[item]);
+    }
+    
+    // Delete buffers
+    this.buffers.forEach(function(item) {
+      this.gl.deleteBuffer(item);
+    }, this);
+    
+    // Delete shaders
+    this.shaders.forEach(function(item) {
+      this.gl.deleteShader(item);
+    }, this);
+    
+    // Delete programs
+    for (item in this.programs) {
+      this.gl.deleteProgram(this.programs[item]);
+    }
+    
+    this.gl = undefined;
+    this.reset();
   };
   
   rawimage.shaders = {
@@ -403,8 +422,6 @@ rawimage = (function(){
     callbacks.onmouseout = callbacks.onmouseout || voidfn;
     callbacks.onmouseover = callbacks.onmouseover || voidfn;
     callbacks.onzoom = callbacks.onzoom || voidfn;
-    
-    console.log(callbacks.onmousemove);
     
     // Event handlers for interactions
     this.canvas.onmousedown = function(e) {
@@ -744,22 +761,34 @@ rawimage = (function(){
     this.gl.useProgram(this.programs[this.program]);
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
   };
+  rawimage.prototype.setStretch = function(stretch) {
+    this.program = stretch;
+    this.gl.useProgram(this.programs[stretch]);
+    this.draw();
+  };
+  
   rawimage.prototype.setScales = function(r, g, b) {
+    var color;
+    
     this.gl.useProgram(this.programs.color);
     
-    this.gl.uniform1f(this.uniforms.color.uScaleR, r);
-    this.gl.uniform1f(this.uniforms.color.uScaleG, g);
-    this.gl.uniform1f(this.uniforms.color.uScaleB, b);
+    color = this.uniforms.color;
+    this.gl.uniform1f(color.uScaleR, r);
+    this.gl.uniform1f(color.uScaleG, g);
+    this.gl.uniform1f(color.uScaleB, b);
     
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
   };
   
   rawimage.prototype.setCalibrations = function(r, g, b) {
+    var color;
+    
     this.gl.useProgram(this.programs.color);
     
-    this.gl.uniform1f(this.uniforms.color.uCalibrationR, r);
-    this.gl.uniform1f(this.uniforms.color.uCalibrationG, g);
-    this.gl.uniform1f(this.uniforms.color.uCalibrationB, b);
+    color = this.uniforms.color;
+    this.gl.uniform1f(color.uCalibrationR, r);
+    this.gl.uniform1f(color.uCalibrationG, g);
+    this.gl.uniform1f(color.uCalibrationB, b);
     
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
   };

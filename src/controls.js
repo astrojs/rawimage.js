@@ -20,8 +20,6 @@ rawimage.prototype.setupControls = function(callbacks, opts) {
   callbacks.onmouseover = callbacks.onmouseover || voidfn;
   callbacks.onzoom = callbacks.onzoom || voidfn;
   
-  console.log(callbacks.onmousemove);
-  
   // Event handlers for interactions
   this.canvas.onmousedown = function(e) {
     target.drag = true;
