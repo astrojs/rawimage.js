@@ -13,8 +13,7 @@ rawimage.prototype.downsample = function(arr, width, height, factor) {
   // Downsample by averaging factor x factor blocks, placing the result in the bottom left of the block.
   for (j = 0; j < newHeight; j += 1) {
     for (i = 0; i < newWidth; i += 1) {
-      sum = 0;
-      N = 0;
+      sum = 0, N = 0;
       
       for (jj = 0; jj < factor; jj += 1) {
         if (j * factor + jj >= height) break;

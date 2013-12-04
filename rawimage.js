@@ -670,6 +670,10 @@ rawimage = (function(){
     this.loadColorMap();
     this.currentImage = null;
     
+    // Store the maximum texture size
+    // Does this account for floating point textures?
+    this.MAX_TEXTURE_SIZE = this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE);
+    
     return true;
   };
   
@@ -678,7 +682,15 @@ rawimage = (function(){
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
   };
   rawimage.prototype.loadImage = function(id, arr, width, height) {
-    var index, texture;
+    var index, texture, factor, downsampled;
+    
+    // Downsample if the image is too large for the GPU
+    var dimension = (width > height) ? width : height;
+    if (dimension > this.MAX_TEXTURE_SIZE) {
+      factor = ~~(dimension / this.MAX_TEXTURE_SIZE) + 1;
+      downsampled = this.downsample(arr, width, height, factor);
+      arr = downsampled.arr, width = downsampled.width, height = downsampled.height;
+    }
     
     // Save on GPU memory by reusing the texture instead of creating a new one.
     if (this.lookup.hasOwnProperty(id)) {
@@ -779,8 +791,7 @@ rawimage = (function(){
     // Downsample by averaging factor x factor blocks, placing the result in the bottom left of the block.
     for (j = 0; j < newHeight; j += 1) {
       for (i = 0; i < newWidth; i += 1) {
-        sum = 0;
-        N = 0;
+        sum = 0, N = 0;
         
         for (jj = 0; jj < factor; jj += 1) {
           if (j * factor + jj >= height) break;

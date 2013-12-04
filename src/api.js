@@ -1,5 +1,13 @@
 rawimage.prototype.loadImage = function(id, arr, width, height) {
-  var index, texture;
+  var index, texture, factor, downsampled;
+  
+  // Downsample if the image is too large for the GPU
+  var dimension = (width > height) ? width : height;
+  if (dimension > this.MAX_TEXTURE_SIZE) {
+    factor = ~~(dimension / this.MAX_TEXTURE_SIZE) + 1;
+    downsampled = this.downsample(arr, width, height, factor);
+    arr = downsampled.arr, width = downsampled.width, height = downsampled.height;
+  }
   
   // Save on GPU memory by reusing the texture instead of creating a new one.
   if (this.lookup.hasOwnProperty(id)) {

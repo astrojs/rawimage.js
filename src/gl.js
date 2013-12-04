@@ -136,6 +136,10 @@ rawimage.prototype.getContext = function() {
   this.loadColorMap();
   this.currentImage = null;
   
+  // Store the maximum texture size
+  // Does this account for floating point textures?
+  this.MAX_TEXTURE_SIZE = this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE);
+  
   return true;
 };
 
