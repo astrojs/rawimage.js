@@ -26,14 +26,14 @@ rawimage.prototype.loadShader = function(source, type) {
   return shader;
 };
 
-rawimage.prototype.createProgram = function(vshader, fshader) {
+rawimage.prototype.createProgram = function(vertexShader, fragmentShader) {
   var gl, linked, program;
   
   gl = this.gl;
   
   program = gl.createProgram();
-  gl.attachShader(program, vshader);
-  gl.attachShader(program, fshader);
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
   gl.linkProgram(program);
   
   linked = gl.getProgramParameter(program, gl.LINK_STATUS);

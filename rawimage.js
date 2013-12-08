@@ -118,7 +118,7 @@ rawimage = (function(){
         
         "vTextureCoordinate = aTextureCoordinate;",
       "}"
-    ].join('\n'),
+    ].join(''),
     
     linear: [
       "precision mediump float;",
@@ -139,7 +139,7 @@ rawimage = (function(){
           "float x = (pixel_v.r - min) / (max - min);",
           "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
       "}"
-    ].join("\n"),
+    ].join(""),
     
     logarithm: [
       "precision mediump float;",
@@ -168,7 +168,7 @@ rawimage = (function(){
           
           "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
       "}"
-    ].join("\n"),
+    ].join(""),
     
     sqrt: [
       "precision mediump float;",
@@ -191,7 +191,7 @@ rawimage = (function(){
         
         "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
       "}"
-    ].join("\n"),
+    ].join(""),
     
     arcsinh: [
       "precision mediump float;",
@@ -217,7 +217,7 @@ rawimage = (function(){
         
         "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
       "}"
-    ].join("\n"),
+    ].join(""),
     
     power: [
       "precision mediump float;",
@@ -241,7 +241,7 @@ rawimage = (function(){
         
         "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
       "}"
-    ].join("\n"),
+    ].join(""),
     
     color: [
       "precision mediump float;",
@@ -289,7 +289,7 @@ rawimage = (function(){
         
         "gl_FragColor = vec4(R, G, B, 1.0);",
       "}"
-    ].join("\n")
+    ].join("")
   };
   
   rawimage.prototype.loadColorMap = function() {
@@ -560,14 +560,14 @@ rawimage = (function(){
     return shader;
   };
   
-  rawimage.prototype.createProgram = function(vshader, fshader) {
+  rawimage.prototype.createProgram = function(vertexShader, fragmentShader) {
     var gl, linked, program;
     
     gl = this.gl;
     
     program = gl.createProgram();
-    gl.attachShader(program, vshader);
-    gl.attachShader(program, fshader);
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
     
     linked = gl.getProgramParameter(program, gl.LINK_STATUS);

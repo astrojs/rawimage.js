@@ -18,7 +18,7 @@ rawimage.shaders = {
       
       "vTextureCoordinate = aTextureCoordinate;",
     "}"
-  ].join('\n'),
+  ].join(''),
   
   linear: [
     "precision mediump float;",
@@ -39,7 +39,7 @@ rawimage.shaders = {
         "float x = (pixel_v.r - min) / (max - min);",
         "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
     "}"
-  ].join("\n"),
+  ].join(""),
   
   logarithm: [
     "precision mediump float;",
@@ -68,7 +68,7 @@ rawimage.shaders = {
         
         "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
     "}"
-  ].join("\n"),
+  ].join(""),
   
   sqrt: [
     "precision mediump float;",
@@ -91,7 +91,7 @@ rawimage.shaders = {
       
       "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
     "}"
-  ].join("\n"),
+  ].join(""),
   
   arcsinh: [
     "precision mediump float;",
@@ -117,7 +117,7 @@ rawimage.shaders = {
       
       "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
     "}"
-  ].join("\n"),
+  ].join(""),
   
   power: [
     "precision mediump float;",
@@ -141,7 +141,7 @@ rawimage.shaders = {
       
       "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
     "}"
-  ].join("\n"),
+  ].join(""),
   
   color: [
     "precision mediump float;",
@@ -189,5 +189,5 @@ rawimage.shaders = {
       
       "gl_FragColor = vec4(R, G, B, 1.0);",
     "}"
-  ].join("\n")
+  ].join("")
 };
