@@ -633,7 +633,7 @@ rawimage = (function(){
       // TODO: Offset the image so that it's centered on load
       this.gl.uniform2f(this.uniforms[key].uOffset, -width / 2, -height / 2);
       this.gl.uniform1f(this.uniforms[key].uScale, 2 / width);
-      this.gl.uniform1f(this.uniforms[key].uColorIndex, rawimage.colormaps.binary);
+      this.gl.uniform1f(this.uniforms[key].uColorIndex, rawimage.colormaps.binary - 0.5);
       this.gl.uniform1i(this.uniforms[key].uTexture0, 1);
     }, this);
     
