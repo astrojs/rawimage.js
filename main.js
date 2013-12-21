@@ -11,9 +11,9 @@
     "varying vec2 vTextureCoordinate;",
     
     "void main() {",
-      "vec2 position = aPosition + uOffset;",
-      "position = position * uScale;",
-      "gl_Position = vec4(position, 0.0, 1.0);",
+      // "vec2 position = aPosition + uOffset;",
+      // "position = position * uScale;",
+      "gl_Position = vec4(aPosition, 0.0, 1.0);",
       
       "vTextureCoordinate = aTextureCoordinate;",
     "}"
@@ -71,8 +71,8 @@
         
       "}",
       
-      // "return pixel;",
-      "return vec4(1.0, 0.0, 0.0, 1.0);",
+      "return pixel;",
+      // "return vec4(1.0, 0.0, 0.0, 1.0);",
     "}",
     
     "void main() {",
@@ -83,7 +83,8 @@
       // "float pixel = (pixel_v.r - min) / (max - min);",
       "float pixel = pixel_v.r;",
       
-      "gl_FragColor = vec4(pixel, pixel, pixel, 0.0);",
+      "gl_FragColor = pixel_v;",
+      // "gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);",
     "}"
   ];
   
@@ -161,6 +162,9 @@
       uniforms[key] = gl.getUniformLocation(program, key);
     }, this);
     
+    // gl.uniform2f(uniforms, 0);
+    // console.log(uniforms);
+    
     var aPosition = gl.getAttribLocation(program, 'aPosition');
     var aTextureCoordinate = gl.getAttribLocation(program, 'aTextureCoordinate');
     
@@ -178,6 +182,9 @@
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.enableVertexAttribArray(aPosition);
     gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+    var x1 = y1 = -1.0;
+    var x2 = y2 = 1.0;
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW);
     
     // Tile image
     for (var j = 0; j < yTiles; j++) {
@@ -188,8 +195,13 @@
         var y1 = j * maximumTextureSize;
         var y2 = maximumTextureSize;
         
+        // var x1 = 0;
+        // var x2 = maximumTextureSize;
+        // var y1 = 0;
+        // var y2 = maximumTextureSize;
+        
         // Set vertices on position buffer
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW);
+        // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW);
         
         // Get tile from full image
         var counter = 0;
@@ -211,15 +223,14 @@
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, x2, y2, 0, gl.LUMINANCE, gl.FLOAT, tile);
+        
+        var key = textureKeys[index];
+        uniforms[key] = gl.getUniformLocation(program, key);
+        gl.uniform1i(uniforms[key], index);
       }
     }
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
     
-    textureKeys.forEach(function(key, index) {
-      uniforms[key] = gl.getUniformLocation(program, key);
-      gl.uniform1i(uniforms[key], index);
-    }, this);
-    console.log(uniforms);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
     
     window.gl = gl;
     window.program = program;
