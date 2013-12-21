@@ -40,35 +40,61 @@
       "float dy = 1.0 / 3.0;",
       
       "vec2 delta = vec2(dx, dy);",
+      "vec2 scaledPosition;",
       
       "if (textureCoordinate.x < (1.0 * dx)) {",
         
         "if (textureCoordinate.y < (1.0 * dy)) {",
-          "pixel = texture2D(uTexture00, vTextureCoordinate);",
+          
+          "scaledPosition = (vTextureCoordinate - vec2(0, 0)) / delta;",
+          "pixel = texture2D(uTexture00, scaledPosition);",
+          
         "} else if (textureCoordinate.y < (2.0 * dy)) {",
-          "pixel = texture2D(uTexture01, vTextureCoordinate);",
+          
+          "scaledPosition = (vTextureCoordinate - vec2(0, 1.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture01, scaledPosition);",
+          
         "} else {",
-          "pixel = texture2D(uTexture02, vTextureCoordinate);",
+          
+          "scaledPosition = (vTextureCoordinate - vec2(0, 2.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture02, scaledPosition);",
+          
         "}",
         
       "} else if (textureCoordinate.x < (2.0 * dx)) {",
         
         "if (textureCoordinate.y < (1.0 * dy)) {",
-          "pixel = texture2D(uTexture10, vTextureCoordinate);",
+          
+          "scaledPosition = (vTextureCoordinate - vec2(1.0 * dx, 0.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture10, scaledPosition);",
+          
         "} else if (textureCoordinate.y < (2.0 * dy)) {",
-          "pixel = texture2D(uTexture11, vTextureCoordinate);",
+          "scaledPosition = (vTextureCoordinate - vec2(1.0 * dx, 1.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture11, scaledPosition);",
+          
         "} else {",
-          "pixel = texture2D(uTexture12, vTextureCoordinate);",
+          
+          "scaledPosition = (vTextureCoordinate - vec2(1.0 * dx, 2.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture12, scaledPosition);",
+          
         "}",
         
-        "} else {",
+      "} else {",
         
         "if (textureCoordinate.y < (1.0 * dy)) {",
-          "pixel = texture2D(uTexture20, vTextureCoordinate);",
+          
+          "scaledPosition = (vTextureCoordinate - vec2(2.0 * dx, 0.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture20, scaledPosition);",
+          
         "} else if (textureCoordinate.y < (2.0 * dy)) {",
-          "pixel = texture2D(uTexture21, vTextureCoordinate);",
+          
+          "scaledPosition = (vTextureCoordinate - vec2(2.0 * dx, 1.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture21, scaledPosition);",
+          
         "} else {",
-          "pixel = texture2D(uTexture22, vTextureCoordinate);",
+          "scaledPosition = (vTextureCoordinate - vec2(2.0 * dx, 2.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture22, scaledPosition);",
+          
         "}",
         
       "}",
@@ -127,9 +153,9 @@
     xTiles = (width % maximumTextureSize === 0) ? xTiles : ~~xTiles + 1;
     yTiles = (height % maximumTextureSize === 0) ? yTiles : ~~yTiles + 1;
     
-    // // Only doing 3x3 grid right now (leaving out some data)
-    // xTiles -= 1
-    // yTiles -= 1
+    // Only doing 3x3 grid right now (leaving out some data)
+    xTiles -= 1
+    yTiles -= 1
     
     // Generate a fragment shader with xTiles * yTiles textures
     var textureSrc = [textureAddress, 1];
