@@ -36,8 +36,8 @@
       
       // The values 3.0 should be replaced with xTiles and yTiles
       // 2.0 comes from the range in clip space coordinates
-      "float dx = 2.0 / 3.0;",
-      "float dy = 2.0 / 3.0;",
+      "float dx = 1.0 / 3.0;",
+      "float dy = 1.0 / 3.0;",
       
       "if (textureCoordinate.x < (-1.0 + 1.0 * dx)) {",
         
@@ -72,7 +72,6 @@
       "}",
       
       "return pixel;",
-      // "return vec4(1.0, 0.0, 0.0, 1.0);",
     "}",
     
     "void main() {",
@@ -84,7 +83,6 @@
       "float pixel = pixel_v.r;",
       
       "gl_FragColor = pixel_v;",
-      // "gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);",
     "}"
   ];
   
@@ -162,9 +160,6 @@
       uniforms[key] = gl.getUniformLocation(program, key);
     }, this);
     
-    // gl.uniform2f(uniforms, 0);
-    // console.log(uniforms);
-    
     var aPosition = gl.getAttribLocation(program, 'aPosition');
     var aTextureCoordinate = gl.getAttribLocation(program, 'aTextureCoordinate');
     
@@ -195,14 +190,6 @@
         var y1 = j * maximumTextureSize;
         var y2 = maximumTextureSize;
         
-        // var x1 = 0;
-        // var x2 = maximumTextureSize;
-        // var y1 = 0;
-        // var y2 = maximumTextureSize;
-        
-        // Set vertices on position buffer
-        // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW);
-        
         // Get tile from full image
         var counter = 0;
         for (var jj = y1; jj < y1 + y2; jj++) {
@@ -231,9 +218,6 @@
     }
     
     gl.drawArrays(gl.TRIANGLES, 0, 6);
-    
-    window.gl = gl;
-    window.program = program;
   }
 
   function onDOM() {
