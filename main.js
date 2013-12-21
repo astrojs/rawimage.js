@@ -27,9 +27,56 @@
     "uniform vec2 uExtent;",
   
     "varying vec2 vTextureCoordinate;",
-  
+    
+    "vec4 textureLookup(vec2 textureCoordinate) {",
+      "vec4 pixel;",
+      
+      // Working in clipspace (-1, 1)
+      // Given a coordinate need to figure out the texture to pick
+      
+      // The values 3.0 should be replaced with xTiles and yTiles
+      // 2.0 comes from the range in clip space coordinates
+      "float dx = 2.0 / 3.0;",
+      "float dy = 2.0 / 3.0;",
+      
+      "if (textureCoordinate.x < (-1.0 + 1.0 * dx)) {",
+        
+        "if (textureCoordinate.y < (-1.0 + 1.0 * dy)) {",
+          "pixel = texture2D(uTexture00, vTextureCoordinate);",
+          "} else if (textureCoordinate.y < (-1.0 + 2.0 * dy)) {",
+          "pixel = texture2D(uTexture01, vTextureCoordinate);",
+          "} else {",
+          "pixel = texture2D(uTexture02, vTextureCoordinate);",
+          "}",
+        
+      "} else if (textureCoordinate.x < (-1.0 + 2.0 * dx)) {",
+        
+        "if (textureCoordinate.y < (-1.0 + 1.0 * dy)) {",
+          "pixel = texture2D(uTexture10, vTextureCoordinate);",
+          "} else if (textureCoordinate.y < (-1.0 + 2.0 * dy)) {",
+          "pixel = texture2D(uTexture11, vTextureCoordinate);",
+          "} else {",
+          "pixel = texture2D(uTexture12, vTextureCoordinate);",
+        "}",
+        
+        "} else {",
+        
+        "if (textureCoordinate.y < (-1.0 + 1.0 * dy)) {",
+          "pixel = texture2D(uTexture20, vTextureCoordinate);",
+          "} else if (textureCoordinate.y < (-1.0 + 2.0 * dy)) {",
+          "pixel = texture2D(uTexture21, vTextureCoordinate);",
+          "} else {",
+          "pixel = texture2D(uTexture22, vTextureCoordinate);",
+        "}",
+        
+      "}",
+      
+      // "return pixel;",
+      "return vec4(1.0, 0.0, 0.0, 1.0);",
+    "}",
+    
     "void main() {",
-      "vec4 pixel_v = texture2D(uTexture00, vTextureCoordinate);",
+      "vec4 pixel_v = textureLookup(vTextureCoordinate);",
       
       "float min = uExtent[0];",
       "float max = uExtent[1];",
@@ -63,7 +110,7 @@
     
     var canvas = document.querySelector('#' + opts.el);
     var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    gl.viewport(0, 0, 500, 500);
+    gl.viewport(0, 0, canvas.width, canvas.height);
     var ext = gl.getExtension('OES_texture_float');
     
     //
@@ -78,27 +125,19 @@
     xTiles = (width % maximumTextureSize === 0) ? xTiles : ~~xTiles + 1;
     yTiles = (height % maximumTextureSize === 0) ? yTiles : ~~yTiles + 1;
     
+    // Only doing 3x3 grid right now (leaving out some data)
+    xTiles -= 1
+    yTiles -= 1
+    
     // Generate a fragment shader with xTiles * yTiles textures
     var textureSrc = [textureAddress, 1];
     var textureKeys = [];
-    // var textures = {};
     for (var j = 0; j < yTiles; j++) {
       for (var i = 0; i < xTiles; i++) {
         var index = j * xTiles + i;
         
         textureSrc.push("uniform sampler2D uTexture" + i + "" + j + ";");
         textureKeys.push("uTexture" + i + "" + j);
-        
-        // // Create textures first otherwise, the uniform locations are null
-        // gl.activeTexture(gl["TEXTURE" + index]);
-        // var texture = gl.createTexture();
-        // gl.bindTexture(gl.TEXTURE_2D, texture);
-        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        // 
-        // textures[i + "" + j] = texture;
       }
     }
     fragmentShaderSrc.splice.apply(fragmentShaderSrc, textureSrc);
@@ -164,7 +203,7 @@
         
         // Create texture
         var index = j * xTiles + i;
-        gl.activeTexture(gl["TEXTUE" + index]);
+        gl.activeTexture(gl["TEXTURE" + index]);
         texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -177,7 +216,6 @@
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     
     textureKeys.forEach(function(key, index) {
-      console.log(key);
       uniforms[key] = gl.getUniformLocation(program, key);
       gl.uniform1i(uniforms[key], index);
     }, this);
