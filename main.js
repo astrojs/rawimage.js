@@ -31,7 +31,7 @@
     "vec4 textureLookup(vec2 textureCoordinate) {",
       "vec4 pixel;",
       
-      // Working in clipspace (-1, 1)
+      // Working in texture coordinates [0, 1]
       // Given a coordinate need to figure out the texture to pick
       
       // The values 3.0 should be replaced with xTiles and yTiles
@@ -39,38 +39,41 @@
       "float dx = 1.0 / 3.0;",
       "float dy = 1.0 / 3.0;",
       
-      "if (textureCoordinate.x < (-1.0 + 1.0 * dx)) {",
+      "vec2 delta = vec2(dx, dy);",
+      
+      "if (textureCoordinate.x < (1.0 * dx)) {",
         
-        "if (textureCoordinate.y < (-1.0 + 1.0 * dy)) {",
+        "if (textureCoordinate.y < (1.0 * dy)) {",
           "pixel = texture2D(uTexture00, vTextureCoordinate);",
-          "} else if (textureCoordinate.y < (-1.0 + 2.0 * dy)) {",
+        "} else if (textureCoordinate.y < (2.0 * dy)) {",
           "pixel = texture2D(uTexture01, vTextureCoordinate);",
-          "} else {",
+        "} else {",
           "pixel = texture2D(uTexture02, vTextureCoordinate);",
-          "}",
+        "}",
         
-      "} else if (textureCoordinate.x < (-1.0 + 2.0 * dx)) {",
+      "} else if (textureCoordinate.x < (2.0 * dx)) {",
         
-        "if (textureCoordinate.y < (-1.0 + 1.0 * dy)) {",
+        "if (textureCoordinate.y < (1.0 * dy)) {",
           "pixel = texture2D(uTexture10, vTextureCoordinate);",
-          "} else if (textureCoordinate.y < (-1.0 + 2.0 * dy)) {",
+        "} else if (textureCoordinate.y < (2.0 * dy)) {",
           "pixel = texture2D(uTexture11, vTextureCoordinate);",
-          "} else {",
+        "} else {",
           "pixel = texture2D(uTexture12, vTextureCoordinate);",
         "}",
         
         "} else {",
         
-        "if (textureCoordinate.y < (-1.0 + 1.0 * dy)) {",
+        "if (textureCoordinate.y < (1.0 * dy)) {",
           "pixel = texture2D(uTexture20, vTextureCoordinate);",
-          "} else if (textureCoordinate.y < (-1.0 + 2.0 * dy)) {",
+        "} else if (textureCoordinate.y < (2.0 * dy)) {",
           "pixel = texture2D(uTexture21, vTextureCoordinate);",
-          "} else {",
+        "} else {",
           "pixel = texture2D(uTexture22, vTextureCoordinate);",
         "}",
         
       "}",
       
+      // "pixel = texture2D(uTexture02, vTextureCoordinate);",
       "return pixel;",
     "}",
     
@@ -124,9 +127,9 @@
     xTiles = (width % maximumTextureSize === 0) ? xTiles : ~~xTiles + 1;
     yTiles = (height % maximumTextureSize === 0) ? yTiles : ~~yTiles + 1;
     
-    // Only doing 3x3 grid right now (leaving out some data)
-    xTiles -= 1
-    yTiles -= 1
+    // // Only doing 3x3 grid right now (leaving out some data)
+    // xTiles -= 1
+    // yTiles -= 1
     
     // Generate a fragment shader with xTiles * yTiles textures
     var textureSrc = [textureAddress, 1];
@@ -163,6 +166,14 @@
     var aPosition = gl.getAttribLocation(program, 'aPosition');
     var aTextureCoordinate = gl.getAttribLocation(program, 'aTextureCoordinate');
     
+    var x1 = y1 = -1.0;
+    var x2 = y2 = 1.0;
+    positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(aPosition);
+    gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+    
     textureBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
     gl.bufferData(
@@ -173,22 +184,14 @@
     gl.enableVertexAttribArray(aTextureCoordinate);
     gl.vertexAttribPointer(aTextureCoordinate, 2, gl.FLOAT, false, 0, 0);
     
-    positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.enableVertexAttribArray(aPosition);
-    gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
-    var x1 = y1 = -1.0;
-    var x2 = y2 = 1.0;
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW);
-    
     // Tile image
     for (var j = 0; j < yTiles; j++) {
       for (var i = 0; i < xTiles; i++) {
         var tile = new Float32Array(maximumTextureSize * maximumTextureSize);
+        
         var x1 = i * maximumTextureSize;
-        var x2 = maximumTextureSize;
         var y1 = j * maximumTextureSize;
-        var y2 = maximumTextureSize;
+        var x2 = y2 = maximumTextureSize;
         
         // Get tile from full image
         var counter = 0;
@@ -200,7 +203,7 @@
           }
         }
         
-        // Create texture
+        // Create texture from tile
         var index = j * xTiles + i;
         gl.activeTexture(gl["TEXTURE" + index]);
         texture = gl.createTexture();
@@ -209,7 +212,7 @@
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, x2, y2, 0, gl.LUMINANCE, gl.FLOAT, tile);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, maximumTextureSize, maximumTextureSize, 0, gl.LUMINANCE, gl.FLOAT, tile);
         
         var key = textureKeys[index];
         uniforms[key] = gl.getUniformLocation(program, key);
@@ -219,17 +222,16 @@
     
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
-
+  
   function onDOM() {
-
+    
     // Define the path and options
     var path = '/examples/data/m101.fits'
     var opts = {el: 'wicked-science-visualization'};
-
+    
     // Initialize a FITS file, passing getImage function as a callback
     var f = new astro.FITS(path, getImage, opts);
   }
-
+  
   window.addEventListener('DOMContentLoaded', onDOM, false);
-
 })();
