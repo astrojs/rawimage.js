@@ -118,29 +118,28 @@
         
         "if (textureCoordinate.y < (1.0 * dy)) {",
         
-          "scaledPosition = (vTextureCoordinate - vec2(0, 0.0 * dy)) / delta;",
+          "scaledPosition = (vTextureCoordinate - vec2(3.0 * dx, 0.0 * dy)) / delta;",
           "pixel = texture2D(uTexture30, scaledPosition);",
         
         "} else if (textureCoordinate.y < (2.0 * dy)) {",
         
-          "scaledPosition = (vTextureCoordinate - vec2(0, 1.0 * dy)) / delta;",
+          "scaledPosition = (vTextureCoordinate - vec2(3.0 * dx, 1.0 * dy)) / delta;",
           "pixel = texture2D(uTexture31, scaledPosition);",
         
         "} else if (vTextureCoordinate.y < (3.0 * dy)) {",
         
-          "scaledPosition = (vTextureCoordinate - vec2(0, 2.0 * dy)) / delta;",
+          "scaledPosition = (vTextureCoordinate - vec2(3.0 * dx, 2.0 * dy)) / delta;",
           "pixel = texture2D(uTexture32, scaledPosition);",
         
         "} else {",
           
-          "scaledPosition = (vTextureCoordinate - vec2(0, 3.0 * dy)) / delta;",
+          "scaledPosition = (vTextureCoordinate - vec2(3.0 * dx, 3.0 * dy)) / delta;",
           "pixel = texture2D(uTexture33, scaledPosition);",
           
         "}",
         
       "}",
       
-      // "pixel = texture2D(uTexture02, vTextureCoordinate);",
       "return pixel;",
     "}",
     
@@ -258,17 +257,10 @@
         
         var x1 = i * maximumTextureSize;
         var y1 = j * maximumTextureSize;
-        var x2 = y2 = maximumTextureSize;
+        var x2 = maximumTextureSize - ( (x1 + maximumTextureSize) % width ) % maximumTextureSize;
+        var y2 = maximumTextureSize;
         
-        // if (i == xTiles - 1) {
-        //   x2 = width - (i * maximumTextureSize);
-        // }
-        // if (j == yTiles - 1) {
-        //   y2 = height - (j * maximumTextureSize);
-        // }
-        
-        // Some tiles will not have the entire width containing data (e.g. when a tile contains an image edge)
-        // Compute the width and height of data needed on the tile
+        var nonDataWidth = maximumTextureSize - x2;
         
         // Get tile from full image
         var counter = 0;
@@ -279,6 +271,7 @@
             tile[counter] = (arr[jj * width + ii] - extent[0]) / (extent[1] - extent[0]);
             counter++;
           }
+          counter += nonDataWidth;
         }
         
         // Create texture from tile
@@ -300,7 +293,7 @@
     
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     
-    getTile(arr, extent);
+    // getTile(arr, extent);
   }
   
   // Testing function to get corner tile
@@ -339,7 +332,7 @@
       imgData.data[i+2] = pixel;
       imgData.data[i+3] = 255;
     }
-    console.log(imgData.data);
+    
     ctx.putImageData(imgData, 0, 0);
   }
   
