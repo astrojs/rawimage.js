@@ -35,9 +35,9 @@
       // Given a coordinate need to figure out the texture to pick
       
       // The values 3.0 should be replaced with xTiles and yTiles
-      // 2.0 comes from the range in clip space coordinates
-      "float dx = 1.0 / 3.0;",
-      "float dy = 1.0 / 3.0;",
+      // 1.0 comes from the range in the texture frame
+      "float dx = 1.0 / 4.0;",
+      "float dy = 1.0 / 4.0;",
       
       "vec2 delta = vec2(dx, dy);",
       "vec2 scaledPosition;",
@@ -46,18 +46,23 @@
         
         "if (textureCoordinate.y < (1.0 * dy)) {",
           
-          "scaledPosition = (vTextureCoordinate - vec2(0, 0)) / delta;",
+          "scaledPosition = (vTextureCoordinate - vec2(0.0 * dx, 0.0 * dy)) / delta;",
           "pixel = texture2D(uTexture00, scaledPosition);",
           
         "} else if (textureCoordinate.y < (2.0 * dy)) {",
           
-          "scaledPosition = (vTextureCoordinate - vec2(0, 1.0 * dy)) / delta;",
+          "scaledPosition = (vTextureCoordinate - vec2(0.0 * dx, 1.0 * dy)) / delta;",
           "pixel = texture2D(uTexture01, scaledPosition);",
+          
+        "} else if (textureCoordinate.y < (3.0 * dy)) {",
+          
+          "scaledPosition = (vTextureCoordinate - vec2(0.0 * dx, 2.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture02, scaledPosition);",
           
         "} else {",
           
-          "scaledPosition = (vTextureCoordinate - vec2(0, 2.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture02, scaledPosition);",
+          "scaledPosition = (vTextureCoordinate - vec2(0.0 * dx, 3.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture03, scaledPosition);",
           
         "}",
         
@@ -69,17 +74,23 @@
           "pixel = texture2D(uTexture10, scaledPosition);",
           
         "} else if (textureCoordinate.y < (2.0 * dy)) {",
+          
           "scaledPosition = (vTextureCoordinate - vec2(1.0 * dx, 1.0 * dy)) / delta;",
           "pixel = texture2D(uTexture11, scaledPosition);",
           
-        "} else {",
+        "} else if (textureCoordinate.y < (3.0 * dy)) {",
           
           "scaledPosition = (vTextureCoordinate - vec2(1.0 * dx, 2.0 * dy)) / delta;",
           "pixel = texture2D(uTexture12, scaledPosition);",
           
+        "} else {",
+          
+          "scaledPosition = (vTextureCoordinate - vec2(1.0 * dx, 3.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture13, scaledPosition);",
+          
         "}",
         
-      "} else {",
+      "} else if (textureCoordinate.x < (3.0 * dx)) {",
         
         "if (textureCoordinate.y < (1.0 * dy)) {",
           
@@ -91,9 +102,39 @@
           "scaledPosition = (vTextureCoordinate - vec2(2.0 * dx, 1.0 * dy)) / delta;",
           "pixel = texture2D(uTexture21, scaledPosition);",
           
-        "} else {",
+        "} else if (textureCoordinate.y < (3.0 * dy)) {",
+          
           "scaledPosition = (vTextureCoordinate - vec2(2.0 * dx, 2.0 * dy)) / delta;",
           "pixel = texture2D(uTexture22, scaledPosition);",
+          
+        "} else {",
+          
+          "scaledPosition = (vTextureCoordinate - vec2(2.0 * dx, 3.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture23, scaledPosition);",
+          
+        "}",
+        
+      "} else {",
+        
+        "if (textureCoordinate.y < (1.0 * dy)) {",
+        
+          "scaledPosition = (vTextureCoordinate - vec2(0, 0.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture30, scaledPosition);",
+        
+        "} else if (textureCoordinate.y < (2.0 * dy)) {",
+        
+          "scaledPosition = (vTextureCoordinate - vec2(0, 1.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture31, scaledPosition);",
+        
+        "} else if (vTextureCoordinate.y < (3.0 * dy)) {",
+        
+          "scaledPosition = (vTextureCoordinate - vec2(0, 2.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture32, scaledPosition);",
+        
+        "} else {",
+          
+          "scaledPosition = (vTextureCoordinate - vec2(0, 3.0 * dy)) / delta;",
+          "pixel = texture2D(uTexture33, scaledPosition);",
           
         "}",
         
@@ -153,9 +194,9 @@
     xTiles = (width % maximumTextureSize === 0) ? xTiles : ~~xTiles + 1;
     yTiles = (height % maximumTextureSize === 0) ? yTiles : ~~yTiles + 1;
     
-    // Only doing 3x3 grid right now (leaving out some data)
-    xTiles -= 1
-    yTiles -= 1
+    // // Only doing 3x3 grid right now (leaving out some data)
+    // xTiles -= 1
+    // yTiles -= 1
     
     // Generate a fragment shader with xTiles * yTiles textures
     var textureSrc = [textureAddress, 1];
@@ -219,10 +260,21 @@
         var y1 = j * maximumTextureSize;
         var x2 = y2 = maximumTextureSize;
         
+        // if (i == xTiles - 1) {
+        //   x2 = width - (i * maximumTextureSize);
+        // }
+        // if (j == yTiles - 1) {
+        //   y2 = height - (j * maximumTextureSize);
+        // }
+        
+        // Some tiles will not have the entire width containing data (e.g. when a tile contains an image edge)
+        // Compute the width and height of data needed on the tile
+        
         // Get tile from full image
         var counter = 0;
         for (var jj = y1; jj < y1 + y2; jj++) {
           for (var ii = x1; ii < x1 + x2; ii++) {
+            
             // NOTE: Scaling on CPU to debug
             tile[counter] = (arr[jj * width + ii] - extent[0]) / (extent[1] - extent[0]);
             counter++;
@@ -247,6 +299,48 @@
     }
     
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+    
+    getTile(arr, extent);
+  }
+  
+  // Testing function to get corner tile
+  function getTile(arr, extent) {
+    var imageWidth = 891;
+    
+    var tileWidth = tileHeight = 256;
+    
+    var tile = new Float32Array(tileWidth * tileHeight);
+    var x1 = 3 * 256,
+        x2 = tileWidth,
+        y1 = 0,
+        y2 = tileHeight;
+    
+    var dataWidth = tileWidth - ((x1 + x2) % imageWidth) % tileWidth;
+    var remainderWidth = tileWidth - dataWidth;
+    
+    counter = 0;
+    for (var jj = y1; jj < y1 + y2; jj++) {
+      for (var ii = x1; ii < x1 + dataWidth; ii++) {
+        tile[counter] = (arr[jj * imageWidth + ii] - extent[0]) / (extent[1] - extent[0]);
+        counter += 1;
+      }
+      counter += remainderWidth;
+    }
+    
+    var canvas = document.querySelector("#tile");
+    var ctx = canvas.getContext("2d");
+    var imgData = ctx.createImageData(tileWidth, tileHeight);
+    for (var i = 0; i < imgData.data.length; i += 4) {
+      var index = i / 4;
+      var pixel = 255 * tile[index];
+      
+      imgData.data[i+0] = pixel;
+      imgData.data[i+1] = pixel;
+      imgData.data[i+2] = pixel;
+      imgData.data[i+3] = 255;
+    }
+    console.log(imgData.data);
+    ctx.putImageData(imgData, 0, 0);
   }
   
   function onDOM() {
