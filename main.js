@@ -25,6 +25,8 @@
   
     "uniform sampler2D uTexture00;",
     "uniform vec2 uExtent;",
+    "uniform float uXTiles;",
+    "uniform float uYTiles;",
   
     "varying vec2 vTextureCoordinate;",
     
@@ -34,10 +36,9 @@
       // Working in texture coordinates [0, 1]
       // Given a coordinate need to figure out the texture to pick
       
-      // The values 3.0 should be replaced with xTiles and yTiles
       // 1.0 comes from the range in the texture frame
-      "float dx = 1.0 / 4.0;",
-      "float dy = 1.0 / 4.0;",
+      "float dx = 1.0 / uXTiles;",
+      "float dy = 1.0 / uYTiles;",
       
       "vec2 delta = vec2(dx, dy);",
       "vec2 scaledPosition;",
@@ -151,14 +152,63 @@
       "float pixel = (pixel_v.r - min) / (max - min);",
       
       "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);",
-      
-      // "float pixel = pixel_v.r;",
-      // "gl_FragColor = pixel_v;",
     "}"
   ];
   
   // Define shader uniforms
-  var uniformKeys = ['uOffset', 'uScale', 'uExtent'];
+  var uniformKeys = ['uOffset', 'uScale', 'uExtent', 'uXTiles', 'uYTiles'];
+  
+  var textureLookupFn = [
+    "vec4 textureLookup(vec2 textureCoordinate) {",
+      "vec4 pixel;",
+      
+      "float dx = 1.0 / uXTiles;",
+      "float dy = 1.0 / uYTiles;",
+      
+      "vec2 delta = vec2(dx, dy);",
+      "vec2 scaledPosition;",
+      
+      "return pixel;",
+    "}",
+  ];
+  
+  // Create a texture look up function for the fragment shader.
+  function getTextureLookupFn(xTiles, yTiles) {
+    
+    conditionals = {};
+    conditionals[0] = "if";
+    conditionals[xTiles - 1] = "else";
+    
+    fn = [
+      "vec4 textureLookup(vec2 textureCoordinate) {",
+        "vec4 pixel;",
+        
+        "float dx = 1.0 / uXTiles;",
+        "float dy = 1.0 / uYTiles;",
+        
+        "vec2 delta = vec2(dx, dy);",
+        "vec2 scaledPosition;",
+    ];
+    
+    for (var x = 0; x < xTiles; x++) {
+      var xConditional = conditionals[x] || "else if";
+      
+      fn.push(xConditional + " (textureCoordinate.x < (" + (x + 1) + ".0 * dx)) {");
+      for (var y = 0; y < yTiles; y++) {
+        var yConditional = conditionals[y] || "else if";
+        
+        fn.push("\t" + yConditional + " (textureCoordinate.y < (" + (y + 1) + ".0 * dy)) {");
+        fn.push("\t\tscaledPosition = (vTextureCoordinate - vec2(" + x + ".0 * dx, " + y + ".0 * dy)) / delta;");
+        fn.push("\t\tpixel = texture2D(uTexture" + x + "" + y + ", scaledPosition);");
+        fn.push("\t}");  
+      }
+      fn.push("}")
+    }
+    fn.push("return pixel;");
+    
+    console.log(fn.join('\n'));
+    return fn.join("\n");
+  };
   
   // Define callback to be executed after FITS is received from the server
   function getImage(f, opts) {
@@ -196,6 +246,10 @@
     xTiles = (width % maximumTextureSize === 0) ? xTiles : ~~xTiles + 1;
     yTiles = (height % maximumTextureSize === 0) ? yTiles : ~~yTiles + 1;
     
+    
+    // TEST: Generated texture lookup function
+    getTextureLookupFn(xTiles, yTiles);
+    
     // Generate a fragment shader with xTiles * yTiles textures
     var textureSrc = [textureAddress, 1];
     var textureKeys = [];
@@ -223,10 +277,15 @@
     gl.linkProgram(program);
     gl.useProgram(program); // Not necessary since linkProgram automatically uses it (or at least the first)
     
+    // Get uniform locations
     var uniforms = {};
     uniformKeys.forEach(function(key) {
       uniforms[key] = gl.getUniformLocation(program, key);
     }, this);
+    
+    // Set initial uniforms
+    gl.uniform1f(uniforms.uXTiles, xTiles);
+    gl.uniform1f(uniforms.uYTiles, yTiles);
     gl.uniform2f(uniforms.uExtent, extent[0], extent[1]);
     
     var aPosition = gl.getAttribLocation(program, 'aPosition');
