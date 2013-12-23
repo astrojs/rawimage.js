@@ -158,20 +158,6 @@
   // Define shader uniforms
   var uniformKeys = ['uOffset', 'uScale', 'uExtent', 'uXTiles', 'uYTiles'];
   
-  var textureLookupFn = [
-    "vec4 textureLookup(vec2 textureCoordinate) {",
-      "vec4 pixel;",
-      
-      "float dx = 1.0 / uXTiles;",
-      "float dy = 1.0 / uYTiles;",
-      
-      "vec2 delta = vec2(dx, dy);",
-      "vec2 scaledPosition;",
-      
-      "return pixel;",
-    "}",
-  ];
-  
   // Create a texture look up function for the fragment shader.
   function getTextureLookupFn(xTiles, yTiles) {
     
