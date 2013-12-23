@@ -148,10 +148,12 @@
       
       "float min = uExtent[0];",
       "float max = uExtent[1];",
-      // "float pixel = (pixel_v.r - min) / (max - min);",
-      "float pixel = pixel_v.r;",
+      "float pixel = (pixel_v.r - min) / (max - min);",
       
-      "gl_FragColor = pixel_v;",
+      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);",
+      
+      // "float pixel = pixel_v.r;",
+      // "gl_FragColor = pixel_v;",
     "}"
   ];
   
@@ -189,13 +191,10 @@
     tileCoordinates = [];
     xTiles = width / maximumTextureSize;
     yTiles = height / maximumTextureSize;
-  
+    
+    // TODO: Shouldn't need to check anything here. 
     xTiles = (width % maximumTextureSize === 0) ? xTiles : ~~xTiles + 1;
     yTiles = (height % maximumTextureSize === 0) ? yTiles : ~~yTiles + 1;
-    
-    // // Only doing 3x3 grid right now (leaving out some data)
-    // xTiles -= 1
-    // yTiles -= 1
     
     // Generate a fragment shader with xTiles * yTiles textures
     var textureSrc = [textureAddress, 1];
@@ -228,6 +227,7 @@
     uniformKeys.forEach(function(key) {
       uniforms[key] = gl.getUniformLocation(program, key);
     }, this);
+    gl.uniform2f(uniforms.uExtent, extent[0], extent[1]);
     
     var aPosition = gl.getAttribLocation(program, 'aPosition');
     var aTextureCoordinate = gl.getAttribLocation(program, 'aTextureCoordinate');
@@ -267,8 +267,9 @@
         for (var jj = y1; jj < y1 + y2; jj++) {
           for (var ii = x1; ii < x1 + x2; ii++) {
             
-            // NOTE: Scaling on CPU to debug
-            tile[counter] = (arr[jj * width + ii] - extent[0]) / (extent[1] - extent[0]);
+            // // NOTE: Scaling on CPU to debug
+            // tile[counter] = (arr[jj * width + ii] - extent[0]) / (extent[1] - extent[0]);
+            tile[counter] = arr[jj * width + ii];
             counter++;
           }
           counter += nonDataWidth;
@@ -293,6 +294,13 @@
     
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     
+    
+    var inputEl = document.querySelector("input");
+    inputEl.onchange = function(e) {
+      var value = parseInt(e.target.value);
+      gl.uniform2f(uniforms.uExtent, value, extent[1]);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
     // getTile(arr, extent);
   }
   
