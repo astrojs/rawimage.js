@@ -20,129 +20,16 @@
   ];
   
   var textureAddress = 1;
+  var textureLookupFnAddress = 6;
   var fragmentShaderSrc = [
     "precision mediump float;",
-  
+    
     "uniform sampler2D uTexture00;",
     "uniform vec2 uExtent;",
     "uniform float uXTiles;",
     "uniform float uYTiles;",
-  
-    "varying vec2 vTextureCoordinate;",
     
-    "vec4 textureLookup(vec2 textureCoordinate) {",
-      "vec4 pixel;",
-      
-      // Working in texture coordinates [0, 1]
-      // Given a coordinate need to figure out the texture to pick
-      
-      // 1.0 comes from the range in the texture frame
-      "float dx = 1.0 / uXTiles;",
-      "float dy = 1.0 / uYTiles;",
-      
-      "vec2 delta = vec2(dx, dy);",
-      "vec2 scaledPosition;",
-      
-      "if (textureCoordinate.x < (1.0 * dx)) {",
-        
-        "if (textureCoordinate.y < (1.0 * dy)) {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(0.0 * dx, 0.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture00, scaledPosition);",
-          
-        "} else if (textureCoordinate.y < (2.0 * dy)) {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(0.0 * dx, 1.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture01, scaledPosition);",
-          
-        "} else if (textureCoordinate.y < (3.0 * dy)) {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(0.0 * dx, 2.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture02, scaledPosition);",
-          
-        "} else {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(0.0 * dx, 3.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture03, scaledPosition);",
-          
-        "}",
-        
-      "} else if (textureCoordinate.x < (2.0 * dx)) {",
-        
-        "if (textureCoordinate.y < (1.0 * dy)) {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(1.0 * dx, 0.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture10, scaledPosition);",
-          
-        "} else if (textureCoordinate.y < (2.0 * dy)) {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(1.0 * dx, 1.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture11, scaledPosition);",
-          
-        "} else if (textureCoordinate.y < (3.0 * dy)) {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(1.0 * dx, 2.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture12, scaledPosition);",
-          
-        "} else {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(1.0 * dx, 3.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture13, scaledPosition);",
-          
-        "}",
-        
-      "} else if (textureCoordinate.x < (3.0 * dx)) {",
-        
-        "if (textureCoordinate.y < (1.0 * dy)) {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(2.0 * dx, 0.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture20, scaledPosition);",
-          
-        "} else if (textureCoordinate.y < (2.0 * dy)) {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(2.0 * dx, 1.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture21, scaledPosition);",
-          
-        "} else if (textureCoordinate.y < (3.0 * dy)) {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(2.0 * dx, 2.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture22, scaledPosition);",
-          
-        "} else {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(2.0 * dx, 3.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture23, scaledPosition);",
-          
-        "}",
-        
-      "} else {",
-        
-        "if (textureCoordinate.y < (1.0 * dy)) {",
-        
-          "scaledPosition = (vTextureCoordinate - vec2(3.0 * dx, 0.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture30, scaledPosition);",
-        
-        "} else if (textureCoordinate.y < (2.0 * dy)) {",
-        
-          "scaledPosition = (vTextureCoordinate - vec2(3.0 * dx, 1.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture31, scaledPosition);",
-        
-        "} else if (vTextureCoordinate.y < (3.0 * dy)) {",
-        
-          "scaledPosition = (vTextureCoordinate - vec2(3.0 * dx, 2.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture32, scaledPosition);",
-        
-        "} else {",
-          
-          "scaledPosition = (vTextureCoordinate - vec2(3.0 * dx, 3.0 * dy)) / delta;",
-          "pixel = texture2D(uTexture33, scaledPosition);",
-          
-        "}",
-        
-      "}",
-      
-      "return pixel;",
-    "}",
+    "varying vec2 vTextureCoordinate;",
     
     "void main() {",
       "vec4 pixel_v = textureLookup(vTextureCoordinate);",
@@ -163,7 +50,7 @@
     
     conditionals = {};
     conditionals[0] = "if";
-    conditionals[xTiles - 1] = "else";
+    // conditionals[xTiles - 1] = "else";
     
     fn = [
       "vec4 textureLookup(vec2 textureCoordinate) {",
@@ -179,11 +66,21 @@
     for (var x = 0; x < xTiles; x++) {
       var xConditional = conditionals[x] || "else if";
       
-      fn.push(xConditional + " (textureCoordinate.x < (" + (x + 1) + ".0 * dx)) {");
+      if (xConditional === "else") {
+        fn.push(xConditional + " {");
+      } else {
+        fn.push(xConditional + " (textureCoordinate.x < (" + (x + 1) + ".0 * dx)) {");
+      }
+      
       for (var y = 0; y < yTiles; y++) {
         var yConditional = conditionals[y] || "else if";
         
-        fn.push("\t" + yConditional + " (textureCoordinate.y < (" + (y + 1) + ".0 * dy)) {");
+        if (yConditional === "else") {
+          fn.push("\t" + yConditional + " {");
+        } else {
+          fn.push("\t" + yConditional + " (textureCoordinate.y < (" + (y + 1) + ".0 * dy)) {");
+        }
+        
         fn.push("\t\tscaledPosition = (vTextureCoordinate - vec2(" + x + ".0 * dx, " + y + ".0 * dy)) / delta;");
         fn.push("\t\tpixel = texture2D(uTexture" + x + "" + y + ", scaledPosition);");
         fn.push("\t}");  
@@ -191,9 +88,8 @@
       fn.push("}")
     }
     fn.push("return pixel;");
-    
-    console.log(fn.join('\n'));
-    return fn.join("\n");
+    fn.push("}")
+    return fn;
   };
   
   // Define callback to be executed after FITS is received from the server
@@ -222,7 +118,7 @@
     //
     // With the image dimensions generate an appropriate fragment shader
     //
-    var maximumTextureSize = 256 || gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    var maximumTextureSize = 1024 || gl.getParameter(gl.MAX_TEXTURE_SIZE);
     
     tileCoordinates = [];
     xTiles = width / maximumTextureSize;
@@ -232,9 +128,8 @@
     xTiles = (width % maximumTextureSize === 0) ? xTiles : ~~xTiles + 1;
     yTiles = (height % maximumTextureSize === 0) ? yTiles : ~~yTiles + 1;
     
-    
     // TEST: Generated texture lookup function
-    getTextureLookupFn(xTiles, yTiles);
+    fragmentShaderSrc.splice.apply(fragmentShaderSrc, [textureLookupFnAddress, 0].concat( getTextureLookupFn(xTiles, yTiles) ));
     
     // Generate a fragment shader with xTiles * yTiles textures
     var textureSrc = [textureAddress, 1];
@@ -248,6 +143,7 @@
       }
     }
     fragmentShaderSrc.splice.apply(fragmentShaderSrc, textureSrc);
+    console.log(fragmentShaderSrc.join("\n"));
     
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vertexShader, vertexShaderSrc.join(''));
@@ -392,7 +288,8 @@
   function onDOM() {
     
     // Define the path and options
-    var path = '/examples/data/m101.fits'
+    var path = '/examples/data/m101.fits';
+    // var path = '/examples/hlsp_hudf12_hst_acs_udfpar2_f814w_v1.0_drz_drz.fits';
     var opts = {el: 'wicked-science-visualization'};
     
     // Initialize a FITS file, passing getImage function as a callback
