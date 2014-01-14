@@ -81,7 +81,7 @@
           fn.push("\t" + yConditional + " (textureCoordinate.y < (" + (y + 1) + ".0 * dy)) {");
         }
         
-        fn.push("\t\tscaledPosition = (vTextureCoordinate - vec2(" + x + ".0 * dx, " + y + ".0 * dy)) / delta;");
+        fn.push("\t\tscaledPosition = (textureCoordinate - vec2(" + x + ".0 * dx, " + y + ".0 * dy)) / delta;");
         fn.push("\t\tpixel = texture2D(uTexture" + x + "" + y + ", scaledPosition);");
         fn.push("\t}");  
       }
@@ -118,15 +118,15 @@
     //
     // With the image dimensions generate an appropriate fragment shader
     //
-    var maximumTextureSize = 1024 || gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    var maximumTextureSize = 256
+    // var maximumTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     
     tileCoordinates = [];
-    xTiles = width / maximumTextureSize;
-    yTiles = height / maximumTextureSize;
+    xTiles = Math.ceil(width / maximumTextureSize);
+    yTiles = Math.ceil(height / maximumTextureSize);
     
-    // TODO: Shouldn't need to check anything here. 
-    xTiles = (width % maximumTextureSize === 0) ? xTiles : ~~xTiles + 1;
-    yTiles = (height % maximumTextureSize === 0) ? yTiles : ~~yTiles + 1;
+    console.log("xTile:\t", xTiles);
+    console.log("yTile:\t", yTiles);
     
     // TEST: Generated texture lookup function
     fragmentShaderSrc.splice.apply(fragmentShaderSrc, [textureLookupFnAddress, 0].concat( getTextureLookupFn(xTiles, yTiles) ));
