@@ -200,13 +200,8 @@
         var y1 = j * maximumTextureSize;
         var x2 = maximumTextureSize - ( (x1 + maximumTextureSize) % width ) % maximumTextureSize;
         var y2 = maximumTextureSize - ( (y1 + maximumTextureSize) % height ) % maximumTextureSize;
-        console.log(x2, y2);
-        console.log("====");
         
-        // TODO: Lots of wasted memory using this approach. Determine the needed size of the tile!!!
         var tile = new Float32Array(x2 * y2);
-        
-        // var nonDataWidth = maximumTextureSize - x2;
         
         // Get tile from full image
         var counter = 0;
@@ -216,7 +211,6 @@
             tile[counter] = arr[jj * width + ii];
             counter++;
           }
-          // counter += nonDataWidth;
         }
         
         // Create texture from tile
@@ -235,10 +229,10 @@
         gl.uniform1i(uniforms[key], index);
       }
     }
-    
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     
     
+    // Hook up user interaction for testing
     var minEl = document.querySelector("input[data-type='min']");
     var maxEl = document.querySelector("input[data-type='max']");
     minEl.onchange = function(e) {
@@ -253,46 +247,6 @@
       gl.uniform2f(uniforms.uExtent, extent[0], extent[1]);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
-  }
-  
-  // Testing function to get corner tile
-  function getTile(arr, extent) {
-    var imageWidth = 891;
-    
-    var tileWidth = tileHeight = 256;
-    
-    var tile = new Float32Array(tileWidth * tileHeight);
-    var x1 = 3 * 256,
-        x2 = tileWidth,
-        y1 = 0,
-        y2 = tileHeight;
-    
-    var dataWidth = tileWidth - ((x1 + x2) % imageWidth) % tileWidth;
-    var remainderWidth = tileWidth - dataWidth;
-    
-    counter = 0;
-    for (var jj = y1; jj < y1 + y2; jj++) {
-      for (var ii = x1; ii < x1 + dataWidth; ii++) {
-        tile[counter] = (arr[jj * imageWidth + ii] - extent[0]) / (extent[1] - extent[0]);
-        counter += 1;
-      }
-      counter += remainderWidth;
-    }
-    
-    var canvas = document.querySelector("#tile");
-    var ctx = canvas.getContext("2d");
-    var imgData = ctx.createImageData(tileWidth, tileHeight);
-    for (var i = 0; i < imgData.data.length; i += 4) {
-      var index = i / 4;
-      var pixel = 255 * tile[index];
-      
-      imgData.data[i+0] = pixel;
-      imgData.data[i+1] = pixel;
-      imgData.data[i+2] = pixel;
-      imgData.data[i+3] = 255;
-    }
-    
-    ctx.putImageData(imgData, 0, 0);
   }
   
   function onDOM() {
