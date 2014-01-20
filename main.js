@@ -50,7 +50,6 @@
     
     conditionals = {};
     conditionals[0] = "if";
-    // conditionals[xTiles - 1] = "else";
     
     fn = [
       "vec4 textureLookup(vec2 textureCoordinate) {",
@@ -65,21 +64,11 @@
     
     for (var x = 0; x < xTiles; x++) {
       var xConditional = conditionals[x] || "else if";
-      
-      if (xConditional === "else") {
-        fn.push(xConditional + " {");
-      } else {
-        fn.push(xConditional + " (textureCoordinate.x < (" + (x + 1) + ".0 * dx)) {");
-      }
+      fn.push(xConditional + " (textureCoordinate.x < (" + (x + 1) + ".0 * dx)) {");
       
       for (var y = 0; y < yTiles; y++) {
         var yConditional = conditionals[y] || "else if";
-        
-        if (yConditional === "else") {
-          fn.push("\t" + yConditional + " {");
-        } else {
-          fn.push("\t" + yConditional + " (textureCoordinate.y < (" + (y + 1) + ".0 * dy)) {");
-        }
+        fn.push("\t" + yConditional + " (textureCoordinate.y < (" + (y + 1) + ".0 * dy)) {");
         
         fn.push("\t\tscaledPosition = (textureCoordinate - vec2(" + x + ".0 * dx, " + y + ".0 * dy)) / delta;");
         fn.push("\t\tpixel = texture2D(uTexture" + x + "" + y + ", scaledPosition);");
@@ -118,8 +107,9 @@
     //
     // With the image dimensions generate an appropriate fragment shader
     //
-    var maximumTextureSize = 256
-    // var maximumTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    // var maximumTextureSize = 256
+    var maximumTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    console.log('MAX TEXTURE SIZE', maximumTextureSize);
     
     tileCoordinates = [];
     xTiles = Math.ceil(width / maximumTextureSize);
@@ -143,7 +133,7 @@
       }
     }
     fragmentShaderSrc.splice.apply(fragmentShaderSrc, textureSrc);
-    console.log(fragmentShaderSrc.join("\n"));
+    // console.log(fragmentShaderSrc.join("\n"));
     
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vertexShader, vertexShaderSrc.join(''));
@@ -169,23 +159,31 @@
     gl.uniform1f(uniforms.uXTiles, xTiles);
     gl.uniform1f(uniforms.uYTiles, yTiles);
     gl.uniform2f(uniforms.uExtent, extent[0], extent[1]);
+    // gl.uniform2f(uniforms.uExtent, -0.20889312, 0.42971656);
     
     var aPosition = gl.getAttribLocation(program, 'aPosition');
     var aTextureCoordinate = gl.getAttribLocation(program, 'aTextureCoordinate');
     
     var x1 = y1 = -1.0;
     var x2 = y2 = 1.0;
+    
     positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(aPosition);
     gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
     
+    // Scale the texture buffer to account for rectangular view ports
+    x1 = y1 = 0;
+    x2 = 1;
+    y2 = canvas.height / canvas.width;
+    
     textureBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
     gl.bufferData(
-      gl.ARRAY_BUFFER, 
-      new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]),
+      gl.ARRAY_BUFFER,
+      new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+      // new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]),
       gl.STATIC_DRAW
     );
     gl.enableVertexAttribArray(aTextureCoordinate);
@@ -194,26 +192,31 @@
     // Tile image
     for (var j = 0; j < yTiles; j++) {
       for (var i = 0; i < xTiles; i++) {
-        var tile = new Float32Array(maximumTextureSize * maximumTextureSize);
+        
+        // Determine the resolution of current tile based on tile indices and resolution
+        // of source image.
         
         var x1 = i * maximumTextureSize;
         var y1 = j * maximumTextureSize;
         var x2 = maximumTextureSize - ( (x1 + maximumTextureSize) % width ) % maximumTextureSize;
-        var y2 = maximumTextureSize;
+        var y2 = maximumTextureSize - ( (y1 + maximumTextureSize) % height ) % maximumTextureSize;
+        console.log(x2, y2);
+        console.log("====");
         
-        var nonDataWidth = maximumTextureSize - x2;
+        // TODO: Lots of wasted memory using this approach. Determine the needed size of the tile!!!
+        var tile = new Float32Array(x2 * y2);
+        
+        // var nonDataWidth = maximumTextureSize - x2;
         
         // Get tile from full image
         var counter = 0;
         for (var jj = y1; jj < y1 + y2; jj++) {
           for (var ii = x1; ii < x1 + x2; ii++) {
             
-            // // NOTE: Scaling on CPU to debug
-            // tile[counter] = (arr[jj * width + ii] - extent[0]) / (extent[1] - extent[0]);
             tile[counter] = arr[jj * width + ii];
             counter++;
           }
-          counter += nonDataWidth;
+          // counter += nonDataWidth;
         }
         
         // Create texture from tile
@@ -225,7 +228,7 @@
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, maximumTextureSize, maximumTextureSize, 0, gl.LUMINANCE, gl.FLOAT, tile);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, x2, y2, 0, gl.LUMINANCE, gl.FLOAT, tile);
         
         var key = textureKeys[index];
         uniforms[key] = gl.getUniformLocation(program, key);
@@ -236,13 +239,20 @@
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     
     
-    var inputEl = document.querySelector("input");
-    inputEl.onchange = function(e) {
+    var minEl = document.querySelector("input[data-type='min']");
+    var maxEl = document.querySelector("input[data-type='max']");
+    minEl.onchange = function(e) {
       var value = parseInt(e.target.value);
-      gl.uniform2f(uniforms.uExtent, value, extent[1]);
+      extent[0] = value;
+      gl.uniform2f(uniforms.uExtent, extent[0], extent[1]);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
-    // getTile(arr, extent);
+    maxEl.onchange = function(e) {
+      var value = parseInt(e.target.value);
+      extent[1] = value;
+      gl.uniform2f(uniforms.uExtent, extent[0], extent[1]);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
   }
   
   // Testing function to get corner tile
@@ -286,11 +296,19 @@
   }
   
   function onDOM() {
-    
     // Define the path and options
     var path = '/examples/data/m101.fits';
-    // var path = '/examples/hlsp_hudf12_hst_acs_udfpar2_f814w_v1.0_drz_drz.fits';
     var opts = {el: 'wicked-science-visualization'};
+    
+    window.ondragover = function(e) { e.preventDefault(); }
+    window.ondrop = function(e) {
+      e.preventDefault();
+      
+      var file = e.dataTransfer.files[0];
+      new astro.FITS(file, getImage, opts);
+    }
+    
+    return;
     
     // Initialize a FITS file, passing getImage function as a callback
     var f = new astro.FITS(path, getImage, opts);
