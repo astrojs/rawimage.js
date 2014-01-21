@@ -107,7 +107,6 @@
     //
     // With the image dimensions generate an appropriate fragment shader
     //
-    // var maximumTextureSize = 256
     var maximumTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     console.log('MAX TEXTURE SIZE', maximumTextureSize);
     
@@ -133,7 +132,7 @@
       }
     }
     fragmentShaderSrc.splice.apply(fragmentShaderSrc, textureSrc);
-    // console.log(fragmentShaderSrc.join("\n"));
+    console.log(fragmentShaderSrc.join("\n"));
     
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vertexShader, vertexShaderSrc.join(''));
@@ -174,8 +173,8 @@
     gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
     
     // Scale the texture buffer to account for rectangular view ports
-    x1 = y1 = 0;
-    x2 = 1;
+    x1 = y1 = 0.0;
+    x2 = 1.0;
     y2 = canvas.height / canvas.width;
     
     textureBuffer = gl.createBuffer();
@@ -207,7 +206,6 @@
         var counter = 0;
         for (var jj = y1; jj < y1 + y2; jj++) {
           for (var ii = x1; ii < x1 + x2; ii++) {
-            
             tile[counter] = arr[jj * width + ii];
             counter++;
           }
