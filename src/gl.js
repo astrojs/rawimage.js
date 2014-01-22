@@ -72,7 +72,7 @@ RawImage.prototype.setupGLContext = function() {
 
 // The remainder of GL setup code depends on knowing the number of tiles needed
 // to display an image.
-RawImage.prototype.initGL = function(width, height) {
+RawImage.prototype.initGL = function(width, height, callback) {
   
   // Determine the number of tiles from the image dimensions
   var xTiles = Math.ceil(width / this.maximumTextureSize);
@@ -122,66 +122,70 @@ RawImage.prototype.initGL = function(width, height) {
   this.program = this.programs['linear'];
   this.gl.useProgram(this.program);
   
-  // Set up position and texture buffers
-  
-  // The position buffer is derived from the image resolution. Clipspace coordinates
-  // must be computed. Start by working along a unit domain.
-  var x1 = y1 = 0.0;
-  var x2 = 1.0;
-  y2 = this.canvas.width / this.canvas.height;
-  
-  // Transform to a [0, 2] domain
-  x2 *= 2.0;
-  y2 *= 2.0;
-  
-  // Transform to clipspace coordinates
-  x1 -= 1.0;
-  y1 -= 1.0;
-  x2 -= 1.0;
-  y2 -= 1.0;
-  
+  // Create position and texture buffers
   var positionBuffer = this.gl.createBuffer();
   this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
-  this.gl.bufferData(
-    this.gl.ARRAY_BUFFER,
-    new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
-    this.gl.STATIC_DRAW);
   this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aPosition']);
   this.gl.vertexAttribPointer(this.attributes[this.transfer]['aPosition'], 2, this.gl.FLOAT, false, 0, 0);
   this.buffers['position'] = positionBuffer;
   
-  // The texture buffer is also derived from the image resolution, except it requires coordinates
-  // between [0, 1].
-  x1 = y1 = 0.0;
-  x2 = y2 = 1.0;
+  // Load the color map first using a clean buffer. Using a callback here to ensure instructions
+  // sent to GPU synchronously.
+  this.loadColorMap(function() {
+    
+    // The position buffer is derived from the image resolution. Clipspace coordinates
+    // must be computed. Start by working along a unit domain.
+    var x1 = y1 = 0.0;
+    var x2 = 1.0;
+    y2 = this.canvas.width / this.canvas.height;
   
-  // Assuming the resolution is a multiple of the maximum support texture size,
-  // compute the number of excess pixels using the image resolution.
-  var xp = xTiles * this.maximumTextureSize % width;
-  var yp = yTiles * this.maximumTextureSize % height;
+    // Transform to a [0, 2] domain
+    x2 *= 2.0;
+    y2 *= 2.0;
   
-  // Determine the fraction of excess pixels
-  xp = xp / (xTiles * this.maximumTextureSize);
-  yp = yp / (yTiles * this.maximumTextureSize);
+    // Transform to clipspace coordinates
+    x1 -= 1.0;
+    y1 -= 1.0;
+    x2 -= 1.0;
+    y2 -= 1.0;
   
-  // Subtract from the maximum texture coordinate.
-  x2 = x2 - xp;
-  y2 = y2 - yp;
+    this.gl.bufferData(
+      this.gl.ARRAY_BUFFER,
+      new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+      this.gl.STATIC_DRAW
+    );
+    
+    // The texture buffer is also derived from the image resolution, except it requires coordinates
+    // between [0, 1].
+    x1 = y1 = 0.0;
+    x2 = y2 = 1.0;
   
-  var textureBuffer = this.gl.createBuffer();
-  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textureBuffer);
-  this.gl.bufferData(
-    this.gl.ARRAY_BUFFER,
-    new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
-    this.gl.STATIC_DRAW
-  );
-  this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aTextureCoordinate']);
-  this.gl.vertexAttribPointer(this.attributes[this.transfer]['aTextureCoordinate'], 2, this.gl.FLOAT, false, 0, 0);
-  this.buffers['texture'] = textureBuffer;
+    // Assuming the resolution is a multiple of the maximum support texture size,
+    // compute the number of excess pixels using the image resolution.
+    var xp = xTiles * this.maximumTextureSize % width;
+    var yp = yTiles * this.maximumTextureSize % height;
   
-  this.loadColorMap();
+    // Determine the fraction of excess pixels
+    xp = xp / (xTiles * this.maximumTextureSize);
+    yp = yp / (yTiles * this.maximumTextureSize);
   
-  return true;
+    // Subtract from the maximum texture coordinate.
+    x2 = x2 - xp;
+    y2 = y2 - yp;
+  
+    var textureBuffer = this.gl.createBuffer();
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textureBuffer);
+    this.gl.bufferData(
+      this.gl.ARRAY_BUFFER,
+      new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+      this.gl.STATIC_DRAW
+    );
+    this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aTextureCoordinate']);
+    this.gl.vertexAttribPointer(this.attributes[this.transfer]['aTextureCoordinate'], 2, this.gl.FLOAT, false, 0, 0);
+    this.buffers['texture'] = textureBuffer;
+    
+    callback.call(this, xTiles, yTiles);
+  });
 };
 
 RawImage.prototype.createTiledFragmentShader = function(xTiles, yTiles) {
@@ -211,13 +215,13 @@ RawImage.prototype.createTiledFragmentShader = function(xTiles, yTiles) {
   
   // Generate a fragment shader with xTiles * yTiles textures
   var textureSrc = [this.textureAddress, 1];
-  var textureKeys = [];
+  this.textureKeys = [];
   for (var j = 0; j < yTiles; j++) {
     for (var i = 0; i < xTiles; i++) {
       var index = j * xTiles + i;
       
       textureSrc.push("uniform sampler2D uTexture" + i + "" + j + ";");
-      textureKeys.push("uTexture" + i + "" + j);
+      this.textureKeys.push("uTexture" + i + "" + j);
     }
   }
   fragmentShader.splice.apply(fragmentShader, textureSrc);

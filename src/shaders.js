@@ -13,7 +13,7 @@ RawImage.shaders = {
     
     "void main() {",
       "vec2 position = aPosition + uOffset;",
-      "position = position * uScale;",
+      // "position = position * uScale;",
       "gl_Position = vec4(position, 0.0, 1.0);",
       
       "vTextureCoordinate = aTextureCoordinate;",
@@ -39,7 +39,8 @@ RawImage.shaders = {
       "float max = uExtent[1];",
       
       "float x = (pixel_v.r - min) / (max - min);",
-      "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
+      "gl_FragColor = vec4(x, x, x, 1.0);",
+      // "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
     "}"
   ],
   
