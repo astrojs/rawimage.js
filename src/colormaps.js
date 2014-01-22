@@ -34,8 +34,6 @@ RawImage.prototype.loadColorMap = function(callback) {
     
     // Switch back to current program
     target.gl.useProgram(target.programs[target.transfer]);
-    target.gl.drawArrays(target.gl.TRIANGLES, 0, 6);
-    
     callback.call(target);
   };
   img.src = "data:image/png;base64," + RawImage.colormaps.base64;

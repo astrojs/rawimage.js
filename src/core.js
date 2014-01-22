@@ -79,6 +79,7 @@ RawImage.prototype.reset = function() {
   
   // Texture lookup table for referencing user specified identifiers with a GL texture index
   this.textureLookup = {};
+  this.textureKeys = ['uColorMap'];
 };
 
 // Release all objects on the GPU

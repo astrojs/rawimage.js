@@ -55,6 +55,7 @@ RawImage.prototype.loadImage = function(id, arr, width, height) {
     
         // Create texture from tile
         var index = j * xTiles + i + 1; // Offset by 1 to account for the colormap texture
+        // var index = j * xTiles + i;
         this.gl.activeTexture(this.gl["TEXTURE" + index]);
         texture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
@@ -64,38 +65,15 @@ RawImage.prototype.loadImage = function(id, arr, width, height) {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, x2, y2, 0, this.gl.LUMINANCE, this.gl.FLOAT, tile);
         
-        // var key = this.textureKeys[index];
-        // uniforms[key] = gl.getUniformLocation(program, key);
-        // gl.uniform1i(uniforms[key], index);
+        var key = this.textureKeys[index];
+        this.uniforms[this.transfer][key] = this.gl.getUniformLocation(this.program, key);
+        this.gl.uniform1i(this.uniforms[this.transfer][key], index);
       }
     }
+    console.log(this.textureKeys);
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-    
   });
   
-  console.log('FINISHED INITIALIZING GL');
-  return;
-  
-  index = this.nTextures;
-  this.lookup[id] = this.nTextures;
-  
-  this.gl.activeTexture(this.gl.TEXTURE0 + index);
-  texture = this.gl.createTexture();
-  this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-  
-  // TODO: Remove need to cast to Float32 array. Check if WebGL supports other data types now.
-  //       This might be due to the use of the floating point extension. Need to look at this in depth.
-  this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, new Float32Array(arr));
-  
-  // Current image defaults to the first texture uploaded.
-  this.currentImage = this.currentImage || id;
-  
-  this.textures[id] = texture;
-  this.nTextures += 1;
 }
 
 RawImage.prototype.setColorMap = function(cmap) {

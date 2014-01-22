@@ -79,6 +79,7 @@ RawImage = (function(){
     
     // Texture lookup table for referencing user specified identifiers with a GL texture index
     this.textureLookup = {};
+    this.textureKeys = ['uColorMap'];
   };
   
   // Release all objects on the GPU
@@ -124,7 +125,7 @@ RawImage = (function(){
       
       "void main() {",
         "vec2 position = aPosition + uOffset;",
-        // "position = position * uScale;",
+        "position = position * uScale;",
         "gl_Position = vec4(position, 0.0, 1.0);",
         
         "vTextureCoordinate = aTextureCoordinate;",
@@ -150,8 +151,8 @@ RawImage = (function(){
         "float max = uExtent[1];",
         
         "float x = (pixel_v.r - min) / (max - min);",
-        "gl_FragColor = vec4(x, x, x, 1.0);",
-        // "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
+        // "gl_FragColor = vec4(x, x, x, 1.0);",
+        "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
       "}"
     ],
     
@@ -373,8 +374,6 @@ RawImage = (function(){
       
       // Switch back to current program
       target.gl.useProgram(target.programs[target.transfer]);
-      target.gl.drawArrays(target.gl.TRIANGLES, 0, 6);
-      
       callback.call(target);
     };
     img.src = "data:image/png;base64," + RawImage.colormaps.base64;
@@ -693,7 +692,7 @@ RawImage = (function(){
       this.gl.uniform1f(this.uniforms[transfer].uYTiles, yTiles);
       this.gl.uniform2f(this.uniforms[transfer].uOffset, 0.0, 0.0);
       this.gl.uniform1f(this.uniforms[transfer].uScale, 1.0);
-      this.gl.uniform1f(this.uniforms[transfer].uColorIndex, RawImage.colormaps.binary - 0.5);
+      this.gl.uniform1f(this.uniforms[transfer].uColorIndex, RawImage.colormaps.Blues - 0.5);
       
       // Get attribute locations
       this.attributes[transfer] = {};
@@ -740,6 +739,8 @@ RawImage = (function(){
         new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
         this.gl.STATIC_DRAW
       );
+      this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aPosition']);
+      this.gl.vertexAttribPointer(this.attributes[this.transfer]['aPosition'], 2, this.gl.FLOAT, false, 0, 0);
       
       // The texture buffer is also derived from the image resolution, except it requires coordinates
       // between [0, 1].
@@ -801,7 +802,6 @@ RawImage = (function(){
     
     // Generate a fragment shader with xTiles * yTiles textures
     var textureSrc = [this.textureAddress, 1];
-    this.textureKeys = [];
     for (var j = 0; j < yTiles; j++) {
       for (var i = 0; i < xTiles; i++) {
         var index = j * xTiles + i;
@@ -876,6 +876,7 @@ RawImage = (function(){
       
           // Create texture from tile
           var index = j * xTiles + i + 1; // Offset by 1 to account for the colormap texture
+          // var index = j * xTiles + i;
           this.gl.activeTexture(this.gl["TEXTURE" + index]);
           texture = this.gl.createTexture();
           this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
@@ -885,38 +886,15 @@ RawImage = (function(){
           this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
           this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, x2, y2, 0, this.gl.LUMINANCE, this.gl.FLOAT, tile);
           
-          // var key = this.textureKeys[index];
-          // uniforms[key] = gl.getUniformLocation(program, key);
-          // gl.uniform1i(uniforms[key], index);
+          var key = this.textureKeys[index];
+          this.uniforms[this.transfer][key] = this.gl.getUniformLocation(this.program, key);
+          this.gl.uniform1i(this.uniforms[this.transfer][key], index);
         }
       }
+      console.log(this.textureKeys);
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-      
     });
     
-    console.log('FINISHED INITIALIZING GL');
-    return;
-    
-    index = this.nTextures;
-    this.lookup[id] = this.nTextures;
-    
-    this.gl.activeTexture(this.gl.TEXTURE0 + index);
-    texture = this.gl.createTexture();
-    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-    
-    // TODO: Remove need to cast to Float32 array. Check if WebGL supports other data types now.
-    //       This might be due to the use of the floating point extension. Need to look at this in depth.
-    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, new Float32Array(arr));
-    
-    // Current image defaults to the first texture uploaded.
-    this.currentImage = this.currentImage || id;
-    
-    this.textures[id] = texture;
-    this.nTextures += 1;
   }
   
   RawImage.prototype.setColorMap = function(cmap) {
@@ -956,7 +934,7 @@ RawImage = (function(){
   
   RawImage.prototype.setExtent = function(min, max) {
     var name, program, uExtent;
-    console.log(min, max);
+    
     for (name in this.programs) {
       if (name === 'color') continue;
       

@@ -154,6 +154,8 @@ RawImage.prototype.initGL = function(width, height, callback) {
       new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
       this.gl.STATIC_DRAW
     );
+    this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aPosition']);
+    this.gl.vertexAttribPointer(this.attributes[this.transfer]['aPosition'], 2, this.gl.FLOAT, false, 0, 0);
     
     // The texture buffer is also derived from the image resolution, except it requires coordinates
     // between [0, 1].
@@ -215,7 +217,6 @@ RawImage.prototype.createTiledFragmentShader = function(xTiles, yTiles) {
   
   // Generate a fragment shader with xTiles * yTiles textures
   var textureSrc = [this.textureAddress, 1];
-  this.textureKeys = [];
   for (var j = 0; j < yTiles; j++) {
     for (var i = 0; i < xTiles; i++) {
       var index = j * xTiles + i;
