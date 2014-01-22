@@ -11,9 +11,9 @@
     "varying vec2 vTextureCoordinate;",
     
     "void main() {",
-      // "vec2 position = aPosition + uOffset;",
+      "vec2 position = aPosition + uOffset;",
       // "position = position * uScale;",
-      "gl_Position = vec4(aPosition, 0.0, 1.0);",
+      "gl_Position = vec4(position, 0.0, 1.0);",
       
       "vTextureCoordinate = aTextureCoordinate;",
     "}"
@@ -158,7 +158,11 @@
     gl.uniform1f(uniforms.uXTiles, xTiles);
     gl.uniform1f(uniforms.uYTiles, yTiles);
     gl.uniform2f(uniforms.uExtent, extent[0], extent[1]);
-    gl.uniform2f(uniforms.uExtent, -0.20889312, 0.42971656);
+    
+    // TODO: Create a function that accounts for inputting offset in clipspace coordinates
+    gl.uniform2f(uniforms.uOffset, 0, 0);
+    // gl.uniform2f(uniforms.uOffset, 0, -1);
+    // gl.uniform2f(uniforms.uExtent, -0.20889312, 0.42971656);
     
     var aPosition = gl.getAttribLocation(program, 'aPosition');
     var aTextureCoordinate = gl.getAttribLocation(program, 'aTextureCoordinate');
@@ -180,22 +184,28 @@
     x2 = x2 - 1.0;
     y2 = y2 - 1.0;
     
-    console.log(x1, x2);
-    console.log(y1, y2);
-    // var x1 = y1 = -1.0;
-    // var x2 = y2 = 1.0;
-    
     positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(aPosition);
     gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
     
+    x1 = y1 = 0.0;
+    x2 = y2 = 1.0;
+    var xp = xTiles * maximumTextureSize % width;
+    var yp = yTiles * maximumTextureSize % height;
+    xp = xp / (xTiles * maximumTextureSize);
+    yp = yp / (yTiles * maximumTextureSize);
+    x2 = x2 - xp;
+    y2 = y2 - yp;
+    console.log(x2, y2);
+    
     textureBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
     gl.bufferData(
       gl.ARRAY_BUFFER,
-      new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]),
+      new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+      // new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]),
       gl.STATIC_DRAW
     );
     gl.enableVertexAttribArray(aTextureCoordinate);
