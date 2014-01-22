@@ -20,10 +20,12 @@ RawImage.shaders = {
     "}"
   ].join(''),
   
-  fragment: [
+  linear: [
     "precision mediump float;",
   
     "uniform sampler2D uTexture00;",
+    "uniform sampler2D uColorMap;",
+    "uniform float uColorIndex;",
     "uniform vec2 uExtent;",
     "uniform float uXTiles;",
     "uniform float uYTiles;",
@@ -35,9 +37,9 @@ RawImage.shaders = {
     
       "float min = uExtent[0];",
       "float max = uExtent[1];",
-      "float pixel = (pixel_v.r - min) / (max - min);",
-    
-      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);",
+      
+      "float x = (pixel_v.r - min) / (max - min);",
+      "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
     "}"
   ],
   
@@ -52,26 +54,26 @@ RawImage.shaders = {
       "vec2 scaledPosition;",
   ],
   
-  linear: [
-    "precision mediump float;",
-    
-    "uniform sampler2D uTexture0;",
-    "uniform sampler2D uColorMap;",
-    "uniform float uColorIndex;",
-    "uniform vec2 uExtent;",
-    
-    "varying vec2 vTextureCoordinate;",
-    
-    "void main() {",
-        "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
-        
-        "float min = uExtent[0];",
-        "float max = uExtent[1];",
-        
-        "float x = (pixel_v.r - min) / (max - min);",
-        "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
-    "}"
-  ].join(""),
+  // linear: [
+  //   "precision mediump float;",
+  //   
+  //   "uniform sampler2D uTexture0;",
+  //   "uniform sampler2D uColorMap;",
+  //   "uniform float uColorIndex;",
+  //   "uniform vec2 uExtent;",
+  //   
+  //   "varying vec2 vTextureCoordinate;",
+  //   
+  //   "void main() {",
+  //       "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
+  //       
+  //       "float min = uExtent[0];",
+  //       "float max = uExtent[1];",
+  //       
+  //       "float x = (pixel_v.r - min) / (max - min);",
+  //       "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
+  //   "}"
+  // ].join(""),
   
   logarithm: [
     "precision mediump float;",

@@ -72,75 +72,114 @@ RawImage.prototype.setupGLContext = function() {
 
 // The remainder of GL setup code depends on knowing the number of tiles needed
 // to display an image.
-RawImage.prototype.initGL = function(xTiles, yTiles) {
+RawImage.prototype.initGL = function(width, height) {
   
-  var fragmentShader = this.createTiledFragmentShader(xTiles, yTiles);
-  console.log(fragmentShader.join('\n'));
+  // Determine the number of tiles from the image dimensions
+  var xTiles = Math.ceil(width / this.maximumTextureSize);
+  var yTiles = Math.ceil(height / this.maximumTextureSize);
   
+  // Create and compile shaders
   vertexShader = this.loadShader(RawImage.shaders.vertex, this.gl.VERTEX_SHADER);
   if (!vertexShader) return false;
   
-  // Create all fragment shaders
-  // TODO: Could be more GPU memory efficient by loading only shaders when called
-  //       and removing those when not used.
-  this.fragmentShaders.forEach(function(key) {
-    fragmentShader = this.loadShader(rawimage.shaders[key], this.gl.FRAGMENT_SHADER);
+  // Every transfer function needs it's own program
+  // TODO: Test performance of using conditional check of transfer function on one program
+  // TODO: Retrofit the other fragment shaders for tiling.
+  ["linear"].forEach(function(transfer) {
+    
+    var fragmentShaderStr = this.createTiledFragmentShader(xTiles, yTiles);
+    var fragmentShader = this.loadShader(fragmentShaderStr, this.gl.FRAGMENT_SHADER);
     if (!fragmentShader) return false;
     
-    program = this.createProgram(vertexShader, fragmentShader);
+    var program = this.createProgram(vertexShader, fragmentShader);
     if (!program) return false;
-    this.programs[key] = program;
-    
-    // Cache uniforms since they are expensive to look up
+    this.programs[transfer] = program;
     this.gl.useProgram(program);
-    this.uniforms[key] = {};
-    ['uOffset', 'uScale', 'uExtent', 'uColorIndex', 'uColorMap', 'uTexture0'].forEach(function(u){
-      this.uniforms[key][u] = this.gl.getUniformLocation(program, u);
+    
+    // Look up and store uniform locations
+    this.uniforms[transfer] = {};
+    this.uniformKeys.forEach(function(key) {
+      this.uniforms[transfer][key] = this.gl.getUniformLocation(program, key);
     }, this);
     
-    // TODO: Offset the image so that it's centered on load
-    this.gl.uniform2f(this.uniforms[key].uOffset, -width / 2, -height / 2);
-    this.gl.uniform1f(this.uniforms[key].uScale, 2 / width);
-    this.gl.uniform1f(this.uniforms[key].uColorIndex, rawimage.colormaps.binary - 0.5);
-    this.gl.uniform1i(this.uniforms[key].uTexture0, 1);
+    // Set initial uniforms for current program
+    this.gl.uniform1f(this.uniforms[transfer].uXTiles, xTiles);
+    this.gl.uniform1f(this.uniforms[transfer].uYTiles, yTiles);
+    this.gl.uniform2f(this.uniforms[transfer].uOffset, 0.0, 0.0);
+    this.gl.uniform1f(this.uniforms[transfer].uScale, 1.0);
+    this.gl.uniform1f(this.uniforms[transfer].uColorIndex, RawImage.colormaps.binary - 0.5);
+    
+    // Get attribute locations
+    this.attributes[transfer] = {};
+    this.attributes[transfer]['aPosition'] = this.gl.getAttribLocation(program, 'aPosition');
+    this.attributes[transfer]['aTextureCoordinate']  = this.gl.getAttribLocation(program, 'aTextureCoordinate');
   }, this);
   
-  // Cache color program uniforms (no need to switch programs since color is current)
-  ['uScaleR', 'uScaleG', 'uScaleB',
-   'uCalibrationR', 'uCalibrationG', 'uCalibrationB',
-   'uAlpha', 'uQ',
-   'uTexture1', 'uTexture2'].forEach(function(key) {
-    this.uniforms['color'][key] = this.gl.getUniformLocation(program, key);
-  }, this);
+  // TODO: Handle color program!
   
-  // Cache attribute locations
-  this.aPosition = this.gl.getAttribLocation(program, 'aPosition');
-  this.aTextureCoordinate = this.gl.getAttribLocation(program, 'aTextureCoordinate');
+  // Start with the linear transfer function
+  this.transfer = 'linear';
+  this.program = this.programs['linear'];
+  this.gl.useProgram(this.program);
   
-  // Start with the linearly scaled image
-  this.program = 'linear';
-  this.gl.useProgram(this.programs[this.program]);
+  // Set up position and texture buffers
   
-  // Create texture and position buffers
-  buffer = this.gl.createBuffer();
-  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-  this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), this.gl.STATIC_DRAW);
-  this.gl.enableVertexAttribArray(this.aTextureCoordinate);
-  this.gl.vertexAttribPointer(this.aTextureCoordinate, 2, this.gl.FLOAT, false, 0, 0);
-  this.buffers.push(buffer);
+  // The position buffer is derived from the image resolution. Clipspace coordinates
+  // must be computed. Start by working along a unit domain.
+  var x1 = y1 = 0.0;
+  var x2 = 1.0;
+  y2 = this.canvas.width / this.canvas.height;
   
-  buffer = this.gl.createBuffer();
-  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-  this.gl.enableVertexAttribArray(this.aPosition);
-  this.gl.vertexAttribPointer(this.aPosition, 2, this.gl.FLOAT, false, 0, 0);
-  this.buffers.push(buffer);
+  // Transform to a [0, 2] domain
+  x2 *= 2.0;
+  y2 *= 2.0;
+  
+  // Transform to clipspace coordinates
+  x1 -= 1.0;
+  y1 -= 1.0;
+  x2 -= 1.0;
+  y2 -= 1.0;
+  
+  var positionBuffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+  this.gl.bufferData(
+    this.gl.ARRAY_BUFFER,
+    new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+    this.gl.STATIC_DRAW);
+  this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aPosition']);
+  this.gl.vertexAttribPointer(this.attributes[this.transfer]['aPosition'], 2, this.gl.FLOAT, false, 0, 0);
+  this.buffers['position'] = positionBuffer;
+  
+  // The texture buffer is also derived from the image resolution, except it requires coordinates
+  // between [0, 1].
+  x1 = y1 = 0.0;
+  x2 = y2 = 1.0;
+  
+  // Assuming the resolution is a multiple of the maximum support texture size,
+  // compute the number of excess pixels using the image resolution.
+  var xp = xTiles * this.maximumTextureSize % width;
+  var yp = yTiles * this.maximumTextureSize % height;
+  
+  // Determine the fraction of excess pixels
+  xp = xp / (xTiles * this.maximumTextureSize);
+  yp = yp / (yTiles * this.maximumTextureSize);
+  
+  // Subtract from the maximum texture coordinate.
+  x2 = x2 - xp;
+  y2 = y2 - yp;
+  
+  var textureBuffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textureBuffer);
+  this.gl.bufferData(
+    this.gl.ARRAY_BUFFER,
+    new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+    this.gl.STATIC_DRAW
+  );
+  this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aTextureCoordinate']);
+  this.gl.vertexAttribPointer(this.attributes[this.transfer]['aTextureCoordinate'], 2, this.gl.FLOAT, false, 0, 0);
+  this.buffers['texture'] = textureBuffer;
   
   this.loadColorMap();
-  this.currentImage = null;
-  
-  // Store the maximum texture size
-  // Does this account for floating point textures?
-  this.MAX_TEXTURE_SIZE = this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE);
   
   return true;
 };
@@ -167,7 +206,7 @@ RawImage.prototype.createTiledFragmentShader = function(xTiles, yTiles) {
   fn.push("return pixel;");
   fn.push("}");
   
-  var fragmentShader = RawImage.shaders.fragment.slice(0);
+  var fragmentShader = RawImage.shaders.linear.slice(0);
   fragmentShader.splice.apply(fragmentShader, [this.textureLookupFnAddress, 0].concat(fn));
   
   // Generate a fragment shader with xTiles * yTiles textures
@@ -183,7 +222,7 @@ RawImage.prototype.createTiledFragmentShader = function(xTiles, yTiles) {
   }
   fragmentShader.splice.apply(fragmentShader, textureSrc);
   
-  return fragmentShader;
+  return fragmentShader.join('\n');
 }
 
 RawImage.prototype.draw = function() {

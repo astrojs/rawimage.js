@@ -3,7 +3,19 @@ RawImage.prototype.loadColorMap = function() {
   var img,
       target = this;
   
-  this.setRectangle(256, 70);
+  var x1 = y1 = 0.0;
+  var x2 = 256, y2 = 70;
+  
+  var colormapBuffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, colormapBuffer);
+  this.gl.bufferData(
+    this.gl.ARRAY_BUFFER,
+    new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+    this.gl.STATIC_DRAW);
+  this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aTextureCoordinate']);
+  this.gl.vertexAttribPointer(this.attributes[this.transfer]['aTextureCoordinate'], 2, this.gl.FLOAT, false, 0, 0);
+  this.buffers['colormap'] = colormapBuffer;
+  
   img = new Image();
   img.onload = function() {
     var texture, name, program, uColorMap;
@@ -15,7 +27,6 @@ RawImage.prototype.loadColorMap = function() {
     target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_WRAP_T, target.gl.CLAMP_TO_EDGE);
     target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_MIN_FILTER, target.gl.NEAREST);
     target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_MAG_FILTER, target.gl.NEAREST);
-    
     target.gl.texImage2D(target.gl.TEXTURE_2D, 0, target.gl.RGB, target.gl.RGB, target.gl.UNSIGNED_BYTE, img);
     
     for (name in target.programs) {
@@ -32,7 +43,7 @@ RawImage.prototype.loadColorMap = function() {
     target.gl.useProgram(target.programs[target.program]);
     target.gl.drawArrays(target.gl.TRIANGLES, 0, 6);
   };
-  img.src = "data:image/png;base64," + rawimage.colormaps.base64;
+  img.src = "data:image/png;base64," + RawImage.colormaps.base64;
 };
 
 RawImage.colormaps = {

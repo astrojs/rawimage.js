@@ -24,10 +24,12 @@ function RawImage(el, width, height) {
   this.el.appendChild(this.canvas);
   this.el.appendChild(this.overlay);
   
+  // Set GL specific properties
   if (!this.setupGLContext()) return null;
   this.hasFragmentShader = false;
   this.textureAddress = 1;
-  this.textureLookupFnAddress = 6;
+  this.textureLookupFnAddress = 8;
+  this.uniformKeys = ['uOffset', 'uScale', 'uExtent', 'uColorIndex', 'uColorMap', 'uXTiles', 'uYTiles'];
   
   // Position the canvases
   parentStyle = this.canvas.parentElement.style;
@@ -67,10 +69,12 @@ function RawImage(el, width, height) {
 RawImage.prototype.reset = function() {
   this.programs = {};
   this.uniforms = {};
+  this.attributes = {};
   this.textures = {};
-  this.buffers = [];
+  this.buffers = {};
   this.shaders = [];
   
+  // Always starting with the colormap texture
   this.nTextures = 1;
   
   // Texture lookup table for referencing user specified identifiers with a GL texture index

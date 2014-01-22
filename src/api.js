@@ -19,16 +19,10 @@ RawImage.prototype.loadImage = function(id, arr, width, height) {
   // Loading an image is a multi-step process
   //
   
-  // Determine the number of tiles from the image dimensions
-  var xTiles = Math.ceil(width / this.maximumTextureSize);
-  var yTiles = Math.ceil(height / this.maximumTextureSize);
-  
-  // Generate a fragment shader using the number of tiles
-  this.initGL(xTiles, yTiles);
-  
+  // Generate a fragment shader based on the image resolution
+  this.initGL(width, height);
+  console.log('FINISHED INITIALIZING GL');
   return;
-  
-  this.setRectangle(width, height);
   
   index = this.nTextures;
   this.lookup[id] = this.nTextures;
