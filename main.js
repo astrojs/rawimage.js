@@ -158,13 +158,32 @@
     gl.uniform1f(uniforms.uXTiles, xTiles);
     gl.uniform1f(uniforms.uYTiles, yTiles);
     gl.uniform2f(uniforms.uExtent, extent[0], extent[1]);
-    // gl.uniform2f(uniforms.uExtent, -0.20889312, 0.42971656);
+    gl.uniform2f(uniforms.uExtent, -0.20889312, 0.42971656);
     
     var aPosition = gl.getAttribLocation(program, 'aPosition');
     var aTextureCoordinate = gl.getAttribLocation(program, 'aTextureCoordinate');
     
-    var x1 = y1 = -1.0;
+    // Compute the position coordinates based on the image (data) resolution
+    // Start by working between [0, 1]
+    
+    var x1 = y1 = 0.0;
     var x2 = y2 = 1.0;
+    y2 = canvas.width / canvas.height;
+    
+    // Transform to a [0, 2] domain
+    x2 = 2.0 * x2;
+    y2 = 2.0 * y2;
+    
+    // Transform to clipspace coordinates [-1, 1]
+    x1 = x1 - 1.0;
+    y1 = y1 - 1.0;
+    x2 = x2 - 1.0;
+    y2 = y2 - 1.0;
+    
+    console.log(x1, x2);
+    console.log(y1, y2);
+    // var x1 = y1 = -1.0;
+    // var x2 = y2 = 1.0;
     
     positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -172,17 +191,11 @@
     gl.enableVertexAttribArray(aPosition);
     gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
     
-    // Scale the texture buffer to account for rectangular view ports
-    x1 = y1 = 0.0;
-    x2 = 1.0;
-    y2 = canvas.height / canvas.width;
-    
     textureBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
     gl.bufferData(
       gl.ARRAY_BUFFER,
-      new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
-      // new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]),
+      new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]),
       gl.STATIC_DRAW
     );
     gl.enableVertexAttribArray(aTextureCoordinate);
@@ -195,13 +208,20 @@
         // Determine the resolution of current tile based on tile indices and resolution
         // of source image.
         
+        // Get the origin for the current tile
         var x1 = i * maximumTextureSize;
         var y1 = j * maximumTextureSize;
-        var x2 = maximumTextureSize - ( (x1 + maximumTextureSize) % width ) % maximumTextureSize;
-        var y2 = maximumTextureSize - ( (y1 + maximumTextureSize) % height ) % maximumTextureSize;
+        
+        // Get the remaining number of pixels needing to be tiled
+        var xr = width - x1;
+        var yr = height - y1;
+        
+        // If larger than the max texture size, then set the tile extent to the max texture size
+        var x2 = (xr > maximumTextureSize) ? maximumTextureSize : xr;
+        var y2 = (yr > maximumTextureSize) ? maximumTextureSize : yr;
         
         var tile = new Float32Array(x2 * y2);
-        
+        console.log("creating texture with dimensions", x2, y2);
         // Get tile from full image
         var counter = 0;
         for (var jj = y1; jj < y1 + y2; jj++) {
