@@ -2,7 +2,7 @@
 // Callbacks may be used to capture coordinates or execute custom functionality
 // on mouse events. To specify opts without callbacks, pass either
 // undefined or an empty object {}.
-rawimage.prototype.setupControls = function(callbacks, opts) {
+RawImage.prototype.setupControls = function(callbacks, opts) {
   var voidfn, onmousedown, onmousemove, onmouseout, onmouseover, onmouseup,
       target = this;
   
@@ -109,12 +109,12 @@ rawimage.prototype.setupControls = function(callbacks, opts) {
 
 // Toggle a cursor over the image.
 // TODO: This check might be avoidable by redefining a cursor function
-rawimage.prototype.setCursor = function() {
+RawImage.prototype.setCursor = function() {
   this.overlay.width = this.overlay.width;
   this.crosshair = (type === 'crosshair' ? true : false);
 };
 
-rawimage.prototype.drawCrosshair = function() {
+RawImage.prototype.drawCrosshair = function() {
   
   // Reset the width to clear the canvas
   this.overlay.width = this.overlay.width;

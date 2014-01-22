@@ -1,5 +1,5 @@
 
-rawimage.shaders = {
+RawImage.shaders = {
   
   // Same vertex shader for all programs
   vertex: [
@@ -19,6 +19,38 @@ rawimage.shaders = {
       "vTextureCoordinate = aTextureCoordinate;",
     "}"
   ].join(''),
+  
+  fragment: [
+    "precision mediump float;",
+  
+    "uniform sampler2D uTexture00;",
+    "uniform vec2 uExtent;",
+    "uniform float uXTiles;",
+    "uniform float uYTiles;",
+  
+    "varying vec2 vTextureCoordinate;",
+  
+    "void main() {",
+      "vec4 pixel_v = getPixelFromTile(vTextureCoordinate);",
+    
+      "float min = uExtent[0];",
+      "float max = uExtent[1];",
+      "float pixel = (pixel_v.r - min) / (max - min);",
+    
+      "gl_FragColor = vec4(pixel, pixel, pixel, 1.0);",
+    "}"
+  ],
+  
+  getPixelFromTile: [
+    "vec4 getPixelFromTile(vec2 textureCoordinate) {",
+      "vec4 pixel;",
+
+      "float dx = 1.0 / uXTiles;",
+      "float dy = 1.0 / uYTiles;",
+
+      "vec2 delta = vec2(dx, dy);",
+      "vec2 scaledPosition;",
+  ],
   
   linear: [
     "precision mediump float;",

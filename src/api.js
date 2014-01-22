@@ -12,11 +12,21 @@ RawImage.prototype.loadImage = function(id, arr, width, height) {
     return;
   }
   
+  // TODO: Check if GL has been setup. If it has, then skip GL setup, and check that the next image can use
+  // the previously generated fragment shader (e.g. the width, height, xTiles and yTiles are identical).
+  
   //
   // Loading an image is a multi-step process
   //
   
+  // Determine the number of tiles from the image dimensions
+  var xTiles = Math.ceil(width / this.maximumTextureSize);
+  var yTiles = Math.ceil(height / this.maximumTextureSize);
   
+  // Generate a fragment shader using the number of tiles
+  this.initGL(xTiles, yTiles);
+  
+  return;
   
   this.setRectangle(width, height);
   
@@ -42,7 +52,7 @@ RawImage.prototype.loadImage = function(id, arr, width, height) {
   this.nTextures += 1;
 }
 
-rawimage.prototype.setColorMap = function(cmap) {
+RawImage.prototype.setColorMap = function(cmap) {
   var cmaps, index, name, program, uColorIndex;
 
   cmaps = Object.keys(rawimage.colormaps);
@@ -70,14 +80,14 @@ rawimage.prototype.setColorMap = function(cmap) {
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
 
-rawimage.prototype.setImage = function(id) {
+RawImage.prototype.setImage = function(id) {
   var index = this.lookup[id];
   this.gl.activeTexture(this.gl.TEXTURE0 + index);
   this.gl.uniform1i(this.uniforms[this.program].uTexture0, index);
   this.currentImage = id;
 };
 
-rawimage.prototype.setExtent = function(min, max) {
+RawImage.prototype.setExtent = function(min, max) {
   var name, program, uExtent;
   
   for (name in this.programs) {

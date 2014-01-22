@@ -1,10 +1,10 @@
-rawimage.prototype.setStretch = function(stretch) {
+RawImage.prototype.setStretch = function(stretch) {
   this.program = stretch;
   this.gl.useProgram(this.programs[stretch]);
   this.draw();
 };
 
-rawimage.prototype.setScales = function(r, g, b) {
+RawImage.prototype.setScales = function(r, g, b) {
   var color;
   
   this.gl.useProgram(this.programs.color);
@@ -17,7 +17,7 @@ rawimage.prototype.setScales = function(r, g, b) {
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
 
-rawimage.prototype.setCalibrations = function(r, g, b) {
+RawImage.prototype.setCalibrations = function(r, g, b) {
   var color;
   
   this.gl.useProgram(this.programs.color);
@@ -30,18 +30,19 @@ rawimage.prototype.setCalibrations = function(r, g, b) {
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
 
-rawimage.prototype.setAlpha = function(alpha) {
+RawImage.prototype.setAlpha = function(alpha) {
   this.gl.useProgram(this.programs.color);
   this.gl.uniform1f(this.uniforms.color.uAlpha, alpha);
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
-rawimage.prototype.setQ = function(Q) {
+
+RawImage.prototype.setQ = function(Q) {
   this.gl.useProgram(this.programs.color);
   this.gl.uniform1f(this.uniforms.color.uQ, Q);
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
 
-rawimage.prototype.drawColor = function(rId, gId, bId) {
+RawImage.prototype.drawColor = function(rId, gId, bId) {
   this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   this.program = 'color';
   this.gl.useProgram(this.programs.color);

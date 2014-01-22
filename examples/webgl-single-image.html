@@ -37,17 +37,17 @@
     var el = document.querySelector('#' + opts.el);
     
     // Initialize a WebFITS context with a viewer of size width
-    var raw = new rawimage(el, width);
+    var raw = new RawImage(el, 800, 600);
     
-    // Enable pan and zoom controls
-    raw.setupControls();
+    // // Enable pan and zoom controls
+    // raw.setupControls();
     
     // Load array representation of image
     raw.loadImage('some-identifier', arr, width, height);
     
-    // Set the intensity range and stretch
-    raw.setExtent(extent[0], extent[1]);
-    raw.setStretch('linear');
+    // // Set the intensity range and stretch
+    // raw.setExtent(extent[0], extent[1]);
+    // raw.setStretch('linear');
     
     // // Optionally set colormap.  WebFITS defaults to grayscale mapping.
     // raw.setColorMap('binary');
@@ -59,6 +59,7 @@
     
     // Define the path and options
     var path = '/examples/data/m101.fits'
+    var path = '/examples/data/test-8400.fits'
     var opts = {el: 'wicked-science-visualization'};
     
     // Initialize a FITS file, passing getImage function as a callback
@@ -71,7 +72,7 @@
 
 <body onload='main()'>
   <div class='content'>
-    <h3>Single WebFITS Instance (WebGL)</h3>
+    <h3>Single RawImage Instance (WebGL)</h3>
     <div id="wicked-science-visualization"></div>
   </div>
 </body>

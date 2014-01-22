@@ -46,23 +46,14 @@ RawImage.prototype.createProgram = function(vertexShader, fragmentShader) {
   return program;
 };
 
-// TODO: Find out how to support non-square viewports
-RawImage.prototype.setRectangle = function(width, height) {
-  var x1, x2, y1, y2;
-  
-  x1 = 0, x2 = width;
-  y1 = 0, y2 = height;
-  
-  this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), this.gl.STATIC_DRAW);
-};
-
 RawImage.prototype.updateUniforms = function() {
   var uniforms = this.uniforms[this.program];
+  
   this.gl.uniform2f(uniforms.uOffset, this.xOffset, this.yOffset);
   this.gl.uniform1f(uniforms.uScale, this.zoom);
 };
 
-RawImage.prototype.getContext = function() {
+RawImage.prototype.setupGLContext = function() {
   var width, height, ext, vertexShader, fragmentShader, key, i, program, buffer;
   
   this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
@@ -75,7 +66,18 @@ RawImage.prototype.getContext = function() {
   ext = this.getExtension();
   if (!ext) return false;
   
-  vertexShader = this.loadShader(rawimage.shaders.vertex, this.gl.VERTEX_SHADER);
+  this.maximumTextureSize = this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE);
+  return true;
+}
+
+// The remainder of GL setup code depends on knowing the number of tiles needed
+// to display an image.
+RawImage.prototype.initGL = function(xTiles, yTiles) {
+  
+  var fragmentShader = this.createTiledFragmentShader(xTiles, yTiles);
+  console.log(fragmentShader.join('\n'));
+  
+  vertexShader = this.loadShader(RawImage.shaders.vertex, this.gl.VERTEX_SHADER);
   if (!vertexShader) return false;
   
   // Create all fragment shaders
@@ -143,7 +145,48 @@ RawImage.prototype.getContext = function() {
   return true;
 };
 
-rawimage.prototype.draw = function() {
+RawImage.prototype.createTiledFragmentShader = function(xTiles, yTiles) {
+  var conditionals = { 0: "if" };
+  
+  var fn = RawImage.shaders.getPixelFromTile.slice(0);
+  
+  for (var x = 0; x < xTiles; x++) {
+    var xConditional = conditionals[x] || "else if";
+    fn.push(xConditional + " (textureCoordinate.x < (" + (x + 1) + ".0 * dx)) {");
+    
+    for (var y = 0; y < yTiles; y++) {
+      var yConditional = conditionals[y] || "else if";
+      fn.push("\t" + yConditional + " (textureCoordinate.y < (" + (y + 1) + ".0 * dy)) {");
+    
+      fn.push("\t\tscaledPosition = (textureCoordinate - vec2(" + x + ".0 * dx, " + y + ".0 * dy)) / delta;");
+      fn.push("\t\tpixel = texture2D(uTexture" + x + "" + y + ", scaledPosition);");
+      fn.push("\t}");  
+    }
+    fn.push("}")
+  }
+  fn.push("return pixel;");
+  fn.push("}");
+  
+  var fragmentShader = RawImage.shaders.fragment.slice(0);
+  fragmentShader.splice.apply(fragmentShader, [this.textureLookupFnAddress, 0].concat(fn));
+  
+  // Generate a fragment shader with xTiles * yTiles textures
+  var textureSrc = [this.textureAddress, 1];
+  var textureKeys = [];
+  for (var j = 0; j < yTiles; j++) {
+    for (var i = 0; i < xTiles; i++) {
+      var index = j * xTiles + i;
+      
+      textureSrc.push("uniform sampler2D uTexture" + i + "" + j + ";");
+      textureKeys.push("uTexture" + i + "" + j);
+    }
+  }
+  fragmentShader.splice.apply(fragmentShader, textureSrc);
+  
+  return fragmentShader;
+}
+
+RawImage.prototype.draw = function() {
   this.updateUniforms();
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };

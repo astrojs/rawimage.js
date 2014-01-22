@@ -1,7 +1,7 @@
 
 // Downsample by a given factor, typically done prior to uploading texture
 // to the GPU.
-rawimage.prototype.downsample = function(arr, width, height, factor) {
+RawImage.prototype.downsample = function(arr, width, height, factor) {
   var i, j, ii, jj, newWidth, newHeight, sum, N;
   
   newWidth = parseInt((width + factor - 1) / factor);

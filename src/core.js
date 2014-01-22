@@ -24,7 +24,10 @@ function RawImage(el, width, height) {
   this.el.appendChild(this.canvas);
   this.el.appendChild(this.overlay);
   
-  if (!this.getContext()) return null;
+  if (!this.setupGLContext()) return null;
+  this.hasFragmentShader = false;
+  this.textureAddress = 1;
+  this.textureLookupFnAddress = 6;
   
   // Position the canvases
   parentStyle = this.canvas.parentElement.style;
