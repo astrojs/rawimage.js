@@ -1,11 +1,11 @@
-rawimage.prototype.fragmentShaders = ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color'];
+RawImage.prototype.fragmentShaders = ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color'];
 
 // Get necessary WebGL extensions (e.g. floating point textures).
-rawimage.prototype.getExtension = function() {
+RawImage.prototype.getExtension = function() {
   return this.gl.getExtension('OES_texture_float');
 };
 
-rawimage.prototype.loadShader = function(source, type) {
+RawImage.prototype.loadShader = function(source, type) {
   var gl, shader, compiled, error;
   
   gl = this.gl;
@@ -26,7 +26,7 @@ rawimage.prototype.loadShader = function(source, type) {
   return shader;
 };
 
-rawimage.prototype.createProgram = function(vertexShader, fragmentShader) {
+RawImage.prototype.createProgram = function(vertexShader, fragmentShader) {
   var gl, linked, program;
   
   gl = this.gl;
@@ -47,7 +47,7 @@ rawimage.prototype.createProgram = function(vertexShader, fragmentShader) {
 };
 
 // TODO: Find out how to support non-square viewports
-rawimage.prototype.setRectangle = function(width, height) {
+RawImage.prototype.setRectangle = function(width, height) {
   var x1, x2, y1, y2;
   
   x1 = 0, x2 = width;
@@ -56,13 +56,13 @@ rawimage.prototype.setRectangle = function(width, height) {
   this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), this.gl.STATIC_DRAW);
 };
 
-rawimage.prototype.updateUniforms = function() {
+RawImage.prototype.updateUniforms = function() {
   var uniforms = this.uniforms[this.program];
   this.gl.uniform2f(uniforms.uOffset, this.xOffset, this.yOffset);
   this.gl.uniform1f(uniforms.uScale, this.zoom);
 };
 
-rawimage.prototype.getContext = function() {
+RawImage.prototype.getContext = function() {
   var width, height, ext, vertexShader, fragmentShader, key, i, program, buffer;
   
   this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');

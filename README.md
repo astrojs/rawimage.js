@@ -1,6 +1,12 @@
-# WebFITS
+# RawImage
 
-A JavaScript library to visualize astronomical images in a web browser.  This library contains a set of functions that are frequently used to visualize the high dynamic range of astronomical images.
+A JavaScript library to visualize high bit depth images in a browser.  This library contains a set of functions that are frequently used to visualize the high dynamic range of astronomical images.
+
+## Usage
+
+    var el = document.querySelector("#some-dom-element");
+    var raw = new RawImage(el, viewportWidth, viewportHeight);
+    raw.loadImage('some-identifier', arr, imageWidth, imageHeight);
 
 ## API
     

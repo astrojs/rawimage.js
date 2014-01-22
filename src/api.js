@@ -1,21 +1,22 @@
-rawimage.prototype.loadImage = function(id, arr, width, height) {
-  var index, texture, factor, downsampled;
-  
-  // Downsample if the image is too large for the GPU
-  var dimension = (width > height) ? width : height;
-  if (dimension > this.MAX_TEXTURE_SIZE) {
-    factor = ~~(dimension / this.MAX_TEXTURE_SIZE) + 1;
-    downsampled = this.downsample(arr, width, height, factor);
-    arr = downsampled.arr, width = downsampled.width, height = downsampled.height;
-  }
+
+RawImage.prototype.loadImage = function(id, arr, width, height) {
+  var index, texture;
   
   // Save on GPU memory by reusing the texture instead of creating a new one.
-  if (this.lookup.hasOwnProperty(id)) {
-    index = this.lookup[id];
+  // First check if an id has been used before. If so, reuse the previously allocated texture.
+  // TODO: Incorporate texture reuse for tiled image implementation.
+  if (this.textureLookup.hasOwnProperty(id)) {
+    index = this.textureLookup[id];
     this.gl.activeTexture(this.gl.TEXTURE0 + index);
     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, new Float32Array(arr));
     return;
   }
+  
+  //
+  // Loading an image is a multi-step process
+  //
+  
+  
   
   this.setRectangle(width, height);
   

@@ -1,1 +1,1 @@
-rawimage = (function(){
+RawImage = (function(){

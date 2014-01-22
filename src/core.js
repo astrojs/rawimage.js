@@ -1,37 +1,32 @@
 
-function rawimage(el, dimension) {
+// Initialize a ra
+function RawImage(el, width, height) {
   var canvasStyle, overlayStyle, parentStyle;
   
   this.el = el;
-  this.width = this.height = dimension;
+  this.width = width;
+  this.height = height;
   this.reset();
   
-  // Createa a canvas for the WebGL context
+  // Createa a WebGL canvas
   this.canvas = document.createElement('canvas');
-  this.canvas.setAttribute('width', this.width);
-  this.canvas.setAttribute('height', this.height);
-  this.canvas.setAttribute('class', 'rawimage-visualization');
+  this.canvas.setAttribute('width', width);
+  this.canvas.setAttribute('height', height);
+  this.canvas.setAttribute('class', 'rawimage-gl');
   
-  // Create a canvas for other annotations (e.g. crosshair)
+  // Create an overlay canvas (e.g. annotations or crosshair)
   this.overlay = document.createElement('canvas');
-  this.overlay.setAttribute('width', this.width);
-  this.overlay.setAttribute('height', this.height);
+  this.overlay.setAttribute('width', width);
+  this.overlay.setAttribute('height', height);
   this.overlay.setAttribute('class', 'rawimage-overlay');
   this.overlayCtx = this.overlay.getContext('2d');
   
   this.el.appendChild(this.canvas);
   this.el.appendChild(this.overlay);
   
-  // Keep track of textures uploaded to GPU
-  this.nTextures = 1;
-  this.lookup = {};
-  
-  // TODO: Rename this function since porting to only WebGL implementation
   if (!this.getContext()) return null;
   
-  this.offsetLeft = this.canvas.offsetLeft;
-  this.offsetTop = this.canvas.offsetTop;
-  
+  // Position the canvases
   parentStyle = this.canvas.parentElement.style;
   parentStyle.width = "" + this.canvas.width + "px";
   parentStyle.height = "" + this.canvas.height + "px";
@@ -46,14 +41,17 @@ function rawimage(el, dimension) {
   overlayStyle.position = 'absolute';
   overlayStyle.pointerEvents = 'none';
   
-  this.xOffset = -this.width / 2;
-  this.yOffset = -this.height / 2;
+  // Parameters for mouse events
+  // TODO: Check these!!!
+  this.xOffset = -width / 2;
+  this.yOffset = -height / 2;
   this.xOldOffset = this.xOffset;
   this.yOldOffset = this.yOffset;
   this.drag = false;
   
   // TODO: Dynamically set min and max zoom based on the image dimension
-  this.zoom = 2 / this.width;
+  // TODO: Check these!!!
+  this.zoom = 2 / width;
   this.minZoom = this.zoom / 8;
   this.maxZoom = 20 * this.zoom;
   this.zoomX = this.zoom;
@@ -62,17 +60,23 @@ function rawimage(el, dimension) {
   this.crosshair = false;
 };
 
-rawimage.prototype.reset = function() {
+// Define or reset storage for various GL elements
+RawImage.prototype.reset = function() {
   this.programs = {};
   this.uniforms = {};
   this.textures = {};
   this.buffers = [];
   this.shaders = [];
+  
+  this.nTextures = 1;
+  
+  // Texture lookup table for referencing user specified identifiers with a GL texture index
+  this.textureLookup = {};
 };
 
 // Release all objects on the GPU
 // TODO: Make functions to release specific texture/program/buffer
-rawimage.prototype.destroy = function() {
+RawImage.prototype.destroy = function() {
   var item;
   
   // Delete textures
