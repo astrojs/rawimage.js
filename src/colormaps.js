@@ -106,6 +106,3 @@ RawImage.colormaps = {
   terrain: 2,
   winter: 1
 };
-
-RawImage.colormapImage = new Image();
-RawImage.colormapImage.src = "data:image/png;base64," + RawImage.colormaps.base64;

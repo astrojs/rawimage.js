@@ -426,9 +426,6 @@ RawImage = (function(){
     terrain: 2,
     winter: 1
   };
-  
-  RawImage.colormapImage = new Image();
-  RawImage.colormapImage.src = "data:image/png;base64," + RawImage.colormaps.base64;
   // Setup panning and zooming with optional user-specified callbacks.
   // Callbacks may be used to capture coordinates or execute custom functionality
   // on mouse events. To specify opts without callbacks, pass either
@@ -789,7 +786,7 @@ RawImage = (function(){
   }
   
   RawImage.prototype.draw = function() {
-    this.updateUniforms();
+    // this.updateUniforms();
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
   };
   
@@ -879,9 +876,9 @@ RawImage = (function(){
   }
   
   RawImage.prototype.setColorMap = function(cmap) {
-    var cmaps, index, name, program, uColorIndex;
+    var name, program, uColorIndex, cmaps, index;
   
-    cmaps = Object.keys(rawimage.colormaps);
+    cmaps = Object.keys(RawImage.colormaps);
     index = cmaps.indexOf('base64');
     cmaps.splice(index, 1);
     
@@ -898,11 +895,11 @@ RawImage = (function(){
       
       // The color index must be offset by 0.5 since graphics cards
       // approximate the pixel coordinate differently. 
-      this.gl.uniform1f(uColorIndex, rawimage.colormaps[cmap] - 0.5);
+      this.gl.uniform1f(uColorIndex, RawImage.colormaps[cmap] - 0.5);
     };
     
     // Switch back to current program
-    this.gl.useProgram(this.programs[this.program]);
+    this.gl.useProgram(this.program);
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
   };
   
@@ -927,7 +924,7 @@ RawImage = (function(){
     }
     
     // Switch back to current program
-    this.gl.useProgram(this.programs[this.transfer]);
+    this.gl.useProgram(this.program);
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
   };
   
@@ -968,65 +965,63 @@ RawImage = (function(){
       height: newHeight
     };
   };
-  RawImage.prototype.setStretch = function(transfer) {
+  RawImage.prototype.setTransfer = function(transfer) {
     this.transfer = transfer;
-    
     this.program = this.programs[transfer];
-    console.log(this.program, this.transfer);
     this.gl.useProgram(this.program);
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-    // this.draw();
-  };
-  
-  RawImage.prototype.setScales = function(r, g, b) {
-    var color;
-    
-    this.gl.useProgram(this.programs.color);
-    
-    color = this.uniforms.color;
-    this.gl.uniform1f(color.uScaleR, r);
-    this.gl.uniform1f(color.uScaleG, g);
-    this.gl.uniform1f(color.uScaleB, b);
-    
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-  };
-  
-  RawImage.prototype.setCalibrations = function(r, g, b) {
-    var color;
-    
-    this.gl.useProgram(this.programs.color);
-    
-    color = this.uniforms.color;
-    this.gl.uniform1f(color.uCalibrationR, r);
-    this.gl.uniform1f(color.uCalibrationG, g);
-    this.gl.uniform1f(color.uCalibrationB, b);
-    
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-  };
-  
-  RawImage.prototype.setAlpha = function(alpha) {
-    this.gl.useProgram(this.programs.color);
-    this.gl.uniform1f(this.uniforms.color.uAlpha, alpha);
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-  };
-  
-  RawImage.prototype.setQ = function(Q) {
-    this.gl.useProgram(this.programs.color);
-    this.gl.uniform1f(this.uniforms.color.uQ, Q);
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-  };
-  
-  RawImage.prototype.drawColor = function(rId, gId, bId) {
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-    this.program = 'color';
-    this.gl.useProgram(this.programs.color);
-    
-    this.gl.uniform1i(this.uniforms.color.uTexture0, this.lookup[rId]);
-    this.gl.uniform1i(this.uniforms.color.uTexture1, this.lookup[gId]);
-    this.gl.uniform1i(this.uniforms.color.uTexture2, this.lookup[bId]);
     
     this.draw();
   };
+  
+  // RawImage.prototype.setScales = function(r, g, b) {
+  //   var color;
+  //   
+  //   this.gl.useProgram(this.programs.color);
+  //   
+  //   color = this.uniforms.color;
+  //   this.gl.uniform1f(color.uScaleR, r);
+  //   this.gl.uniform1f(color.uScaleG, g);
+  //   this.gl.uniform1f(color.uScaleB, b);
+  //   
+  //   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+  // };
+  // 
+  // RawImage.prototype.setCalibrations = function(r, g, b) {
+  //   var color;
+  //   
+  //   this.gl.useProgram(this.programs.color);
+  //   
+  //   color = this.uniforms.color;
+  //   this.gl.uniform1f(color.uCalibrationR, r);
+  //   this.gl.uniform1f(color.uCalibrationG, g);
+  //   this.gl.uniform1f(color.uCalibrationB, b);
+  //   
+  //   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+  // };
+  // 
+  // RawImage.prototype.setAlpha = function(alpha) {
+  //   this.gl.useProgram(this.programs.color);
+  //   this.gl.uniform1f(this.uniforms.color.uAlpha, alpha);
+  //   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+  // };
+  // 
+  // RawImage.prototype.setQ = function(Q) {
+  //   this.gl.useProgram(this.programs.color);
+  //   this.gl.uniform1f(this.uniforms.color.uQ, Q);
+  //   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+  // };
+  // 
+  // RawImage.prototype.drawColor = function(rId, gId, bId) {
+  //   this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+  //   this.program = 'color';
+  //   this.gl.useProgram(this.programs.color);
+  //   
+  //   this.gl.uniform1i(this.uniforms.color.uTexture0, this.lookup[rId]);
+  //   this.gl.uniform1i(this.uniforms.color.uTexture1, this.lookup[gId]);
+  //   this.gl.uniform1i(this.uniforms.color.uTexture2, this.lookup[bId]);
+  //   
+  //   this.draw();
+  // };
   RawImage.version = "0.5.1-tile";
   return RawImage;
 })();

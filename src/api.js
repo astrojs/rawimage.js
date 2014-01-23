@@ -85,9 +85,9 @@ RawImage.prototype.loadImage = function(id, arr, width, height, callback) {
 }
 
 RawImage.prototype.setColorMap = function(cmap) {
-  var cmaps, index, name, program, uColorIndex;
+  var name, program, uColorIndex, cmaps, index;
 
-  cmaps = Object.keys(rawimage.colormaps);
+  cmaps = Object.keys(RawImage.colormaps);
   index = cmaps.indexOf('base64');
   cmaps.splice(index, 1);
   
@@ -104,11 +104,11 @@ RawImage.prototype.setColorMap = function(cmap) {
     
     // The color index must be offset by 0.5 since graphics cards
     // approximate the pixel coordinate differently. 
-    this.gl.uniform1f(uColorIndex, rawimage.colormaps[cmap] - 0.5);
+    this.gl.uniform1f(uColorIndex, RawImage.colormaps[cmap] - 0.5);
   };
   
   // Switch back to current program
-  this.gl.useProgram(this.programs[this.program]);
+  this.gl.useProgram(this.program);
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
 
@@ -133,6 +133,6 @@ RawImage.prototype.setExtent = function(min, max) {
   }
   
   // Switch back to current program
-  this.gl.useProgram(this.programs[this.transfer]);
+  this.gl.useProgram(this.program);
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
