@@ -46,21 +46,15 @@ RawImage = (function(){
     overlayStyle.position = 'absolute';
     overlayStyle.pointerEvents = 'none';
     
-    // Parameters for mouse events
-    // TODO: Check these!!!
-    this.xOffset = -width / 2;
-    this.yOffset = -height / 2;
+    // Set parameters for mouse events
+    this.xOffset = 0.0;
+    this.yOffset = 0.0;
     this.xOldOffset = this.xOffset;
     this.yOldOffset = this.yOffset;
     this.drag = false;
-    
-    // TODO: Dynamically set min and max zoom based on the image dimension
-    // TODO: Check these!!!
-    this.zoom = 2 / width;
-    this.minZoom = this.zoom / 8;
-    this.maxZoom = 20 * this.zoom;
-    this.zoomX = this.zoom;
-    this.zoomY = this.zoom;
+    this.zoom = 1.0;
+    this.minZoom = 0.125;
+    this.maxZoom = 10.0;
     
     this.crosshair = false;
   };
@@ -458,6 +452,7 @@ RawImage = (function(){
       
       callbacks.onmousedown.call(target, opts, e);
     };
+    
     this.canvas.onmouseup = function(e) {
       var dx, dy;
       
@@ -475,6 +470,7 @@ RawImage = (function(){
       
       callbacks.onmouseup.call(target, opts, e);
     };
+    
     this.canvas.onmousemove = function(e) {
       var dx, dy, xOffset, yOffset, x, y;
       
@@ -487,10 +483,10 @@ RawImage = (function(){
       if (target.drag) {
         dx = e.clientX - target.xMouseDown;
         dy = e.clientY - target.yMouseDown;
-  
+        
         target.xOffset = target.xOldOffset + (dx / target.width / target.zoom * 2.0);
         target.yOffset = target.yOldOffset - (dy / target.height / target.zoom * 2.0);
-  
+        
         target.draw();
       }
       
@@ -664,8 +660,8 @@ RawImage = (function(){
       // Set initial uniforms for current program
       this.gl.uniform1f(this.uniforms[transfer].uXTiles, xTiles);
       this.gl.uniform1f(this.uniforms[transfer].uYTiles, yTiles);
-      this.gl.uniform2f(this.uniforms[transfer].uOffset, 0.0, 0.0);
-      this.gl.uniform1f(this.uniforms[transfer].uScale, 1.0);
+      this.gl.uniform2f(this.uniforms[transfer].uOffset, this.xOffset, this.yOffset);
+      this.gl.uniform1f(this.uniforms[transfer].uScale, this.zoom);
       this.gl.uniform1f(this.uniforms[transfer].uColorIndex, RawImage.colormaps.binary - 0.5);
       
       // Get attribute locations
@@ -786,7 +782,7 @@ RawImage = (function(){
   }
   
   RawImage.prototype.draw = function() {
-    // this.updateUniforms();
+    this.updateUniforms();
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
   };
   

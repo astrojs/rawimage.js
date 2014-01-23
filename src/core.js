@@ -46,21 +46,15 @@ function RawImage(el, width, height) {
   overlayStyle.position = 'absolute';
   overlayStyle.pointerEvents = 'none';
   
-  // Parameters for mouse events
-  // TODO: Check these!!!
-  this.xOffset = -width / 2;
-  this.yOffset = -height / 2;
+  // Set parameters for mouse events
+  this.xOffset = 0.0;
+  this.yOffset = 0.0;
   this.xOldOffset = this.xOffset;
   this.yOldOffset = this.yOffset;
   this.drag = false;
-  
-  // TODO: Dynamically set min and max zoom based on the image dimension
-  // TODO: Check these!!!
-  this.zoom = 2 / width;
-  this.minZoom = this.zoom / 8;
-  this.maxZoom = 20 * this.zoom;
-  this.zoomX = this.zoom;
-  this.zoomY = this.zoom;
+  this.zoom = 1.0;
+  this.minZoom = 0.125;
+  this.maxZoom = 10.0;
   
   this.crosshair = false;
 };

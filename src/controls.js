@@ -30,6 +30,7 @@ RawImage.prototype.setupControls = function(callbacks, opts) {
     
     callbacks.onmousedown.call(target, opts, e);
   };
+  
   this.canvas.onmouseup = function(e) {
     var dx, dy;
     
@@ -47,6 +48,7 @@ RawImage.prototype.setupControls = function(callbacks, opts) {
     
     callbacks.onmouseup.call(target, opts, e);
   };
+  
   this.canvas.onmousemove = function(e) {
     var dx, dy, xOffset, yOffset, x, y;
     
@@ -59,10 +61,10 @@ RawImage.prototype.setupControls = function(callbacks, opts) {
     if (target.drag) {
       dx = e.clientX - target.xMouseDown;
       dy = e.clientY - target.yMouseDown;
-
+      
       target.xOffset = target.xOldOffset + (dx / target.width / target.zoom * 2.0);
       target.yOffset = target.yOldOffset - (dy / target.height / target.zoom * 2.0);
-
+      
       target.draw();
     }
     

@@ -105,8 +105,8 @@ RawImage.prototype.initGL = function(width, height, callback) {
     // Set initial uniforms for current program
     this.gl.uniform1f(this.uniforms[transfer].uXTiles, xTiles);
     this.gl.uniform1f(this.uniforms[transfer].uYTiles, yTiles);
-    this.gl.uniform2f(this.uniforms[transfer].uOffset, 0.0, 0.0);
-    this.gl.uniform1f(this.uniforms[transfer].uScale, 1.0);
+    this.gl.uniform2f(this.uniforms[transfer].uOffset, this.xOffset, this.yOffset);
+    this.gl.uniform1f(this.uniforms[transfer].uScale, this.zoom);
     this.gl.uniform1f(this.uniforms[transfer].uColorIndex, RawImage.colormaps.binary - 0.5);
     
     // Get attribute locations
@@ -227,6 +227,6 @@ RawImage.prototype.createTiledFragmentShader = function(transfer, xTiles, yTiles
 }
 
 RawImage.prototype.draw = function() {
-  // this.updateUniforms();
+  this.updateUniforms();
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
