@@ -1,6 +1,8 @@
-RawImage.prototype.setStretch = function(stretch) {
-  this.program = stretch;
-  this.gl.useProgram(this.programs[stretch]);
+RawImage.prototype.setStretch = function(transfer) {
+  this.transfer = transfer;
+  
+  this.program = this.programs[transfer];
+  this.gl.useProgram(this.program);
   this.draw();
 };
 

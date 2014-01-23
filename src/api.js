@@ -1,5 +1,5 @@
 
-RawImage.prototype.loadImage = function(id, arr, width, height) {
+RawImage.prototype.loadImage = function(id, arr, width, height, callback) {
   var index, texture;
   
   // Save on GPU memory by reusing the texture instead of creating a new one.
@@ -20,60 +20,59 @@ RawImage.prototype.loadImage = function(id, arr, width, height) {
   //
   
   // Generate a fragment shader based on the image resolution
-  this.initGL(width, height, function(xTiles, yTiles) {
-    // GL is all initialized, so proceed to loading image
-    
-    // Tile the image
-    for (var j = 0; j < yTiles; j++) {
-      for (var i = 0; i < xTiles; i++) {
-        
-        // Determine the resolution of current tile based on tile indices and resolution
-        // of source image.
-        
-        // Get the origin for the current tile
-        var x1 = i * this.maximumTextureSize;
-        var y1 = j * this.maximumTextureSize;
-        
-        // Get the remaining number of pixels needing to be tiled
-        var xr = width - x1;
-        var yr = height - y1;
-        
-        // If larger than the max texture size, then set the tile extent to the max texture size
-        var x2 = (xr > this.maximumTextureSize) ? this.maximumTextureSize : xr;
-        var y2 = (yr > this.maximumTextureSize) ? this.maximumTextureSize : yr;
-        
-        var tile = new Float32Array(x2 * y2);
-        console.log("creating texture with dimensions", x2, y2);
-        // Get tile from full image
-        var counter = 0;
-        for (var jj = y1; jj < y1 + y2; jj++) {
-          for (var ii = x1; ii < x1 + x2; ii++) {
-            tile[counter] = arr[jj * width + ii];
-            counter++;
-          }
-        }
-    
-        // Create texture from tile
-        var index = j * xTiles + i + 1; // Offset by 1 to account for the colormap texture
-        // var index = j * xTiles + i;
-        this.gl.activeTexture(this.gl["TEXTURE" + index]);
-        texture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, x2, y2, 0, this.gl.LUMINANCE, this.gl.FLOAT, tile);
-        
-        var key = this.textureKeys[index];
-        this.uniforms[this.transfer][key] = this.gl.getUniformLocation(this.program, key);
-        this.gl.uniform1i(this.uniforms[this.transfer][key], index);
-      }
-    }
-    console.log(this.textureKeys);
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-  });
+  this.initGL(width, height);
   
+  // GL is all initialized, so proceed to loading image
+  var xTiles = this.xTiles;
+  var yTiles = this.yTiles;
+  
+  // Tile the image
+  for (var j = 0; j < yTiles; j++) {
+    for (var i = 0; i < xTiles; i++) {
+      
+      // Determine the resolution of current tile based on tile indices and resolution
+      // of source image.
+      
+      // Get the origin for the current tile
+      var x1 = i * this.maximumTextureSize;
+      var y1 = j * this.maximumTextureSize;
+      
+      // Get the remaining number of pixels needing to be tiled
+      var xr = width - x1;
+      var yr = height - y1;
+      
+      // If larger than the max texture size, then set the tile extent to the max texture size
+      var x2 = (xr > this.maximumTextureSize) ? this.maximumTextureSize : xr;
+      var y2 = (yr > this.maximumTextureSize) ? this.maximumTextureSize : yr;
+      
+      var tile = new Float32Array(x2 * y2);
+      console.log("creating texture with dimensions", x2, y2);
+      // Get tile from full image
+      var counter = 0;
+      for (var jj = y1; jj < y1 + y2; jj++) {
+        for (var ii = x1; ii < x1 + x2; ii++) {
+          tile[counter] = arr[jj * width + ii];
+          counter++;
+        }
+      }
+  
+      // Create texture from tile
+      var index = j * xTiles + i + 1; // Offset by 1 to account for the colormap texture
+      this.gl.activeTexture(this.gl["TEXTURE" + index]);
+      texture = this.gl.createTexture();
+      this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, x2, y2, 0, this.gl.LUMINANCE, this.gl.FLOAT, tile);
+      
+      var key = this.textureKeys[index];
+      this.uniforms[this.transfer][key] = this.gl.getUniformLocation(this.program, key);
+      this.gl.uniform1i(this.uniforms[this.transfer][key], index);
+    }
+  }
+  this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 }
 
 RawImage.prototype.setColorMap = function(cmap) {

@@ -20,30 +20,6 @@ RawImage.shaders = {
     "}"
   ].join(''),
   
-  linear: [
-    "precision mediump float;",
-  
-    "uniform sampler2D uTexture00;",
-    "uniform sampler2D uColorMap;",
-    "uniform float uColorIndex;",
-    "uniform vec2 uExtent;",
-    "uniform float uXTiles;",
-    "uniform float uYTiles;",
-  
-    "varying vec2 vTextureCoordinate;",
-  
-    "void main() {",
-      "vec4 pixel_v = getPixelFromTile(vTextureCoordinate);",
-    
-      "float min = uExtent[0];",
-      "float max = uExtent[1];",
-      
-      "float x = (pixel_v.r - min) / (max - min);",
-      // "gl_FragColor = vec4(x, x, x, 1.0);",
-      "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
-    "}"
-  ],
-  
   getPixelFromTile: [
     "vec4 getPixelFromTile(vec2 textureCoordinate) {",
       "vec4 pixel;",
@@ -55,34 +31,38 @@ RawImage.shaders = {
       "vec2 scaledPosition;",
   ],
   
-  // linear: [
-  //   "precision mediump float;",
-  //   
-  //   "uniform sampler2D uTexture0;",
-  //   "uniform sampler2D uColorMap;",
-  //   "uniform float uColorIndex;",
-  //   "uniform vec2 uExtent;",
-  //   
-  //   "varying vec2 vTextureCoordinate;",
-  //   
-  //   "void main() {",
-  //       "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
-  //       
-  //       "float min = uExtent[0];",
-  //       "float max = uExtent[1];",
-  //       
-  //       "float x = (pixel_v.r - min) / (max - min);",
-  //       "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
-  //   "}"
-  // ].join(""),
+  linear: [
+    "precision mediump float;",
+  
+    "uniform sampler2D uTexture00;",
+    "uniform sampler2D uColorMap;",
+    "uniform float uColorIndex;",
+    "uniform vec2 uExtent;",
+    "uniform float uXTiles;",
+    "uniform float uYTiles;",
+    
+    "varying vec2 vTextureCoordinate;",
+    
+    "void main() {",
+      "vec4 pixel_v = getPixelFromTile(vTextureCoordinate);",
+      
+      "float min = uExtent[0];",
+      "float max = uExtent[1];",
+      
+      "float x = (pixel_v.r - min) / (max - min);",
+      "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
+    "}"
+  ],
   
   logarithm: [
     "precision mediump float;",
     
-    "uniform sampler2D uTexture0;",
+    "uniform sampler2D uTexture00;",
     "uniform sampler2D uColorMap;",
     "uniform float uColorIndex;",
     "uniform vec2 uExtent;",
+    "uniform float uXTiles;",
+    "uniform float uYTiles;",
     
     "varying vec2 vTextureCoordinate;",
     
@@ -91,7 +71,7 @@ RawImage.shaders = {
     "}",
     
     "void main() {",
-        "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
+        "vec4 pixel_v = getPixelFromTile(vTextureCoordinate);",
         
         "float min = uExtent[0];",
         "float max = logarithm(uExtent[1] - min);",
@@ -103,7 +83,7 @@ RawImage.shaders = {
         
         "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
     "}"
-  ].join(""),
+  ],
   
   sqrt: [
     "precision mediump float;",

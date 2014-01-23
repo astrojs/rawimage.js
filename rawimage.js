@@ -132,30 +132,6 @@ RawImage = (function(){
       "}"
     ].join(''),
     
-    linear: [
-      "precision mediump float;",
-    
-      "uniform sampler2D uTexture00;",
-      "uniform sampler2D uColorMap;",
-      "uniform float uColorIndex;",
-      "uniform vec2 uExtent;",
-      "uniform float uXTiles;",
-      "uniform float uYTiles;",
-    
-      "varying vec2 vTextureCoordinate;",
-    
-      "void main() {",
-        "vec4 pixel_v = getPixelFromTile(vTextureCoordinate);",
-      
-        "float min = uExtent[0];",
-        "float max = uExtent[1];",
-        
-        "float x = (pixel_v.r - min) / (max - min);",
-        // "gl_FragColor = vec4(x, x, x, 1.0);",
-        "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
-      "}"
-    ],
-    
     getPixelFromTile: [
       "vec4 getPixelFromTile(vec2 textureCoordinate) {",
         "vec4 pixel;",
@@ -167,34 +143,38 @@ RawImage = (function(){
         "vec2 scaledPosition;",
     ],
     
-    // linear: [
-    //   "precision mediump float;",
-    //   
-    //   "uniform sampler2D uTexture0;",
-    //   "uniform sampler2D uColorMap;",
-    //   "uniform float uColorIndex;",
-    //   "uniform vec2 uExtent;",
-    //   
-    //   "varying vec2 vTextureCoordinate;",
-    //   
-    //   "void main() {",
-    //       "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
-    //       
-    //       "float min = uExtent[0];",
-    //       "float max = uExtent[1];",
-    //       
-    //       "float x = (pixel_v.r - min) / (max - min);",
-    //       "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
-    //   "}"
-    // ].join(""),
+    linear: [
+      "precision mediump float;",
+    
+      "uniform sampler2D uTexture00;",
+      "uniform sampler2D uColorMap;",
+      "uniform float uColorIndex;",
+      "uniform vec2 uExtent;",
+      "uniform float uXTiles;",
+      "uniform float uYTiles;",
+      
+      "varying vec2 vTextureCoordinate;",
+      
+      "void main() {",
+        "vec4 pixel_v = getPixelFromTile(vTextureCoordinate);",
+        
+        "float min = uExtent[0];",
+        "float max = uExtent[1];",
+        
+        "float x = (pixel_v.r - min) / (max - min);",
+        "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
+      "}"
+    ],
     
     logarithm: [
       "precision mediump float;",
       
-      "uniform sampler2D uTexture0;",
+      "uniform sampler2D uTexture00;",
       "uniform sampler2D uColorMap;",
       "uniform float uColorIndex;",
       "uniform vec2 uExtent;",
+      "uniform float uXTiles;",
+      "uniform float uYTiles;",
       
       "varying vec2 vTextureCoordinate;",
       
@@ -203,7 +183,7 @@ RawImage = (function(){
       "}",
       
       "void main() {",
-          "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
+          "vec4 pixel_v = getPixelFromTile(vTextureCoordinate);",
           
           "float min = uExtent[0];",
           "float max = logarithm(uExtent[1] - min);",
@@ -215,7 +195,7 @@ RawImage = (function(){
           
           "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
       "}"
-    ].join(""),
+    ],
     
     sqrt: [
       "precision mediump float;",
@@ -339,44 +319,38 @@ RawImage = (function(){
     ].join("")
   };
   
-  RawImage.prototype.loadColorMap = function(callback) {
-    var img, target = this;
-    
-    var x1 = y1 = 0.0;
-    var x2 = 256, y2 = 70;
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), this.gl.STATIC_DRAW);
+  RawImage.prototype.loadColorMap = function() {
+    var img, x1, x2, y1, y2, texture, name, program, uColorMap;
     
     img = new Image();
-    img.onload = function() {
-      var texture, name, program, uColorMap;
-      
-      target.gl.activeTexture(target.gl.TEXTURE0);
-      
-      texture = target.gl.createTexture();
-      target.gl.bindTexture(target.gl.TEXTURE_2D, texture);
-      target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_WRAP_S, target.gl.CLAMP_TO_EDGE);
-      target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_WRAP_T, target.gl.CLAMP_TO_EDGE);
-      target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_MIN_FILTER, target.gl.NEAREST);
-      target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_MAG_FILTER, target.gl.NEAREST);
-      target.gl.texImage2D(target.gl.TEXTURE_2D, 0, target.gl.RGB, target.gl.RGB, target.gl.UNSIGNED_BYTE, img);
-      
-      for (name in target.programs) {
-        
-        // Skip the color program since colormaps are not used
-        if (name === 'color') continue;
-        
-        program = target.programs[name];
-        target.gl.useProgram(program);
-        
-        uColorMap = target.uniforms[name].uColorMap;
-        target.gl.uniform1i(uColorMap, 0);
-      };
-      
-      // Switch back to current program
-      target.gl.useProgram(target.programs[target.transfer]);
-      callback.call(target);
-    };
     img.src = "data:image/png;base64," + RawImage.colormaps.base64;
+    
+    x1 = y1 = 0.0;
+    x2 = 256, y2 = 70;
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), this.gl.STATIC_DRAW);
+    
+    this.gl.activeTexture(this.gl.TEXTURE0);
+    
+    texture = this.gl.createTexture();
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, this.gl.RGB, this.gl.UNSIGNED_BYTE, img);
+    
+    for (name in this.programs) {
+      if (name === 'color') continue; // Skip color program
+      
+      program = this.programs[name];
+      this.gl.useProgram(program);
+      
+      uColorMap = this.uniforms[name].uColorMap;
+      this.gl.uniform1i(uColorMap, 0);
+    };
+    
+    // Switch back to current program
+    this.gl.useProgram(this.programs[this.transfer]);
   };
   
   RawImage.colormaps = {
@@ -452,6 +426,9 @@ RawImage = (function(){
     terrain: 2,
     winter: 1
   };
+  
+  RawImage.colormapImage = new Image();
+  RawImage.colormapImage.src = "data:image/png;base64," + RawImage.colormaps.base64;
   // Setup panning and zooming with optional user-specified callbacks.
   // Callbacks may be used to capture coordinates or execute custom functionality
   // on mouse events. To specify opts without callbacks, pass either
@@ -632,7 +609,7 @@ RawImage = (function(){
   };
   
   RawImage.prototype.updateUniforms = function() {
-    var uniforms = this.uniforms[this.program];
+    var uniforms = this.uniforms[this.transfer];
     
     this.gl.uniform2f(uniforms.uOffset, this.xOffset, this.yOffset);
     this.gl.uniform1f(uniforms.uScale, this.zoom);
@@ -660,8 +637,8 @@ RawImage = (function(){
   RawImage.prototype.initGL = function(width, height, callback) {
     
     // Determine the number of tiles from the image dimensions
-    var xTiles = Math.ceil(width / this.maximumTextureSize);
-    var yTiles = Math.ceil(height / this.maximumTextureSize);
+    var xTiles = this.xTiles = Math.ceil(width / this.maximumTextureSize);
+    var yTiles = this.yTiles = Math.ceil(height / this.maximumTextureSize);
     
     // Create and compile shaders
     vertexShader = this.loadShader(RawImage.shaders.vertex, this.gl.VERTEX_SHADER);
@@ -670,9 +647,9 @@ RawImage = (function(){
     // Every transfer function needs it's own program
     // TODO: Test performance of using conditional check of transfer function on one program
     // TODO: Retrofit the other fragment shaders for tiling.
-    ["linear"].forEach(function(transfer) {
+    ["linear", "logarithm"].forEach(function(transfer) {
       
-      var fragmentShaderStr = this.createTiledFragmentShader(xTiles, yTiles);
+      var fragmentShaderStr = this.createTiledFragmentShader(transfer, xTiles, yTiles);
       var fragmentShader = this.loadShader(fragmentShaderStr, this.gl.FRAGMENT_SHADER);
       if (!fragmentShader) return false;
       
@@ -692,15 +669,13 @@ RawImage = (function(){
       this.gl.uniform1f(this.uniforms[transfer].uYTiles, yTiles);
       this.gl.uniform2f(this.uniforms[transfer].uOffset, 0.0, 0.0);
       this.gl.uniform1f(this.uniforms[transfer].uScale, 1.0);
-      this.gl.uniform1f(this.uniforms[transfer].uColorIndex, RawImage.colormaps.Blues - 0.5);
+      this.gl.uniform1f(this.uniforms[transfer].uColorIndex, RawImage.colormaps.binary - 0.5);
       
       // Get attribute locations
       this.attributes[transfer] = {};
       this.attributes[transfer]['aPosition'] = this.gl.getAttribLocation(program, 'aPosition');
       this.attributes[transfer]['aTextureCoordinate']  = this.gl.getAttribLocation(program, 'aTextureCoordinate');
     }, this);
-    
-    // TODO: Handle color program!
     
     // Start with the linear transfer function
     this.transfer = 'linear';
@@ -716,66 +691,64 @@ RawImage = (function(){
     
     // Load the color map first using a clean buffer. Using a callback here to ensure instructions
     // sent to GPU synchronously.
-    this.loadColorMap(function() {
-      
-      // The position buffer is derived from the image resolution. Clipspace coordinates
-      // must be computed. Start by working along a unit domain.
-      var x1 = y1 = 0.0;
-      var x2 = 1.0;
-      y2 = this.canvas.width / this.canvas.height;
+    this.loadColorMap();
     
-      // Transform to a [0, 2] domain
-      x2 *= 2.0;
-      y2 *= 2.0;
+    // The position buffer is derived from the image resolution. Clipspace coordinates
+    // must be computed. Start by working along a unit domain.
+    var x1 = y1 = 0.0;
+    var x2 = 1.0;
+    y2 = this.canvas.width / this.canvas.height;
+  
+    // Transform to a [0, 2] domain
+    x2 *= 2.0;
+    y2 *= 2.0;
+  
+    // Transform to clipspace coordinates
+    x1 -= 1.0;
+    y1 -= 1.0;
+    x2 -= 1.0;
+    y2 -= 1.0;
+  
+    this.gl.bufferData(
+      this.gl.ARRAY_BUFFER,
+      new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+      this.gl.STATIC_DRAW
+    );
+    this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aPosition']);
+    this.gl.vertexAttribPointer(this.attributes[this.transfer]['aPosition'], 2, this.gl.FLOAT, false, 0, 0);
     
-      // Transform to clipspace coordinates
-      x1 -= 1.0;
-      y1 -= 1.0;
-      x2 -= 1.0;
-      y2 -= 1.0;
-    
-      this.gl.bufferData(
-        this.gl.ARRAY_BUFFER,
-        new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
-        this.gl.STATIC_DRAW
-      );
-      this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aPosition']);
-      this.gl.vertexAttribPointer(this.attributes[this.transfer]['aPosition'], 2, this.gl.FLOAT, false, 0, 0);
-      
-      // The texture buffer is also derived from the image resolution, except it requires coordinates
-      // between [0, 1].
-      x1 = y1 = 0.0;
-      x2 = y2 = 1.0;
-    
-      // Assuming the resolution is a multiple of the maximum support texture size,
-      // compute the number of excess pixels using the image resolution.
-      var xp = xTiles * this.maximumTextureSize % width;
-      var yp = yTiles * this.maximumTextureSize % height;
-    
-      // Determine the fraction of excess pixels
-      xp = xp / (xTiles * this.maximumTextureSize);
-      yp = yp / (yTiles * this.maximumTextureSize);
-    
-      // Subtract from the maximum texture coordinate.
-      x2 = x2 - xp;
-      y2 = y2 - yp;
-    
-      var textureBuffer = this.gl.createBuffer();
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textureBuffer);
-      this.gl.bufferData(
-        this.gl.ARRAY_BUFFER,
-        new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
-        this.gl.STATIC_DRAW
-      );
-      this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aTextureCoordinate']);
-      this.gl.vertexAttribPointer(this.attributes[this.transfer]['aTextureCoordinate'], 2, this.gl.FLOAT, false, 0, 0);
-      this.buffers['texture'] = textureBuffer;
-      
-      callback.call(this, xTiles, yTiles);
-    });
+    // The texture buffer is also derived from the image resolution, except it requires coordinates
+    // between [0, 1].
+    x1 = y1 = 0.0;
+    x2 = y2 = 1.0;
+  
+    // Assuming the resolution is a multiple of the maximum support texture size,
+    // compute the number of excess pixels using the image resolution.
+    var xp = xTiles * this.maximumTextureSize % width;
+    var yp = yTiles * this.maximumTextureSize % height;
+  
+    // Determine the fraction of excess pixels
+    xp = xp / (xTiles * this.maximumTextureSize);
+    yp = yp / (yTiles * this.maximumTextureSize);
+  
+    // Subtract from the maximum texture coordinate.
+    x2 = x2 - xp;
+    y2 = y2 - yp;
+  
+    var textureBuffer = this.gl.createBuffer();
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textureBuffer);
+    this.gl.bufferData(
+      this.gl.ARRAY_BUFFER,
+      new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+      this.gl.STATIC_DRAW
+    );
+    this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aTextureCoordinate']);
+    this.gl.vertexAttribPointer(this.attributes[this.transfer]['aTextureCoordinate'], 2, this.gl.FLOAT, false, 0, 0);
+    this.buffers['texture'] = textureBuffer;
   };
   
-  RawImage.prototype.createTiledFragmentShader = function(xTiles, yTiles) {
+  // Generates a fragment shader based on the number of tiles needed to display an image.
+  RawImage.prototype.createTiledFragmentShader = function(transfer, xTiles, yTiles) {
     var conditionals = { 0: "if" };
     
     var fn = RawImage.shaders.getPixelFromTile.slice(0);
@@ -797,7 +770,7 @@ RawImage = (function(){
     fn.push("return pixel;");
     fn.push("}");
     
-    var fragmentShader = RawImage.shaders.linear.slice(0);
+    var fragmentShader = RawImage.shaders[transfer].slice(0);
     fragmentShader.splice.apply(fragmentShader, [this.textureLookupFnAddress, 0].concat(fn));
     
     // Generate a fragment shader with xTiles * yTiles textures
@@ -820,7 +793,7 @@ RawImage = (function(){
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
   };
   
-  RawImage.prototype.loadImage = function(id, arr, width, height) {
+  RawImage.prototype.loadImage = function(id, arr, width, height, callback) {
     var index, texture;
     
     // Save on GPU memory by reusing the texture instead of creating a new one.
@@ -841,60 +814,59 @@ RawImage = (function(){
     //
     
     // Generate a fragment shader based on the image resolution
-    this.initGL(width, height, function(xTiles, yTiles) {
-      // GL is all initialized, so proceed to loading image
-      
-      // Tile the image
-      for (var j = 0; j < yTiles; j++) {
-        for (var i = 0; i < xTiles; i++) {
-          
-          // Determine the resolution of current tile based on tile indices and resolution
-          // of source image.
-          
-          // Get the origin for the current tile
-          var x1 = i * this.maximumTextureSize;
-          var y1 = j * this.maximumTextureSize;
-          
-          // Get the remaining number of pixels needing to be tiled
-          var xr = width - x1;
-          var yr = height - y1;
-          
-          // If larger than the max texture size, then set the tile extent to the max texture size
-          var x2 = (xr > this.maximumTextureSize) ? this.maximumTextureSize : xr;
-          var y2 = (yr > this.maximumTextureSize) ? this.maximumTextureSize : yr;
-          
-          var tile = new Float32Array(x2 * y2);
-          console.log("creating texture with dimensions", x2, y2);
-          // Get tile from full image
-          var counter = 0;
-          for (var jj = y1; jj < y1 + y2; jj++) {
-            for (var ii = x1; ii < x1 + x2; ii++) {
-              tile[counter] = arr[jj * width + ii];
-              counter++;
-            }
-          }
-      
-          // Create texture from tile
-          var index = j * xTiles + i + 1; // Offset by 1 to account for the colormap texture
-          // var index = j * xTiles + i;
-          this.gl.activeTexture(this.gl["TEXTURE" + index]);
-          texture = this.gl.createTexture();
-          this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-          this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, x2, y2, 0, this.gl.LUMINANCE, this.gl.FLOAT, tile);
-          
-          var key = this.textureKeys[index];
-          this.uniforms[this.transfer][key] = this.gl.getUniformLocation(this.program, key);
-          this.gl.uniform1i(this.uniforms[this.transfer][key], index);
-        }
-      }
-      console.log(this.textureKeys);
-      this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-    });
+    this.initGL(width, height);
     
+    // GL is all initialized, so proceed to loading image
+    var xTiles = this.xTiles;
+    var yTiles = this.yTiles;
+    
+    // Tile the image
+    for (var j = 0; j < yTiles; j++) {
+      for (var i = 0; i < xTiles; i++) {
+        
+        // Determine the resolution of current tile based on tile indices and resolution
+        // of source image.
+        
+        // Get the origin for the current tile
+        var x1 = i * this.maximumTextureSize;
+        var y1 = j * this.maximumTextureSize;
+        
+        // Get the remaining number of pixels needing to be tiled
+        var xr = width - x1;
+        var yr = height - y1;
+        
+        // If larger than the max texture size, then set the tile extent to the max texture size
+        var x2 = (xr > this.maximumTextureSize) ? this.maximumTextureSize : xr;
+        var y2 = (yr > this.maximumTextureSize) ? this.maximumTextureSize : yr;
+        
+        var tile = new Float32Array(x2 * y2);
+        console.log("creating texture with dimensions", x2, y2);
+        // Get tile from full image
+        var counter = 0;
+        for (var jj = y1; jj < y1 + y2; jj++) {
+          for (var ii = x1; ii < x1 + x2; ii++) {
+            tile[counter] = arr[jj * width + ii];
+            counter++;
+          }
+        }
+    
+        // Create texture from tile
+        var index = j * xTiles + i + 1; // Offset by 1 to account for the colormap texture
+        this.gl.activeTexture(this.gl["TEXTURE" + index]);
+        texture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, x2, y2, 0, this.gl.LUMINANCE, this.gl.FLOAT, tile);
+        
+        var key = this.textureKeys[index];
+        this.uniforms[this.transfer][key] = this.gl.getUniformLocation(this.program, key);
+        this.gl.uniform1i(this.uniforms[this.transfer][key], index);
+      }
+    }
+    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
   }
   
   RawImage.prototype.setColorMap = function(cmap) {
@@ -987,9 +959,11 @@ RawImage = (function(){
       height: newHeight
     };
   };
-  RawImage.prototype.setStretch = function(stretch) {
-    this.program = stretch;
-    this.gl.useProgram(this.programs[stretch]);
+  RawImage.prototype.setStretch = function(transfer) {
+    this.transfer = transfer;
+    
+    this.program = this.programs[transfer];
+    this.gl.useProgram(this.program);
     this.draw();
   };
   

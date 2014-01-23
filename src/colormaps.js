@@ -1,42 +1,36 @@
 
-RawImage.prototype.loadColorMap = function(callback) {
-  var img, target = this;
-  
-  var x1 = y1 = 0.0;
-  var x2 = 256, y2 = 70;
-  this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), this.gl.STATIC_DRAW);
+RawImage.prototype.loadColorMap = function() {
+  var img, x1, x2, y1, y2, texture, name, program, uColorMap;
   
   img = new Image();
-  img.onload = function() {
-    var texture, name, program, uColorMap;
-    
-    target.gl.activeTexture(target.gl.TEXTURE0);
-    
-    texture = target.gl.createTexture();
-    target.gl.bindTexture(target.gl.TEXTURE_2D, texture);
-    target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_WRAP_S, target.gl.CLAMP_TO_EDGE);
-    target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_WRAP_T, target.gl.CLAMP_TO_EDGE);
-    target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_MIN_FILTER, target.gl.NEAREST);
-    target.gl.texParameteri(target.gl.TEXTURE_2D, target.gl.TEXTURE_MAG_FILTER, target.gl.NEAREST);
-    target.gl.texImage2D(target.gl.TEXTURE_2D, 0, target.gl.RGB, target.gl.RGB, target.gl.UNSIGNED_BYTE, img);
-    
-    for (name in target.programs) {
-      
-      // Skip the color program since colormaps are not used
-      if (name === 'color') continue;
-      
-      program = target.programs[name];
-      target.gl.useProgram(program);
-      
-      uColorMap = target.uniforms[name].uColorMap;
-      target.gl.uniform1i(uColorMap, 0);
-    };
-    
-    // Switch back to current program
-    target.gl.useProgram(target.programs[target.transfer]);
-    callback.call(target);
-  };
   img.src = "data:image/png;base64," + RawImage.colormaps.base64;
+  
+  x1 = y1 = 0.0;
+  x2 = 256, y2 = 70;
+  this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), this.gl.STATIC_DRAW);
+  
+  this.gl.activeTexture(this.gl.TEXTURE0);
+  
+  texture = this.gl.createTexture();
+  this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+  this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+  this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, this.gl.RGB, this.gl.UNSIGNED_BYTE, img);
+  
+  for (name in this.programs) {
+    if (name === 'color') continue; // Skip color program
+    
+    program = this.programs[name];
+    this.gl.useProgram(program);
+    
+    uColorMap = this.uniforms[name].uColorMap;
+    this.gl.uniform1i(uColorMap, 0);
+  };
+  
+  // Switch back to current program
+  this.gl.useProgram(this.programs[this.transfer]);
 };
 
 RawImage.colormaps = {
@@ -112,3 +106,6 @@ RawImage.colormaps = {
   terrain: 2,
   winter: 1
 };
+
+RawImage.colormapImage = new Image();
+RawImage.colormapImage.src = "data:image/png;base64," + RawImage.colormaps.base64;
