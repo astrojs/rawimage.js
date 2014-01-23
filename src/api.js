@@ -45,9 +45,8 @@ RawImage.prototype.loadImage = function(id, arr, width, height, callback) {
       var x2 = (xr > this.maximumTextureSize) ? this.maximumTextureSize : xr;
       var y2 = (yr > this.maximumTextureSize) ? this.maximumTextureSize : yr;
       
-      var tile = new Float32Array(x2 * y2);
-      console.log("creating texture with dimensions", x2, y2);
       // Get tile from full image
+      var tile = new Float32Array(x2 * y2);
       var counter = 0;
       for (var jj = y1; jj < y1 + y2; jj++) {
         for (var ii = x1; ii < x1 + x2; ii++) {
@@ -67,11 +66,21 @@ RawImage.prototype.loadImage = function(id, arr, width, height, callback) {
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
       this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, x2, y2, 0, this.gl.LUMINANCE, this.gl.FLOAT, tile);
       
+      // Update the texture uniform for each program
       var key = this.textureKeys[index];
-      this.uniforms[this.transfer][key] = this.gl.getUniformLocation(this.program, key);
-      this.gl.uniform1i(this.uniforms[this.transfer][key], index);
+      for (name in this.programs) {
+        if (name === 'color') continue;
+        
+        var program = this.programs[name];
+        this.gl.useProgram(program);
+        
+        this.uniforms[name][key] = this.gl.getUniformLocation(program, key);
+        this.gl.uniform1i(this.uniforms[name][key], index);
+      }
+      
     }
   }
+  this.gl.useProgram(this.program);
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 }
 

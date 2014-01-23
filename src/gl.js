@@ -227,6 +227,6 @@ RawImage.prototype.createTiledFragmentShader = function(transfer, xTiles, yTiles
 }
 
 RawImage.prototype.draw = function() {
-  this.updateUniforms();
+  // this.updateUniforms();
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };
