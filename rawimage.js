@@ -36,8 +36,8 @@ RawImage = (function(){
     parentStyle.width = "" + this.canvas.width + "px";
     parentStyle.height = "" + this.canvas.height + "px";
     parentStyle.overflow = 'hidden';
-    parentStyle.backgroundColor = '#FF0000';
-    // parentStyle.backgroundColor = '#252525';
+    // parentStyle.backgroundColor = '#FF0000';
+    parentStyle.backgroundColor = '#252525';
     parentStyle.position = 'relative';
     
     canvasStyle = this.canvas.style;
@@ -55,7 +55,7 @@ RawImage = (function(){
     this.drag = false;
     this.zoom = 1.0;
     this.minZoom = 0.125;
-    this.maxZoom = 10.0;
+    this.maxZoom = 100.0;
     
     this.crosshair = false;
   };
