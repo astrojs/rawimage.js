@@ -131,12 +131,11 @@ RawImage.prototype.initGL = function(width, height, callback) {
   // sent to GPU synchronously.
   this.loadColorMap();
   
-  // The position buffer is derived from the image resolution. Clipspace coordinates
+  // The position buffer is derived from canvas dimensions. Clipspace coordinates
   // must be computed. Start by working along a unit domain.
   var x1 = y1 = 0.0;
-  var x2 = 1.0;
-  y2 = this.canvas.width / this.canvas.height;
-
+  var x2 = 1.0, y2 = this.canvas.width / this.canvas.height;
+  
   // Transform to a [0, 2] domain
   x2 *= 2.0;
   y2 *= 2.0;
@@ -155,24 +154,31 @@ RawImage.prototype.initGL = function(width, height, callback) {
   this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aPosition']);
   this.gl.vertexAttribPointer(this.attributes[this.transfer]['aPosition'], 2, this.gl.FLOAT, false, 0, 0);
   
-  // The texture buffer is also derived from the image resolution, except it requires coordinates
+  // The texture buffer is derived from the image resolution, except it requires coordinates
   // between [0, 1].
   x1 = y1 = 0.0;
   x2 = y2 = 1.0;
-
-  // Assuming the resolution is a multiple of the maximum support texture size,
-  // compute the number of excess pixels using the image resolution.
-  var xp = xTiles * this.maximumTextureSize % width;
-  var yp = yTiles * this.maximumTextureSize % height;
-
-  // Determine the fraction of excess pixels
-  xp = xp / (xTiles * this.maximumTextureSize);
-  yp = yp / (yTiles * this.maximumTextureSize);
-
-  // Subtract from the maximum texture coordinate.
-  x2 = x2 - xp;
-  y2 = y2 - yp;
-
+  
+  // TODO: The below texture coordinate transformations are not needed if the image is not tiled.
+  //       Need to check how this functions when handling the case of tiling along only one dimension.
+  
+  if (xTiles !== 1) {
+    // Assuming the resolution is a multiple of the maximum supported texture size,
+    // compute the number of excess pixels using the image resolution.
+    var xp = xTiles * this.maximumTextureSize % width;
+    
+    // Get a fraction representation of excess pixels
+    xp = xp / (xTiles * this.maximumTextureSize);
+    
+    // Subtract from the maximum texture coordinate
+    x2 = x2 - xp;
+  }
+  if (yTiles !== 1) {
+    var yp = yTiles * this.maximumTextureSize % height;
+    yp = yp / (yTiles * this.maximumTextureSize);
+    y2 = y2 - yp;
+  }
+  
   var textureBuffer = this.gl.createBuffer();
   this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textureBuffer);
   this.gl.bufferData(
@@ -228,5 +234,6 @@ RawImage.prototype.createTiledFragmentShader = function(transfer, xTiles, yTiles
 
 RawImage.prototype.draw = function() {
   this.updateUniforms();
+  this.gl.clearColor(1.0, 0.0, 0.0, 1.0);
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 };

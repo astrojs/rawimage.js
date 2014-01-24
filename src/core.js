@@ -36,7 +36,8 @@ function RawImage(el, width, height) {
   parentStyle.width = "" + this.canvas.width + "px";
   parentStyle.height = "" + this.canvas.height + "px";
   parentStyle.overflow = 'hidden';
-  parentStyle.backgroundColor = '#252525';
+  parentStyle.backgroundColor = '#FF0000';
+  // parentStyle.backgroundColor = '#252525';
   parentStyle.position = 'relative';
   
   canvasStyle = this.canvas.style;

@@ -46,6 +46,7 @@ RawImage.prototype.loadImage = function(id, arr, width, height, callback) {
       var y2 = (yr > this.maximumTextureSize) ? this.maximumTextureSize : yr;
       
       // Get tile from full image
+      // TODO: This loop is not required if the image is not being tiled (e.g. when xTiles = yTiles = 1)
       var tile = new Float32Array(x2 * y2);
       var counter = 0;
       for (var jj = y1; jj < y1 + y2; jj++) {
