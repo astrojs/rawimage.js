@@ -157,27 +157,10 @@ RawImage.prototype.initGL = function(width, height, callback) {
   // The texture buffer is derived from the image resolution, except it requires coordinates
   // between [0, 1].
   x1 = y1 = 0.0;
-  x2 = y2 = 1.0;
   
-  // TODO: The below texture coordinate transformations are not needed if the image is not tiled.
-  //       Need to check how this functions when handling the case of tiling along only one dimension.
-  
-  if (xTiles !== 1) {
-    // Assuming the resolution is a multiple of the maximum supported texture size,
-    // compute the number of excess pixels using the image resolution.
-    var xp = xTiles * this.maximumTextureSize % width;
-    
-    // Get a fraction representation of excess pixels
-    xp = xp / (xTiles * this.maximumTextureSize);
-    
-    // Subtract from the maximum texture coordinate
-    x2 = x2 - xp;
-  }
-  if (yTiles !== 1) {
-    var yp = yTiles * this.maximumTextureSize % height;
-    yp = yp / (yTiles * this.maximumTextureSize);
-    y2 = y2 - yp;
-  }
+  // TODO: Need to check how this functions when handling the case of tiling along only one dimension.
+  x2 = (xTiles === 1) ? 1.0 : width / (xTiles * this.maximumTextureSize);
+  y2 = (yTiles === 1) ? 1.0 : height / (yTiles * this.maximumTextureSize);
   
   var textureBuffer = this.gl.createBuffer();
   this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textureBuffer);
