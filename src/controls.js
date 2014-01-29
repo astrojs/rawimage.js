@@ -85,7 +85,7 @@ RawImage.prototype.setupControls = function(callbacks, opts) {
     // Get offset associated with zoom
     var zoomOffsetX = 0.5 * (target.imageWidth - target.imageWidth / target.zoom);
     var zoomOffsetY = 0.5 * (this.height * (target.imageWidth / this.width) - (this.height / target.zoom) * (target.imageWidth / this.width));
-    zoomOffsetY = target.imageHeight - this.height * (target.imageWidth / this.width) / target.zoom - zoomOffsetY
+    zoomOffsetY = target.imageHeight - this.height * (target.imageWidth / this.width) / target.zoom - zoomOffsetY;
     
     var x = imageX / target.zoom - translateX + zoomOffsetX;
     var y = imageY / target.zoom + translateY + zoomOffsetY;

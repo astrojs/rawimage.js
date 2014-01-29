@@ -495,16 +495,9 @@ RawImage = (function(){
       var canvasX = e.layerX;
       var canvasY = e.layerY;
       
-      // Get the number of canvas pixels needed to fit the image when constrained by width
-      // var heightCanvas = target.imageHeight * (this.width / target.imageHeight);
-      var heightCanvas = target.imageHeight * (this.width / target.imageWidth);
-      // Get the margin offset on the y axis
-      var marginYOffset = heightCanvas - this.height;
-      
       // The image width is initially fit into the canvas width
       var imageX = canvasX * (target.imageWidth / this.width);
       var imageY = canvasY * (target.imageWidth / this.width);
-      // var imageY = (canvasY + marginYOffset) * (target.imageWidth / this.width);
       
       // Get the translation offset
       // Translation offsets are in clipspace units [0, 2]
@@ -515,52 +508,10 @@ RawImage = (function(){
       // Get offset associated with zoom
       var zoomOffsetX = 0.5 * (target.imageWidth - target.imageWidth / target.zoom);
       var zoomOffsetY = 0.5 * (this.height * (target.imageWidth / this.width) - (this.height / target.zoom) * (target.imageWidth / this.width));
-      zoomOffsetY = target.imageHeight - this.height * (target.imageWidth / this.width) / target.zoom - zoomOffsetY
-      
-      // console.log(target.imageHeight - this.height * (target.imageWidth / this.width) / target.zoom - zoomOffsetY);
-      // console.log(imageX / target.zoom - translateX + zoomOffsetX);
-      // console.log(imageY / target.zoom - translateY - zoomOffsetY);
-      // console.log(zoomOffsetY + imageY / target.zoom);
+      zoomOffsetY = target.imageHeight - this.height * (target.imageWidth / this.width) / target.zoom - zoomOffsetY;
       
       var x = imageX / target.zoom - translateX + zoomOffsetX;
       var y = imageY / target.zoom + translateY + zoomOffsetY;
-      
-      console.log(x, y);
-      /*
-      var viewX = e.layerX;
-      var viewY = e.layerY;
-      
-      // By default the image will be placed in the lower left corner of the canvas
-      var imgX = viewX;
-      var imgY = viewY;
-      // var imgY = target.imageHeight - (this.height - viewY);
-      
-      // Translation offsets are in clipspace units [0, 2]
-      // These need to be converted to pixel units (e.g. [0, 2] -> [0, width])
-      var offsetX = (this.width / 2) * target.xOffset;
-      var offsetY = (this.height / 2) * target.yOffset;
-      
-      // Get the image offset as a function of zoom
-      var xZoomOffset = 0.5 * (target.imageWidth - target.imageWidth / target.zoom);
-      var yZoomOffset = 0.5 * (target.imageWidth - target.imageWidth / target.zoom);
-      
-      // console.log(xZoomOffset + imgX / target.zoom - offsetX);
-      console.log(yZoomOffset);
-      
-      var x = xZoomOffset + imgX / target.zoom - offsetX;
-      
-      // // Compute the coordinates in the image reference frame
-      // xOffset = e.clientX - target.offsetLeft;
-      // yOffset = e.clientY - target.offsetTop;
-      // 
-      // dx = -1 * (target.width / 2 - xOffset) / target.width / target.zoom * 2.0;
-      // dy = (target.height / 2 - yOffset) / target.height / target.zoom * 2.0;
-      // 
-      // // TODO: Might be wiser to save (x, y) on rawimage object. This would
-      // //       allow uniform behavior across all user-specified callbacks.
-      // x = ((-1 * (target.xOffset + 0.5)) + dx) + 1.5 << 0;
-      // y = ((-1 * (target.yOffset + 0.5)) + dy) + 1.5 << 0;
-      */
       
       callbacks.onmousemove.call(target, x, y, opts, e);
     };
