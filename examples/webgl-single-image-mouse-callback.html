@@ -25,7 +25,7 @@
   function onmousemove(x, y, opts) {
     var arr = opts.arr;
     var width = opts.width;
-    console.log(x, y, arr[x + width * y]);
+    // console.log(x, y, arr[x + width * y]);
   }
   
   // Define callback for when pixels have been read from file
@@ -43,8 +43,7 @@
     var el = document.querySelector('#' + opts.el);
     
     // Initialize a WebFITS context with a viewer of size width
-    var raw = new rawimage(el, width);
-    window.raw = raw;
+    var raw = new RawImage(el, width, 400);
     
     // Add pan and zoom controls
     opts = {arr: arr, width: width};
@@ -57,7 +56,9 @@
     
     // Set the intensity range and stretch
     raw.setExtent(extent[0], extent[1]);
-    raw.setStretch('linear');
+    raw.setTransfer('linear');
+    
+    window.raw = raw;
   }
   
   function main() {
@@ -76,7 +77,7 @@
 
 <body onload='main()'>
   <div class='content'>
-    <h3>Single WebFITS Instance (WebGL) with Mouse Callback</h3>
+    <h3>Single RawImage Instance (WebGL) with Mouse Callback</h3>
     <h6>(open the javascript console)</h6>
     <div id="wicked-science-visualization"></div>
   </div>

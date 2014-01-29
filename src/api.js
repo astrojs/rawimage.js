@@ -1,16 +1,10 @@
 
+// TODO: Only supporting a single texture right now!
 RawImage.prototype.loadImage = function(id, arr, width, height, callback) {
   var index, texture;
   
-  // Save on GPU memory by reusing the texture instead of creating a new one.
-  // First check if an id has been used before. If so, reuse the previously allocated texture.
-  // TODO: Incorporate texture reuse for tiled image implementation.
-  if (this.textureLookup.hasOwnProperty(id)) {
-    index = this.textureLookup[id];
-    this.gl.activeTexture(this.gl.TEXTURE0 + index);
-    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, new Float32Array(arr));
-    return;
-  }
+  this.imageWidth = width;
+  this.imageHeight = height;
   
   // TODO: Check if GL has been setup. If it has, then skip GL setup, and check that the next image can use
   // the previously generated fragment shader (e.g. the width, height, xTiles and yTiles are identical).
