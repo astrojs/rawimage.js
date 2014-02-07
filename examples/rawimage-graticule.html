@@ -1,0 +1,269 @@
+<html>
+<head>
+  <link rel="stylesheet" href="/examples/astrojs.css" type="text/css" charset="utf-8">
+  
+  <style>
+  svg {
+    position: absolute;
+    pointer-events: none;
+  }
+  
+  svg circle.dot {
+    fill: red;
+  }
+  </style>
+  
+  <script type="text/javascript" src="/examples/lib/fits.js"></script>
+  <script type="text/javascript" src="/examples/lib/wcs.js"></script>
+  <script type="text/javascript" src="/examples/lib/d3.js"></script>
+  
+  <script type="text/javascript" src="/rawimage.js"></script>
+  <script type="text/javascript">
+  
+  // Define callback to be executed after FITS is received from the server
+  function getImage(f, opts) {
+    
+    // Get first header and data unit
+    var header = f.getHeader();
+    var dataunit = f.getDataUnit();
+    
+    // Set options to pass to the next callback
+    opts = {
+      header: header,
+      dataunit: dataunit,
+      el: opts.el
+    };
+    
+    // Get pixels representing the image and pass callback with options
+    dataunit.getFrame(0, createVisualization, opts);
+  }
+  
+  // Callback to capture coordinates in image reference frame
+  function onmousemove(e, x, y, opts) {
+    var arr = opts.arr;
+    var width = opts.width;
+    console.log(x, y, arr[x + width * y]);
+    console.log(opts.w.pix2sky(x, y));
+  }
+  
+  // Define callback for when pixels have been read from file
+  function createVisualization(arr, opts) {
+    
+    // Get header, dataunit, width, and height from options
+    var header = opts.header;
+    var dataunit = opts.dataunit;
+    var imageWidth = dataunit.width;
+    var imageHeight = dataunit.height;
+    var extent = dataunit.getExtent(arr);
+    
+    var width = imageWidth;
+    // var height = 400;
+    var height = imageHeight;
+    
+    // Create an SVG element with a foreign object. The foreignObject will host
+    // the RawImage instance.
+    
+    // Get the DOM element
+    var el = document.querySelector('#' + opts.el);
+    
+    // Initialize a WebFITS context with a viewer of size width
+    var raw = new RawImage(el, width, height);
+    
+    // Initialize WCS object
+    var w = new wcs();
+    var wcsObj = {};
+    for (var key in header.cards) { wcsObj[key] = header.get(key); }
+    w.init(wcsObj);
+    
+    // Add pan and zoom controls
+    opts = {arr: arr, width: width, w: w};
+    callbacks = {onmousemove: onmousemove};
+    
+    raw.setupControls(callbacks, opts);
+    
+    // Load array representation of image
+    raw.loadImage('some-identifier', arr, imageWidth, imageHeight);
+    
+    // Set the intensity range and stretch
+    raw.setExtent(extent[0], extent[1]);
+    raw.setTransfer('linear');
+    
+    testD3(el, width, height, imageWidth, imageWidth, w);
+    
+    window.raw = raw;
+    window.w = w;
+  }
+  
+  function testD3(el, width, height, imageWidth, imageHeight, w) {
+    var nParallelsX = nParallelsY = 10;
+    
+    var data = [
+      {x: 10, y: 10},
+      {x: 20, y: 20},
+      {x: 30, y: 30},
+      {x: 40, y: 40},
+      {x: 50, y: 50}
+    ];
+    
+    var xRange = d3.scale.identity()
+                  .domain([0, width]);
+    var yRange = d3.scale.identity()
+                  .domain([height, 0]);
+    
+    var x = d3.scale.ordinal()
+        .range( xRange.ticks(nParallelsX) );
+    var y = d3.scale.ordinal()
+        .range( yRange.ticks(nParallelsY) );
+    
+    var xAxis = d3.svg.axis()
+        .orient("bottom")
+        .ticks(nParallelsX);
+            
+    var yAxis = d3.svg.axis()
+        .orient("left")
+        .ticks(nParallelsY);
+    
+    var margin = {top: 0, left: 0, bottom: 0, right: 0};
+    var svg = d3.select(el).append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    
+    svg.append("clipPath")
+        .attr("id", "clip")
+      .append("rect")
+        .attr("width", width)
+        .attr("height", height);
+    
+    var gridGroup = svg.append("g")
+      .attr("clip-path", "url(#clip)")
+      .attr("transform", "translate(0, 0)");
+    
+    var xTicks = x.range().map(function(d) {
+      d = d + 1; // Convert to FITS reference frame
+      return w.pix2sky(d, 1)[1].toFixed(6);
+    });
+    x.domain(xTicks);
+    
+    var yTicks = y.range().map(function(d) {
+      d = height - d; // Convert to FITS reference frame
+      return w.pix2sky(1, d)[0].toFixed(3);
+    });
+    console.log(y.range());
+    console.log(yTicks);
+    y.domain(yTicks);
+    
+    xAxis.scale(x);
+    yAxis.scale(y);
+    
+    var lineFn = d3.svg.line()
+        //  Convert back to SVG reference frame
+        .x(function(d) { return d.x - 1; })
+        .y(function(d) { return d.y; })
+        .interpolate("linear");
+    
+    x.range( xRange.ticks(20) );
+    var range = x.range();
+    var spread = range[1] - range[0];
+    range.push(range[range.length - 1] + spread);
+    range.push(range[range.length - 1] + spread);
+    xTicks = range.map(function(d) {
+      d = d + 1; // Convert to FITS reference frame
+      return w.pix2sky(d, 1)[1];
+    });
+    
+    y.range( yRange.ticks(nParallelsY) );
+    range = y.range();
+    spread = range[1] - range[0];
+    range.push(range[range.length - 1] + spread);
+    range.push(range[range.length - 1] + spread);
+    yTicks = range.map(function(d) {
+      d = height - 1; // Convert to FITS reference frame
+      return w.pix2sky(1, d)[0];
+    });
+    
+    svg.selectAll("path").remove()
+    for (var j = 0; j < yTicks.length; j++) {
+      var gridLine = [];
+      
+      for (var i = 0; i < xTicks.length; i++) {
+        var imgcrd = w.sky2pix(yTicks[j], xTicks[i]);
+        var point = {
+          x: 2.0 * imgcrd[0],
+          y: 2.0 * imgcrd[1]
+        };
+        gridLine.push(point);
+      }
+      
+      gridGroup.append("path")
+        .attr("d", lineFn(gridLine))
+        .attr("stroke", "#7FFF00")
+        .attr("stroke-width", 0.75)
+        .attr("fill", "none");
+    }
+    
+    x.range( xRange.ticks(nParallelsX) );
+    range = x.range();
+    spread = range[1] - range[0];
+    range.push(range[range.length - 1] + spread);
+    range.push(range[range.length - 1] + spread);
+    xTicks = range.map(function(d) {
+      d = d + 1; // Convert to FITS reference frame
+      return w.pix2sky(d, 1)[1];
+    });
+    
+    y.range( yRange.ticks(20) );
+    range = y.range();
+    spread = range[1] - range[0];
+    range.push(range[range.length - 1] + spread);
+    range.push(range[range.length - 1] + spread);
+    yTicks = range.map(function(d) {
+      d = height - d; // Convert to FITS reference frame
+      return w.pix2sky(1, d)[0];
+    });
+    
+    for (var i = 0; i < xTicks.length; i++) {
+      var gridLine = [];
+      for (var j = 0; j < yTicks.length; j++) {
+        var imgcrd = w.sky2pix(yTicks[j], xTicks[i]);
+        var point = {
+          x: 2.0 * imgcrd[0],
+          y: 2.0 * imgcrd[1]
+        };
+        gridLine.push(point);
+      }
+      gridGroup.append("path")
+        .attr("d", lineFn(gridLine))
+        .attr("stroke", "#7FFF00")
+        .attr("stroke-width", 0.75)
+        .attr("fill", "none");
+    }
+    
+    x.range( xRange.ticks(nParallelsX) );
+    y.range( yRange.ticks(nParallelsY) );
+  }
+  
+  function main() {
+    
+    // Define the path and options
+    var path = '/examples/data/m101.fits';
+    var opts = {el: 'wicked-science-visualization'};
+    
+    // Initialize a FITS file, passing getImage function as a callback
+    var f = new astro.FITS(path, getImage, opts);
+  }
+  </script>
+  
+  
+</head>
+
+<body onload='main()'>
+  <div class='content'>
+    <h3>Single RawImage Instance (WebGL) with Mouse Callback</h3>
+    <h6>(open the javascript console)</h6>
+    
+    <div id="wicked-science-visualization"></div>
+  </div>
+</body>
+</html>

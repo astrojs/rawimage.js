@@ -37,14 +37,18 @@ function RawImage(el, width, height) {
   parentStyle.height = "" + this.canvas.height + "px";
   parentStyle.overflow = 'hidden';
   // parentStyle.backgroundColor = '#FF0000';
-  parentStyle.backgroundColor = '#252525';
+  // parentStyle.backgroundColor = '#252525';
   parentStyle.position = 'relative';
   
   canvasStyle = this.canvas.style;
   canvasStyle.position = 'absolute';
+  canvasStyle.top = 0;
+  canvasStyle.left = 0;
   
   overlayStyle = this.overlay.style;
   overlayStyle.position = 'absolute';
+  overlayStyle.top = 0;
+  overlayStyle.left = 0;
   overlayStyle.pointerEvents = 'none';
   
   // Set parameters for mouse events

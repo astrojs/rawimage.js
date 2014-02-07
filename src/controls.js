@@ -72,25 +72,11 @@ RawImage.prototype.setupControls = function(callbacks, opts) {
     var canvasX = e.layerX;
     var canvasY = e.layerY;
     
-    // The image width is initially fit into the canvas width
-    var imageX = canvasX * (target.imageWidth / this.width);
-    var imageY = canvasY * (target.imageWidth / this.width);
+    var imageCoordinates = target.getImageCoordinate(canvasX, canvasY);
+    var x = imageCoordinates[0];
+    var y = imageCoordinates[1];
     
-    // Get the translation offset
-    // Translation offsets are in clipspace units [0, 2]
-    // These need to be converted to pixel units (e.g. [0, 2] -> [0, width])
-    var translateX = (this.width / 2) * target.xOffset;
-    var translateY = (this.height / 2) * target.yOffset;
-    
-    // Get offset associated with zoom
-    var zoomOffsetX = 0.5 * (target.imageWidth - target.imageWidth / target.zoom);
-    var zoomOffsetY = 0.5 * (this.height * (target.imageWidth / this.width) - (this.height / target.zoom) * (target.imageWidth / this.width));
-    zoomOffsetY = target.imageHeight - this.height * (target.imageWidth / this.width) / target.zoom - zoomOffsetY;
-    
-    var x = imageX / target.zoom - translateX + zoomOffsetX;
-    var y = imageY / target.zoom + translateY + zoomOffsetY;
-    
-    callbacks.onmousemove.call(target, x, y, opts, e);
+    callbacks.onmousemove.call(target, e, x, y, opts);
   };
   this.canvas.onmouseout = function(e) {
     target.drag = false;
@@ -118,6 +104,30 @@ RawImage.prototype.setupControls = function(callbacks, opts) {
   this.canvas.addEventListener('mousewheel', onzoom, false);
   this.canvas.addEventListener('wheel', onzoom, false);
 };
+
+// Get the image pixel coordinates from the canvas pixel coordinates
+RawImage.prototype.getImageCoordinate = function(canvasX, canvasY) {
+  
+  // The image width is initially fit into the canvas width
+  var imageX = canvasX * (this.imageWidth / this.width);
+  var imageY = canvasY * (this.imageWidth / this.width);
+  
+  // Get the translation offset
+  // Translation offsets are in clipspace units [0, 2]
+  // These need to be converted to pixel units (e.g. [0, 2] -> [0, width])
+  var translateX = (this.width / 2) * this.xOffset;
+  var translateY = (this.height / 2) * this.yOffset;
+  
+  // Get offset associated with zoom
+  var zoomOffsetX = 0.5 * (this.imageWidth - this.imageWidth / this.zoom);
+  var zoomOffsetY = 0.5 * (this.height * (this.imageWidth / this.width) - (this.height / this.zoom) * (this.imageWidth / this.width));
+  zoomOffsetY = this.imageHeight - this.height * (this.imageWidth / this.width) / this.zoom - zoomOffsetY;
+  
+  var x = imageX / this.zoom - translateX + zoomOffsetX;
+  var y = imageY / this.zoom + translateY + zoomOffsetY;
+  
+  return [x, y];
+}
 
 // Toggle a cursor over the image.
 // TODO: This check might be avoidable by redefining a cursor function
