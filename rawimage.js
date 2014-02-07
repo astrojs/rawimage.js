@@ -715,7 +715,10 @@ rawimage = (function(){
     
     // TODO: Remove need to cast to Float32 array. Check if WebGL supports other data types now.
     //       This might be due to the use of the floating point extension. Need to look at this in depth.
-    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, new Float32Array(arr));
+    if (arr.constructor !== Float32Array) {
+      arr = new Float32Array(arr);
+    }
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, arr);
     
     // Current image defaults to the first texture uploaded.
     this.currentImage = this.currentImage || id;
@@ -868,6 +871,6 @@ rawimage = (function(){
     
     this.draw();
   };
-  rawimage.version = "0.5.1";
+  rawimage.version = "0.5.2";
   return rawimage;
 })();
