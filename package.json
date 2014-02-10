@@ -1,6 +1,6 @@
 {
   "name": "rawimage.js",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "A lightweight WebGL library for displaying complex imagery.",
   "keywords": [
     "webgl",

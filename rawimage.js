@@ -696,7 +696,10 @@ rawimage = (function(){
     if (this.lookup.hasOwnProperty(id)) {
       index = this.lookup[id];
       this.gl.activeTexture(this.gl.TEXTURE0 + index);
-      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, new Float32Array(arr));
+      if (arr.constructor !== Float32Array) {
+        arr = new Float32Array(arr);
+      }
+      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.LUMINANCE, width, height, 0, this.gl.LUMINANCE, this.gl.FLOAT, arr);
       return;
     }
     
@@ -871,6 +874,6 @@ rawimage = (function(){
     
     this.draw();
   };
-  rawimage.version = "0.5.2";
+  rawimage.version = "0.5.3";
   return rawimage;
 })();
