@@ -199,15 +199,17 @@ RawImage = (function(){
     sqrt: [
       "precision mediump float;",
       
-      "uniform sampler2D uTexture0;",
+      "uniform sampler2D uTexture00;",
       "uniform sampler2D uColorMap;",
       "uniform float uColorIndex;",
       "uniform vec2 uExtent;",
+      "uniform float uXTiles;",
+      "uniform float uYTiles;",
       
       "varying vec2 vTextureCoordinate;",
       
       "void main() {",
-        "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
+        "vec4 pixel_v = getPixelFromTile(vTextureCoordinate);",
         
         // Shift value by min to avoid negative numbers
         "float min = uExtent[0];",
@@ -217,15 +219,17 @@ RawImage = (function(){
         
         "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
       "}"
-    ].join(""),
+    ],
     
     arcsinh: [
       "precision mediump float;",
       
-      "uniform sampler2D uTexture0;",
+      "uniform sampler2D uTexture00;",
       "uniform sampler2D uColorMap;",
       "uniform float uColorIndex;",
       "uniform vec2 uExtent;",
+      "uniform float uXTiles;",
+      "uniform float uYTiles;",
       
       "varying vec2 vTextureCoordinate;",
       
@@ -234,7 +238,7 @@ RawImage = (function(){
       "}",
       
       "void main() {",
-        "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
+        "vec4 pixel_v = getPixelFromTile(vTextureCoordinate);",
         
         "float min = 0.0;",
         "float max = arcsinh( uExtent[1] - uExtent[0] );",
@@ -243,20 +247,22 @@ RawImage = (function(){
         
         "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
       "}"
-    ].join(""),
+    ],
     
     power: [
       "precision mediump float;",
       
-      "uniform sampler2D uTexture0;",
+      "uniform sampler2D uTexture00;",
       "uniform sampler2D uColorMap;",
       "uniform float uColorIndex;",
       "uniform vec2 uExtent;",
+      "uniform float uXTiles;",
+      "uniform float uYTiles;",
       
       "varying vec2 vTextureCoordinate;",
       
       "void main() {",
-        "vec4 pixel_v = texture2D(uTexture0, vTextureCoordinate);",
+        "vec4 pixel_v = getPixelFromTile(vTextureCoordinate);",
         
         // Shift value by min to avoid negative numbers
         "float min = uExtent[0];",
@@ -267,7 +273,7 @@ RawImage = (function(){
         
         "gl_FragColor = texture2D( uColorMap, vec2(x, uColorIndex / 70.0) );",
       "}"
-    ].join(""),
+    ],
     
     color: [
       "precision mediump float;",
@@ -294,6 +300,7 @@ RawImage = (function(){
       "}",
       
       "void main() {",
+      
         // Get the pixel intensities from textures
         "vec4 pixel_v_r = texture2D(uTexture0, vTextureCoordinate);",
         "vec4 pixel_v_g = texture2D(uTexture1, vTextureCoordinate);",
@@ -556,6 +563,20 @@ RawImage = (function(){
     return [x, y];
   }
   
+  // Get the canvas pixel coordinates from the image pixel coordinates
+  RawImage.prototype.getCanvasCoordinate = function(x, y) {
+    var translateX = (this.width / 2) * this.xOffset;
+    var zoomOffsetX = 0.5 * (this.imageWidth - this.imageWidth / this.zoom);
+    var canvasX = this.zoom * (x + translateX - zoomOffsetX) * (this.width / this.imageWidth);
+    
+    var translateY = (this.height / 2) * this.yOffset;
+    var zoomOffsetY = 0.5 * (this.height * (this.imageWidth / this.width) - (this.height / this.zoom) * (this.imageWidth / this.width));
+    zoomOffsetY = this.imageHeight - this.height * (this.imageWidth / this.width) / this.zoom - zoomOffsetY;
+    var canvasY = this.zoom * (y - translateY - zoomOffsetY) * (this.width / this.imageWidth);
+    
+    return [canvasX, canvasY];
+  }
+  
   // Toggle a cursor over the image.
   // TODO: This check might be avoidable by redefining a cursor function
   RawImage.prototype.setCursor = function() {
@@ -578,7 +599,7 @@ RawImage = (function(){
     
     this.overlayCtx.stroke();
   };
-  RawImage.prototype.fragmentShaders = ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color'];
+  RawImage.prototype.fragmentShaders = ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power'];
   
   // Get necessary WebGL extensions (e.g. floating point textures).
   RawImage.prototype.getExtension = function() {
@@ -664,8 +685,8 @@ RawImage = (function(){
     
     // Every transfer function needs it's own program
     // TODO: Test performance of using conditional check of transfer function on one program
-    // TODO: Retrofit the other fragment shaders for tiling.
-    ["linear", "logarithm"].forEach(function(transfer) {
+    this.fragmentShaders.forEach(function(transfer) {
+    // ["linear", "logarithm"].forEach(function(transfer) {
       
       var fragmentShaderStr = this.createTiledFragmentShader(transfer, xTiles, yTiles);
       var fragmentShader = this.loadShader(fragmentShaderStr, this.gl.FRAGMENT_SHADER);
@@ -756,6 +777,7 @@ RawImage = (function(){
   
   // Generates a fragment shader based on the number of tiles needed to display an image.
   RawImage.prototype.createTiledFragmentShader = function(transfer, xTiles, yTiles) {
+    console.log('createTiledFragmentShader', transfer);
     var conditionals = { 0: "if" };
     
     var fn = RawImage.shaders.getPixelFromTile.slice(0);

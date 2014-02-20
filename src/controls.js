@@ -129,6 +129,20 @@ RawImage.prototype.getImageCoordinate = function(canvasX, canvasY) {
   return [x, y];
 }
 
+// Get the canvas pixel coordinates from the image pixel coordinates
+RawImage.prototype.getCanvasCoordinate = function(x, y) {
+  var translateX = (this.width / 2) * this.xOffset;
+  var zoomOffsetX = 0.5 * (this.imageWidth - this.imageWidth / this.zoom);
+  var canvasX = this.zoom * (x + translateX - zoomOffsetX) * (this.width / this.imageWidth);
+  
+  var translateY = (this.height / 2) * this.yOffset;
+  var zoomOffsetY = 0.5 * (this.height * (this.imageWidth / this.width) - (this.height / this.zoom) * (this.imageWidth / this.width));
+  zoomOffsetY = this.imageHeight - this.height * (this.imageWidth / this.width) / this.zoom - zoomOffsetY;
+  var canvasY = this.zoom * (y - translateY - zoomOffsetY) * (this.width / this.imageWidth);
+  
+  return [canvasX, canvasY];
+}
+
 // Toggle a cursor over the image.
 // TODO: This check might be avoidable by redefining a cursor function
 RawImage.prototype.setCursor = function() {

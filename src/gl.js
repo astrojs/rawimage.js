@@ -1,4 +1,4 @@
-RawImage.prototype.fragmentShaders = ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power', 'color'];
+RawImage.prototype.fragmentShaders = ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power'];
 
 // Get necessary WebGL extensions (e.g. floating point textures).
 RawImage.prototype.getExtension = function() {
@@ -84,8 +84,8 @@ RawImage.prototype.initGL = function(width, height, callback) {
   
   // Every transfer function needs it's own program
   // TODO: Test performance of using conditional check of transfer function on one program
-  // TODO: Retrofit the other fragment shaders for tiling.
-  ["linear", "logarithm"].forEach(function(transfer) {
+  this.fragmentShaders.forEach(function(transfer) {
+  // ["linear", "logarithm"].forEach(function(transfer) {
     
     var fragmentShaderStr = this.createTiledFragmentShader(transfer, xTiles, yTiles);
     var fragmentShader = this.loadShader(fragmentShaderStr, this.gl.FRAGMENT_SHADER);
@@ -176,6 +176,7 @@ RawImage.prototype.initGL = function(width, height, callback) {
 
 // Generates a fragment shader based on the number of tiles needed to display an image.
 RawImage.prototype.createTiledFragmentShader = function(transfer, xTiles, yTiles) {
+  console.log('createTiledFragmentShader', transfer);
   var conditionals = { 0: "if" };
   
   var fn = RawImage.shaders.getPixelFromTile.slice(0);

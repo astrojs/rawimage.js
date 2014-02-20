@@ -42,8 +42,8 @@
   function onmousemove(e, x, y, opts) {
     var arr = opts.arr;
     var width = opts.width;
-    console.log(x, y, arr[x + width * y]);
-    console.log(opts.w.pix2sky(x, y));
+    // console.log(x, y, arr[x + width * y]);
+    // console.log(opts.w.pix2sky(x, y));
   }
   
   // Define callback for when pixels have been read from file
@@ -57,8 +57,7 @@
     var extent = dataunit.getExtent(arr);
     
     var width = imageWidth;
-    // var height = 400;
-    var height = imageHeight;
+    var height = 400; 
     
     // Create an SVG element with a foreign object. The foreignObject will host
     // the RawImage instance.
@@ -79,7 +78,7 @@
     opts = {arr: arr, width: width, w: w};
     callbacks = {onmousemove: onmousemove};
     
-    raw.setupControls(callbacks, opts);
+    // raw.setupControls(callbacks, opts);
     
     // Load array representation of image
     raw.loadImage('some-identifier', arr, imageWidth, imageHeight);
@@ -88,33 +87,34 @@
     raw.setExtent(extent[0], extent[1]);
     raw.setTransfer('linear');
     
-    testD3(el, width, height, imageWidth, imageWidth, w);
+    graticule(el, width, height, imageWidth, imageWidth, raw, w);
     
     window.raw = raw;
     window.w = w;
   }
   
-  function testD3(el, width, height, imageWidth, imageHeight, w) {
-    var nParallelsX = nParallelsY = 10;
+  function graticule(el, width, height, imageWidth, imageHeight, raw, w) {
     
-    var data = [
-      {x: 10, y: 10},
-      {x: 20, y: 20},
-      {x: 30, y: 30},
-      {x: 40, y: 40},
-      {x: 50, y: 50}
-    ];
+    // Set the number of parallels for each axis
+    var nParallelsX = nParallelsY = 5;
     
+    // Create identity scales to easily subdivide the canvas domain
+    // TODO: This is analogous to np.linspace. There might be a more intuitive
+    //       way to generate subdivisions.
     var xRange = d3.scale.identity()
                   .domain([0, width]);
     var yRange = d3.scale.identity()
                   .domain([height, 0]);
     
+    // Create ordinal scales that will map the canvas frame to
+    // the sky frame.
     var x = d3.scale.ordinal()
         .range( xRange.ticks(nParallelsX) );
     var y = d3.scale.ordinal()
         .range( yRange.ticks(nParallelsY) );
     
+    // Create axes for presentation
+    // TODO: Incorporate into visualization later. Will need to do some careful margin calculations.
     var xAxis = d3.svg.axis()
         .orient("bottom")
         .ticks(nParallelsX);
@@ -141,45 +141,78 @@
       .attr("transform", "translate(0, 0)");
     
     var xTicks = x.range().map(function(d) {
-      d = d + 1; // Convert to FITS reference frame
+      
+      // X range subdivides the canvas pixels.
+      // Convert to image pixels
+      d = raw.getImageCoordinate(d, 0)[0];
+      
+      // Convert to FITS reference frame
+      d = d + 1;
       return w.pix2sky(d, 1)[1].toFixed(6);
     });
     x.domain(xTicks);
     
     var yTicks = y.range().map(function(d) {
+      // Convert to image pixels
+      d = raw.getImageCoordinate(0, d)[1];
+      
       d = height - d; // Convert to FITS reference frame
-      return w.pix2sky(1, d)[0].toFixed(3);
+      return w.pix2sky(1, d)[0].toFixed(6);
     });
-    console.log(y.range());
-    console.log(yTicks);
     y.domain(yTicks);
     
+    // TODO: Finishing setting up axis DOM elements
     xAxis.scale(x);
     yAxis.scale(y);
     
+    // Define a line function used to map ...
     var lineFn = d3.svg.line()
         //  Convert back to SVG reference frame
-        .x(function(d) { return d.x - 1; })
-        .y(function(d) { return d.y; })
+        .x(function(d) {
+          
+          // Convert from FITS to image frame
+          var x = d.x - 1;
+          
+          // Convert to SVG/Canvas frame
+          return raw.getCanvasCoordinate(x, 0)[0];
+        })
+        .y(function(d) {
+          
+          // Convert from FITS to image frame
+          var y = height - d.y;
+          
+          // Convert from SVG/Canvas frame
+          return raw.getCanvasCoordinate(0, y)[1];
+        })
         .interpolate("linear");
     
+    // Get granular tick marks for sky coordinates
     x.range( xRange.ticks(20) );
     var range = x.range();
     var spread = range[1] - range[0];
-    range.push(range[range.length - 1] + spread);
-    range.push(range[range.length - 1] + spread);
+    // range.push(range[range.length - 1] + spread);
+    // range.push(range[range.length - 1] + spread);
     xTicks = range.map(function(d) {
-      d = d + 1; // Convert to FITS reference frame
+      
+      // Convert to image pixels
+      d = raw.getImageCoordinate(d, 0)[0];
+      
+      // Convert to FITS reference frame
+      d = d + 1;
       return w.pix2sky(d, 1)[1];
     });
     
     y.range( yRange.ticks(nParallelsY) );
     range = y.range();
     spread = range[1] - range[0];
-    range.push(range[range.length - 1] + spread);
-    range.push(range[range.length - 1] + spread);
+    // range.push(range[range.length - 1] + spread);
+    // range.push(range[range.length - 1] + spread);
     yTicks = range.map(function(d) {
-      d = height - 1; // Convert to FITS reference frame
+      
+      // Convert to image pixels
+      d = raw.getImageCoordinate(0, d)[1];
+      
+      d = height - d; // Convert to FITS reference frame
       return w.pix2sky(1, d)[0];
     });
     
@@ -190,8 +223,8 @@
       for (var i = 0; i < xTicks.length; i++) {
         var imgcrd = w.sky2pix(yTicks[j], xTicks[i]);
         var point = {
-          x: 2.0 * imgcrd[0],
-          y: 2.0 * imgcrd[1]
+          x: imgcrd[0],
+          y: imgcrd[1]
         };
         gridLine.push(point);
       }
@@ -206,20 +239,30 @@
     x.range( xRange.ticks(nParallelsX) );
     range = x.range();
     spread = range[1] - range[0];
-    range.push(range[range.length - 1] + spread);
-    range.push(range[range.length - 1] + spread);
+    // range.push(range[range.length - 1] + spread);
+    // range.push(range[range.length - 1] + spread);
     xTicks = range.map(function(d) {
-      d = d + 1; // Convert to FITS reference frame
+      
+      // Convert to image pixels
+      d = raw.getImageCoordinate(d, 0)[0];
+      
+      // Convert to FITS reference frame
+      d = d + 1;
       return w.pix2sky(d, 1)[1];
     });
     
     y.range( yRange.ticks(20) );
     range = y.range();
     spread = range[1] - range[0];
-    range.push(range[range.length - 1] + spread);
-    range.push(range[range.length - 1] + spread);
+    // range.push(range[range.length - 1] + spread);
+    // range.push(range[range.length - 1] + spread);
     yTicks = range.map(function(d) {
-      d = height - d; // Convert to FITS reference frame
+      
+      // Convert to image pixels
+      d = raw.getImageCoordinate(0, d)[1];
+      
+      // Convert to FITS reference frame
+      d = height - d;
       return w.pix2sky(1, d)[0];
     });
     
@@ -228,8 +271,8 @@
       for (var j = 0; j < yTicks.length; j++) {
         var imgcrd = w.sky2pix(yTicks[j], xTicks[i]);
         var point = {
-          x: 2.0 * imgcrd[0],
-          y: 2.0 * imgcrd[1]
+          x: imgcrd[0],
+          y: imgcrd[1]
         };
         gridLine.push(point);
       }
