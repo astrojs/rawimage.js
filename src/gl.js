@@ -184,7 +184,6 @@ RawImage.prototype.initGL = function(width, height) {
 
 // Generates a fragment shader based on the number of tiles needed to display an image.
 RawImage.prototype.createTiledFragmentShader = function(transfer, xTiles, yTiles) {
-  console.log('createTiledFragmentShader', transfer);
   var conditionals = { 0: "if" };
   
   var fn = RawImage.shaders.getPixelFromTile.slice(0);

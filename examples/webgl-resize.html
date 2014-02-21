@@ -31,6 +31,13 @@
     
   }
   
+  // Callback to capture coordinates in image reference frame
+  function onmousemove(e, x, y, opts) {
+    var arr = opts.arr;
+    var width = opts.width;
+    console.log(x, y, arr[x + width * y]);
+  }
+  
   // Define callback for when pixels have been read from file
   function createVisualization(arr, opts) {
     
@@ -54,7 +61,9 @@
     var raw = new RawImage(el, widthEl, heightEl);
     
     // Enable pan and zoom controls
-    raw.setupControls();
+    opts = {arr: arr, width: width};
+    callbacks = {onmousemove: onmousemove}
+    raw.setupControls(callbacks, opts);
     
     // Load array representation of image
     raw.loadImage('m101', arr, width, height);

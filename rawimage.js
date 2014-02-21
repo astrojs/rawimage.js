@@ -786,7 +786,6 @@ RawImage = (function(){
   
   // Generates a fragment shader based on the number of tiles needed to display an image.
   RawImage.prototype.createTiledFragmentShader = function(transfer, xTiles, yTiles) {
-    console.log('createTiledFragmentShader', transfer);
     var conditionals = { 0: "if" };
     
     var fn = RawImage.shaders.getPixelFromTile.slice(0);
@@ -1065,6 +1064,6 @@ RawImage = (function(){
   //   
   //   this.draw();
   // };
-  RawImage.version = "0.5.1-tile";
+  RawImage.version = "0.5.2-tile";
   return RawImage;
 })();

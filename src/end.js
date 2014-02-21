@@ -1,3 +1,3 @@
-  RawImage.version = "0.5.1-tile";
+  RawImage.version = "0.5.2-tile";
   return RawImage;
 })();
