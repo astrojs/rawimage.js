@@ -29,7 +29,9 @@ RawImage = (function(){
     this.hasFragmentShader = false;
     this.textureAddress = 1;
     this.textureLookupFnAddress = 8;
-    this.uniformKeys = ['uOffset', 'uScale', 'uExtent', 'uColorIndex', 'uColorMap', 'uXTiles', 'uYTiles'];
+    this.uniformKeys = [
+      'uOffset', 'uScale', 'uExtent', 'uColorIndex', 'uColorMap', 'uXTiles', 'uYTiles'
+    ];
     
     // Position the canvases
     parentStyle = this.canvas.parentElement.style;
@@ -64,7 +66,8 @@ RawImage = (function(){
     this.crosshair = false;
   };
   
-  // Define or reset storage for various GL elements
+  // Define or reset storage for various GL elements. By default each RawImage context has the color map texture
+  // at the GL 0th texture address.
   RawImage.prototype.reset = function() {
     this.programs = {};
     this.uniforms = {};
@@ -73,12 +76,10 @@ RawImage = (function(){
     this.buffers = {};
     this.shaders = [];
     
-    // Always starting with the colormap texture
-    this.nTextures = 1;
-    
     // Texture lookup table for referencing user specified identifiers with a GL texture index
     this.textureLookup = {};
     this.textureKeys = ['uColorMap'];
+    this.nTextures = 1;
   };
   
   // Release all objects on the GPU
@@ -599,7 +600,13 @@ RawImage = (function(){
     
     this.overlayCtx.stroke();
   };
-  RawImage.prototype.fragmentShaders = ['linear', 'logarithm', 'sqrt', 'arcsinh', 'power'];
+  
+  // Keep a list of fragment shaders.
+  // NOTE: This might be removed if we consolidate all transfer functions to a single
+  // GL program. Need to test the performance of adding additional conditional statements.
+  RawImage.prototype.fragmentShaders = [
+    'linear', 'logarithm', 'sqrt', 'arcsinh', 'power'
+  ];
   
   // Get necessary WebGL extensions (e.g. floating point textures).
   RawImage.prototype.getExtension = function() {
@@ -671,9 +678,10 @@ RawImage = (function(){
     return true;
   }
   
-  // The remainder of GL setup code depends on knowing the number of tiles needed
-  // to display an image.
-  RawImage.prototype.initGL = function(width, height, callback) {
+  // The remainder of GL setup code depends on the dimensions of the image. The number
+  // of tiles is needed to create the GL program since a texture look up function is dynamically
+  // created.
+  RawImage.prototype.initGL = function(width, height) {
     
     // Determine the number of tiles from the image dimensions
     var xTiles = this.xTiles = Math.ceil(width / this.maximumTextureSize);
@@ -683,10 +691,9 @@ RawImage = (function(){
     vertexShader = this.loadShader(RawImage.shaders.vertex, this.gl.VERTEX_SHADER);
     if (!vertexShader) return false;
     
-    // Every transfer function needs it's own program
-    // TODO: Test performance of using conditional check of transfer function on one program
+    // Initialize a GL program for each transfer function. Store all uniforms, attributes and buffers.
+    // Default to using the linear transfer function.
     this.fragmentShaders.forEach(function(transfer) {
-    // ["linear", "logarithm"].forEach(function(transfer) {
       
       var fragmentShaderStr = this.createTiledFragmentShader(transfer, xTiles, yTiles);
       var fragmentShader = this.loadShader(fragmentShaderStr, this.gl.FRAGMENT_SHADER);
@@ -724,12 +731,14 @@ RawImage = (function(){
     // Create position and texture buffers
     var positionBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
-    this.gl.enableVertexAttribArray(this.attributes[this.transfer]['aPosition']);
-    this.gl.vertexAttribPointer(this.attributes[this.transfer]['aPosition'], 2, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(
+      this.attributes[this.transfer]['aPosition']
+    );
+    this.gl.vertexAttribPointer(
+      this.attributes[this.transfer]['aPosition'],
+      2, this.gl.FLOAT, false, 0, 0
+    );
     this.buffers['position'] = positionBuffer;
-    
-    // Load the color map first using a clean buffer. Using a callback here to ensure instructions
-    // sent to GPU synchronously.
     this.loadColorMap();
     
     // The position buffer is derived from canvas dimensions. Clipspace coordinates
@@ -824,7 +833,7 @@ RawImage = (function(){
   };
   
   // TODO: Only supporting a single texture right now!
-  RawImage.prototype.loadImage = function(id, arr, width, height, callback) {
+  RawImage.prototype.loadImage = function(id, arr, width, height) {
     var index, texture;
     
     this.imageWidth = width;
@@ -954,6 +963,50 @@ RawImage = (function(){
     // Switch back to current program
     this.gl.useProgram(this.program);
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+  };
+  
+  RawImage.prototype.resize = function(width, height) {
+    this.width = width;
+    this.height = height;
+    
+    this.el.style.width = "" + width + 'px';
+    this.el.style.height = "" + height + 'px';
+    
+    this.canvas.setAttribute('width', width);
+    this.canvas.setAttribute('height', height);
+    
+    this.overlay.setAttribute('width', width);
+    this.overlay.setAttribute('height', height);
+    
+    // Update the position buffer
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers['position']);
+    
+    this.gl.viewport(0, 0, width, height);
+    
+    // NOTE: This is repeated code from gl.js
+    var x1 = y1 = 0.0;
+    var x2 = 1.0, y2 = this.canvas.width / this.canvas.height;
+    
+    // Transform to a [0, 2] domain
+    x2 *= 2.0;
+    y2 *= 2.0;
+    
+    // Transform to clipspace coordinates
+    x1 -= 1.0;
+    y1 -= 1.0;
+    x2 -= 1.0;
+    y2 -= 1.0;
+    
+    this.gl.bufferData(
+      this.gl.ARRAY_BUFFER,
+      new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+      this.gl.STATIC_DRAW
+    );
+    
+    // Return to the texture buffer
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers['texture']);
+    
+    this.draw();
   };
   RawImage.prototype.setTransfer = function(transfer) {
     this.transfer = transfer;

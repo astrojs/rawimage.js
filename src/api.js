@@ -1,6 +1,6 @@
 
 // TODO: Only supporting a single texture right now!
-RawImage.prototype.loadImage = function(id, arr, width, height, callback) {
+RawImage.prototype.loadImage = function(id, arr, width, height) {
   var index, texture;
   
   this.imageWidth = width;
@@ -130,4 +130,48 @@ RawImage.prototype.setExtent = function(min, max) {
   // Switch back to current program
   this.gl.useProgram(this.program);
   this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+};
+
+RawImage.prototype.resize = function(width, height) {
+  this.width = width;
+  this.height = height;
+  
+  this.el.style.width = "" + width + 'px';
+  this.el.style.height = "" + height + 'px';
+  
+  this.canvas.setAttribute('width', width);
+  this.canvas.setAttribute('height', height);
+  
+  this.overlay.setAttribute('width', width);
+  this.overlay.setAttribute('height', height);
+  
+  // Update the position buffer
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers['position']);
+  
+  this.gl.viewport(0, 0, width, height);
+  
+  // NOTE: This is repeated code from gl.js
+  var x1 = y1 = 0.0;
+  var x2 = 1.0, y2 = this.canvas.width / this.canvas.height;
+  
+  // Transform to a [0, 2] domain
+  x2 *= 2.0;
+  y2 *= 2.0;
+  
+  // Transform to clipspace coordinates
+  x1 -= 1.0;
+  y1 -= 1.0;
+  x2 -= 1.0;
+  y2 -= 1.0;
+  
+  this.gl.bufferData(
+    this.gl.ARRAY_BUFFER,
+    new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+    this.gl.STATIC_DRAW
+  );
+  
+  // Return to the texture buffer
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers['texture']);
+  
+  this.draw();
 };

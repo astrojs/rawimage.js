@@ -29,7 +29,9 @@ function RawImage(el, width, height) {
   this.hasFragmentShader = false;
   this.textureAddress = 1;
   this.textureLookupFnAddress = 8;
-  this.uniformKeys = ['uOffset', 'uScale', 'uExtent', 'uColorIndex', 'uColorMap', 'uXTiles', 'uYTiles'];
+  this.uniformKeys = [
+    'uOffset', 'uScale', 'uExtent', 'uColorIndex', 'uColorMap', 'uXTiles', 'uYTiles'
+  ];
   
   // Position the canvases
   parentStyle = this.canvas.parentElement.style;
@@ -64,7 +66,8 @@ function RawImage(el, width, height) {
   this.crosshair = false;
 };
 
-// Define or reset storage for various GL elements
+// Define or reset storage for various GL elements. By default each RawImage context has the color map texture
+// at the GL 0th texture address.
 RawImage.prototype.reset = function() {
   this.programs = {};
   this.uniforms = {};
@@ -73,12 +76,10 @@ RawImage.prototype.reset = function() {
   this.buffers = {};
   this.shaders = [];
   
-  // Always starting with the colormap texture
-  this.nTextures = 1;
-  
   // Texture lookup table for referencing user specified identifiers with a GL texture index
   this.textureLookup = {};
   this.textureKeys = ['uColorMap'];
+  this.nTextures = 1;
 };
 
 // Release all objects on the GPU
