@@ -105,26 +105,36 @@ RawImage.prototype.setupControls = function(callbacks, opts) {
   this.canvas.addEventListener('wheel', onzoom, false);
 };
 
-// Get the image pixel coordinates from the canvas pixel coordinates
-RawImage.prototype.getImageCoordinate = function(canvasX, canvasY) {
+// Map the canvas pixel coordinates to image pixel coordinates. This requires multiple transformations.
+// 
+// 1. Transform canvas coordinates to clipspace coordinates
+// 2. Transform clipspace coordinates to texture coordinates
+// 3. Transform texture coordinates to image coordinates
+
+RawImage.prototype.getImageCoordinate = function(xCanvas, yCanvas) {
   
-  // The image width is initially fit into the canvas width
-  var imageX = canvasX * (this.imageWidth / this.width);
-  var imageY = canvasY * (this.imageWidth / this.width);
+  // Transform canvas pixel coordinates to clipspace coordinates. The position
+  // buffer defines the extent of the clipspace coordinates. By convention, the
+  // image width is mapped to the usual clipspace extent (-1, 1). Initially this
+  // means the canvas width corresponds to (-1, 1) for clipspace-x. Clipspace-y
+  // is computed based on the canvas proportion.
   
-  // Get the translation offset
-  // Translation offsets are in clipspace units [0, 2]
-  // These need to be converted to pixel units (e.g. [0, 2] -> [0, width])
-  var translateX = (this.width / 2) * this.xOffset;
-  var translateY = (this.height / 2) * this.yOffset;
+  var wc = this.canvas.width;
+  var hc = this.canvas.height;
   
-  // Get offset associated with zoom
-  var zoomOffsetX = 0.5 * (this.imageWidth - this.imageWidth / this.zoom);
-  var zoomOffsetY = 0.5 * (this.height * (this.imageWidth / this.width) - (this.height / this.zoom) * (this.imageWidth / this.width));
-  zoomOffsetY = this.imageHeight - this.height * (this.imageWidth / this.width) / this.zoom - zoomOffsetY;
+  var xp = ((2 / wc) * xCanvas - 1) / this.zoom - this.xOffset;
+  var yp = ((2 / hc) * yCanvas - 1) / this.zoom + this.yOffset;
   
-  var x = imageX / this.zoom - translateX + zoomOffsetX;
-  var y = imageY / this.zoom + translateY + zoomOffsetY;
+  // Transform clipspace coordinates to texture coordinates. Before doing this, the
+  // domain of clipspace-y must be known.
+  var y2 = 2.0 * (wc / hc) - 1;
+  
+  var xt = 0.5 * (xp + 1);
+  var yt = (1 / (1 + y2)) * (yp - 1) + 1;
+  
+  // Texture coordinates to image pixel coordinates
+  var x = xt * this.imageWidth;
+  var y = yt * this.imageHeight;
   
   return [x, y];
 }

@@ -1,6 +1,15 @@
 <html>
 <head>
   <link rel="stylesheet" href="/examples/astrojs.css" type="text/css" charset="utf-8">
+  <style>
+  canvas {
+    border: 1px solid red;
+  }
+  
+  div#wicked-science-visualization {
+    border: 1px solid blue;
+  }
+  </style>
   <script type="text/javascript" src="/examples/lib/fits.js"></script>
   <script type="text/javascript" src="/rawimage.js"></script>
   <script type="text/javascript">
@@ -23,9 +32,13 @@
   
   // Callback to capture coordinates in image reference frame
   function onmousemove(e, x, y, opts) {
+    console.log(x, y);
     var arr = opts.arr;
     var width = opts.width;
-    console.log(x, y, arr[x + width * y]);
+    var height = opts.height;
+    x = Math.round(x);
+    y = height - Math.round(y);
+    // console.log(x, y, arr[x + width * y]);
   }
   
   // Define callback for when pixels have been read from file
@@ -43,10 +56,10 @@
     var el = document.querySelector('#' + opts.el);
     
     // Initialize a WebFITS context with a viewer of size width
-    var raw = new RawImage(el, width, 400);
+    var raw = new RawImage(el, 800, 400);
     
     // Add pan and zoom controls
-    opts = {arr: arr, width: width};
+    opts = {arr: arr, width: width, height: height};
     callbacks = {onmousemove: onmousemove}
     
     raw.setupControls(callbacks, opts);
